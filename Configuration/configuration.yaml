@@ -147,6 +147,24 @@ mqtt:
 media_player:
   - platform: plex
 
+weblink:
+  entities:
+    - name: Router
+      url: "http://192.168.178.1"
+      icon: "mdi:router-wireless"
+    - name: Plex
+      url: "http://sherlock:32400"
+      icon: "mdi:plex"
+    - name: CouchPotato
+      url: "http://sherlock:5050"
+      icon: "mdi:theater"
+    - name: Sonarr
+      url: "http://sherlocl:8989"
+      icon: "mdi:television-classic"
+    - name: uTorrent
+      url: "http://sherlock:8082"
+      icon: "mdi:download"
+
 light:
   - platform: hue
     host: 192.168.178.23
@@ -243,6 +261,13 @@ group:
       - light.lamp_dressoir
       - light.lamp_eettafel
       - switch.ambilight
+      - cover.gordijn_voor
+      - sensor.verwarming
+      - sensor.temperatuur
+  people:
+    name: People
+    entities:
+      - device_tracker.huaweip10litefritzbox
   meter_reading:
     name: Meterwaarden
     entities:
@@ -252,6 +277,25 @@ group:
       - sensor.power_consumption_normal
       - sensor.gas_consumption
       - sensor.hourly_gas_consumption
+  sonarr:
+    name: Sonarr
+    entities:
+      - sensor.sonarr_queue
+      - sensor.sonarr_disk_space
+      - sensor.sonarr_upcoming
+      - sensor.sonarr_wanted
+  weather:
+    name: Weer
+    entities:
+      - sun.sun
+      - sensor.br_wind_speed
+      - sensor.br_symbol
+      - sensor.br_precipitation
+      - sensor.br_wind_direction
+      - sensor.br_temperature
+      - sensor.br_ground_temperature
+      - sensor.br_stationname
+      - sensor.dark_sky_cloud_coverage
 
 input_boolean:
   slapen:
