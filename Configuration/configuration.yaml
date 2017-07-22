@@ -1,0 +1,598 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Home
+  # Location required to calculate the time the sun rises and sets
+  latitude: !secret latitude_home
+  longitude: !secret longitude_home
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: 6
+  # metric for Metric, imperial for Imperial
+  unit_system: metric
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: Europe/Amsterdam
+  
+  customize:
+    light.hue_color_lamp_3:
+      hidden: true
+    media_player.plex_web_firefox:
+      hidden: true
+    media_player.tablet:
+      hidden: true
+    media_player.mycroft:
+      friendly_name: "Plex woonkamer"
+    remote.tv_woonkamer:
+      hidden: true
+    sensor.power_production:
+      hidden: true
+    sensor.power_production_normal: 
+      hidden: true
+    sensor.power_production_low:
+      hidden: true
+    switch.verwarming_thuis:
+      hidden: true
+    switch.verwarming_kort_afwezig:
+      hidden: true
+    switch.verwarming_lang_afwezig:
+      hidden: true
+    switch.verwarming_comfort:
+      hidden: true
+
+zone:
+  name: Work
+  icon: 'mdi:pi-box'
+  latitude: !secret latitude_work
+  longitude: !secret longitude_work
+  radius: 90
+
+logger:
+  default: info
+  
+# Show links to resources in log and frontend
+#introduction:
+
+# Enables the frontend
+frontend:
+
+http:
+  # Uncomment this to add a password (recommended!)
+  # api_password: PASSWORD
+  # Uncomment this if you are using SSL or running in Docker etc
+  # base_url: example.duckdns.org:8123
+
+# Checks for available updates
+updater:
+  include_used_components: true
+
+# Discover some devices automatically
+#discovery:
+
+# Allows you to issue voice commands from the frontend in enabled browsers
+#conversation:
+
+# Enables support for tracking state changes over time.
+history:
+
+# View all events in a logbook
+logbook:
+
+# Track the sun
+sun:
+
+sensor:
+  - platform: buienradar
+    monitored_conditions:
+      - stationname
+      - symbol
+#      - humidity
+      - temperature
+      - groundtemperature
+      - windspeed
+#      - windforce
+      - winddirection
+#      - windazimuth
+#      - pressure
+#      - visibility
+#      - windgust
+      - precipitation
+#      - irradiance
+  - platform: darksky
+    api_key: !secret darksky_api
+    monitored_conditions:
+      - cloud_cover
+  - platform: sonarr
+    api_key: !secret sonarr_api
+    monitored_conditions:
+      - upcoming
+      - wanted
+      - queue
+      - diskspace
+    days: 28
+    unit: TB
+  - platform: mqtt
+    name: "Verwarming"
+    state_topic: "HW/temp/state"
+    unit_of_measurement: "°C"
+    force_update: true
+  - platform: mqtt
+    name: "Temperatuur"
+    state_topic: "HW/temp/room"
+    unit_of_measurement: "°C"
+    force_update: true
+  - platform: dsmr
+    host: 127.0.0.1
+    port: 8124
+    dsmr_version: 4
+
+# Text to speech
+#tts:
+#  platform: google
+
+device_tracker:
+  - platform: nmap_tracker
+    hosts: 192.168.178.1-64
+    interval_seconds: 20
+    home_interval: 8
+    exclude:
+      - 192.168.178.26
+      - 192.168.178.30
+      - 192.168.178.31
+
+mqtt:
+  broker: 127.0.0.1
+  port: 1883
+  client_id: !secret mqtt_client_id
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+
+media_player:
+  - platform: plex
+
+light:
+  - platform: hue
+    host: 192.168.178.23
+    allow_unreachable: false
+  - platform: mqtt
+    name: "Spots keuken"
+    command_topic: "HW/sw/0/set"
+    state_topic: "HW/sw/0/state"
+    brightness_command_topic: "HW/sw/0/dim"
+    brightness_state_topic: "HW/sw/0/dim/state"
+    brightness_scale: 100
+    optimistic: false
+  - platform: mqtt
+    name: "Lamp eettafel"
+    command_topic: "HW/sw/2/set"
+    state_topic: "HW/sw/2/state"
+    brightness_command_topic: "HW/sw/2/dim"
+    brightness_state_topic: "HW/sw/2/dim/state"
+    brightness_scale: 100
+    optimistic: false
+  - platform: mqtt
+    name: "Lamp dressoir"
+    command_topic: "HW/sw/3/set"
+    state_topic: "HW/sw/3/state"
+    brightness_command_topic: "HW/sw/3/dim"
+    brightness_state_topic: "HW/sw/3/dim/state"
+    brightness_scale: 100
+    optimistic: false
+
+switch:
+  - platform: mqtt
+    name: "Boiler keuken"
+    command_topic: "HW/sw/1/set"
+    state_topic: "HW/sw/1/state"
+    optimistic: false
+  - platform: mqtt
+    name: "Ambilight"
+    command_topic: "HW/sw/4/set"
+    state_topic: "HW/sw/4/state"
+    optimistic: false
+  - platform: mqtt
+    name: "Verwarming (thuis)"
+    command_topic: "HW/temp/set"
+    state_topic: "HW/temp/state"
+    optimistic: true
+    payload_on: "20"
+  - platform: mqtt
+    name: "Verwarming (kort afwezig)"
+    command_topic: "HW/temp/set"
+    state_topic: "HW/temp/state"
+    optimistic: true
+    payload_on: "16"
+  - platform: mqtt
+    name: "Verwarming (lang afwezig)"
+    command_topic: "HW/temp/set"
+    state_topic: "HW/temp/state"
+    optimistic: true
+    payload_on: "12"
+  - platform: mqtt
+    name: "Verwarming (comfort)"
+    command_topic: "HW/temp/set"
+    state_topic: "HW/temp/state"
+    optimistic: true
+    payload_on: "21"
+
+cover:
+  - platform: mqtt
+    name: "Gordijn voor"
+    #command_topic: "soma/shade/rise201/set"
+    set_position_topic: "soma/shade/rise201/set"
+    state_topic: "soma/shade/rise201/state"
+    retain: false
+    
+remote:
+  - platform: harmony
+    name: "TV Woonkamer"
+    host: 192.168.178.20
+    scan_interval: 10
+
+group:
+  # By default, every group appears in the HOME tab. 
+  # If you create a group default_view it will REPLACE the contents 
+  # of the HOME tab so you can customize the HOME tab as you wish.
+  kitchen:
+    name: Keuken
+    entities:
+      - light.spots_keuken
+      - switch.boiler_keuken
+  living_room:
+    name: Woonkamer
+    entities:
+      - light.lamp_tv
+      - light.lamp_bank
+      - light.lamp_dressoir
+      - light.lamp_eettafel
+      - switch.ambilight
+  meter_reading:
+    name: Meterwaarden
+    entities:
+      - sensor.power_tariff
+      - sensor.power_consumption
+      - sensor.power_consumption_low
+      - sensor.power_consumption_normal
+      - sensor.gas_consumption
+      - sensor.hourly_gas_consumption
+
+input_boolean:
+  slapen:
+    initial: off
+    icon: 'mdi:sleep'
+  film_kijken:
+    initial: off
+    icon: 'mdi:theater'
+  zon_onder:
+    initial: off
+    icon: 'mdi:weather-night'
+  
+scene:
+  - name: "Slapen"
+    entities:
+      light.spots_keuken: off
+      light.lamp_tv: off
+      light.lamp_bank: off
+      light.lamp_dressoir: off
+      light.lamp_eettafel: off
+      switch.ambilight: off
+      switch.boiler_keuken: off
+      switch.verwarming_kort_afwezig: on
+      cover.gordijn_voor:
+        position: 82
+      input_boolean.slapen: on
+      
+  - name: "Verwarming (normaal)"
+    entities:
+      switch.verwarming_thuis: on
+      switch.verwarming_kort_afwezig: off
+      switch.verwarming_lang_afwezig: off
+      switch.verwarming_comfort: off
+  - name: "Verwarming (kort weg)"
+    entities:
+      switch.verwarming_thuis: off
+      switch.verwarming_kort_afwezig: on
+      switch.verwarming_lang_afwezig: off
+      switch.verwarming_comfort: off
+  - name: "Verwarming (lang weg)"
+    entities:
+      switch.verwarming_thuis: off
+      switch.verwarming_kort_afwezig: off
+      switch.verwarming_lang_afwezig: on
+      switch.verwarming_comfort: off
+  - name: "Verwarming (comfort)"
+    entities:
+      switch.verwarming_thuis: off
+      switch.verwarming_kort_afwezig: off
+      switch.verwarming_lang_afwezig: off
+      switch.verwarming_comfort: on
+  
+  - name: "Film start"
+    entities:
+      switch.ambilight: on
+      input_boolean.film_kijken: on
+  - name: "Film actief"
+    entities:
+      light.spots_keuken: off
+      light.lamp_tv: off
+      light.lamp_bank: off
+      light.lamp_dressoir: off
+      light.lamp_eettafel: off
+      switch.ambilight: on
+  - name: "Film gepauzeerd"
+    entities:
+      light.spots_keuken: on
+      light.lamp_tv: on
+      light.lamp_bank: on
+      light.lamp_dressoir: on
+      light.lamp_eettafel: on
+      switch.ambilight: on
+
+  - name: "Licht normaal"
+    entities:
+      light.spots_keuken: on
+      light.lamp_tv: on
+      light.lamp_bank: on
+      light.lamp_dressoir: on
+      light.lamp_eettafel: on
+      switch.ambilight: off
+
+automation:
+  - alias: "Start"
+    trigger:
+      platform: homeassistant
+      event: start
+    action:
+      service: input_boolean.turn_on
+      entity_id: input_boolean.zon_onder
+    condition:
+      condition: state
+      entity_id: sun.sun
+      state: 'below_horizon'
+  - alias: "Zon onder"
+    trigger:
+      - platform: sun
+        event: sunset
+        offset: "-00:30:00"
+    action:
+      service: input_boolean.turn_on
+      entity_id: input_boolean.zon_onder
+  - alias: "Zon op"
+    trigger:
+      - platform: sun
+        event: sunrise
+    action:
+      service: input_boolean.turn_off
+      entity_id: input_boolean.zon_onder
+  
+  - alias: "Wakker worden"
+    trigger:
+      platform: time
+      at: "07:30:00"
+    action:
+      service: input_boolean.turn_off
+      entity_id: input_boolean.slapen
+  
+  - alias: "Lichten aan bij zonsondergang"
+    trigger:
+      platform: state
+      entity_id: input_boolean.zon_onder
+      to: 'on'
+    action:
+      service: scene.turn_on
+      entity_id: scene.licht_normaal
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: device_tracker.huaweip10litefritzbox
+          state: 'home'
+        - condition: state
+          entity_id: input_boolean.film_kijken
+          state: 'off'
+  - alias: "Lichten aan als Koen thuis komt"
+    trigger:
+      platform: state
+      entity_id: device_tracker.huaweip10litefritzbox
+      from: 'not_home'
+      to: 'home'
+    action:
+      service: scene.turn_on
+      entity_id: scene.licht_normaal
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_boolean.slapen
+          state: 'off'
+        - condition: state
+          entity_id: input_boolean.film_kijken
+          state: 'off'
+        - condition: state
+          entity_id: input_boolean.zon_onder
+          state: 'on'
+  - alias: "Lichten uit als Koen weg gaat"
+    trigger:
+      platform: state
+      entity_id: device_tracker.huaweip10litefritzbox
+      from: 'home'
+      to: 'not_home'
+    action:
+      service: light.turn_off
+  
+  - alias: "Verwarming aan als Koen thuis komt"
+    trigger:
+      platform: state
+      entity_id: device_tracker.huaweip10litefritzbox
+      from: 'not_home'
+      to: 'home'
+    action:
+      service: scene.turn_on
+      entity_id: scene.verwarming_normaal
+    condition:
+      condition: and
+      conditions:
+      - condition: time
+        after: "07:00:00"
+        before: "22:30:00"
+      - condition: state
+        entity_id: input_boolean.slapen
+        state: 'off'
+  - alias: "Verwarming aan indien thuis"
+    trigger:
+      platform: time
+      at: "09:00:00"
+    action: 
+      service: scene.turn_on
+      entity_id: scene.verwarming_normaal
+    condition:
+      condition: state
+      entity_id: device_tracker.huaweip10litefritzbox
+      state: 'home'
+  - alias: "Verwarming laag als Koen weg gaat"
+    trigger:
+      platform: state
+      entity_id: device_tracker.huaweip10litefritzbox
+      from: 'home'
+      to: 'not_home'
+    action:
+      service: scene.turn_on
+      entity_id: scene.verwarming_kort_weg
+    condition:
+      condition: state
+      entity_id: switch.verwarming_lang_afwezig
+      state: 'off'
+  - alias: "Verwarming uit indien Koen lang weg"
+    trigger:
+      platform: state
+      entity_id: device_tracker.huaweip10litefritzbox
+      to: 'not_home'
+      for:
+        hours: 10
+    action:
+      service: scene.turn_on
+      entity_id: scene.verwarming_lang_weg
+  - alias: "Verwarming laag 's avonds"
+    trigger:
+      platform: time
+      at: "22:30:00"
+    action:
+      service: scene.turn_on
+      entity_id: scene.verwarming_kort_weg
+    condition:
+      condition: state
+      entity_id: switch.verwarming_lang_afwezig
+      state: 'off'
+  
+  - alias: "Boiler keuken uit"
+    trigger:
+      platform: time
+      at: "23:59:00"
+    action:
+      service: switch.turn_off
+      entity_id: switch.boiler_keuken
+  - alias: "Boiler keuken aan (doordeweeks)"
+    trigger:
+      platform: time
+      at: "17:00:00"
+    action:
+      service: switch.turn_on
+      entity_id: switch.boiler_keuken
+    condition: 
+      condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+  - alias: "Boiler keuken aan (weekend)"
+    trigger:
+      platform: time
+      at: "08:00:00"
+    action:
+      service: switch.turn_on
+      entity_id: switch.boiler_keuken
+    condition: 
+      condition: time
+      weekday:
+        - sat
+        - sun
+
+  - alias: "Film kijken"
+    trigger:
+      platform: state
+      entity_id: remote.tv_woonkamer
+    action:
+      service: scene.turn_on
+      entity_id: scene.film_start
+    condition:
+      condition: template
+      value_template: '{{ trigger.to_state.attributes.current_activity == "Watch a Movie" }}'
+  - alias: "Film gepauzeerd"
+    trigger:
+      platform: state
+      entity_id: media_player.mycroft
+      from: "playing"
+    action:
+      service: scene.turn_on
+      entity_id: scene.film_gepauzeerd
+    condition:
+      condition: state
+      entity_id: input_boolean.zon_onder
+      state: 'on'
+  - alias: "Film gestart/hervat"
+    trigger:
+      platform: state
+      entity_id: media_player.mycroft
+      to: "playing"
+    action:
+      service: scene.turn_on
+      entity_id: scene.film_actief
+  - alias: "Film gestopt"
+    trigger:
+      platform: state
+      entity_id: remote.tv_woonkamer
+    action:
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.film_kijken
+      - service: scene.turn_on
+        entity_id: scene.licht_normaal
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_boolean.film_kijken
+          state: 'on'
+        - condition: template
+          value_template: '{{ trigger.to_state.attributes.current_activity != "Watch a Movie" }}'
+        - condition: state
+          entity_id: input_boolean.zon_onder
+          state: 'on'
+  
+  - alias: "Gordijn openen bij opstaan"
+    trigger:
+      platform: state
+      entity_id: input_boolean.slapen
+      to: 'off'
+    action:
+      service: cover.set_cover_position
+      data:
+        entity_id: cover.gordijn_voor
+        position: 15
+  - alias: "Gordijn omlaag in namiddag"
+    trigger:
+      platform: time
+      at: "17:00:00"
+    action:
+      service: cover.set_cover_position
+      data:
+        entity_id: cover.gordijn_voor
+        position: 50
+#  - alias: "Gordijn sluiten bij slapen"
+#    trigger:
+#      platform: state
+#      entity_id: input_boolean.slapen
+#      to: 'on'
+#    action:
+#      service: cover.set_cover_position
+#      data:
+#        entity_id: cover.gordijn_voor
+#        position: 82
