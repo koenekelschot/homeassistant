@@ -322,6 +322,11 @@ scene:
       cover.gordijn_voor:
         position: 82
       input_boolean.slapen: on
+  - name: "Opstaan"
+    entities:
+      cover.gordijn_voor:
+        position: 15
+      input_boolean.slapen: off
       
   - name: "Verwarming (normaal)"
     entities:
@@ -406,13 +411,13 @@ automation:
       service: input_boolean.turn_off
       entity_id: input_boolean.zon_onder
   
-  - alias: "Wakker worden"
+  - alias: "Opstaan"
     trigger:
       platform: time
       at: "07:30:00"
     action:
-      service: input_boolean.turn_off
-      entity_id: input_boolean.slapen
+      service: scene.turn_on
+      entity_id: scene.opstaan
   
   - alias: "Lichten aan bij zonsondergang"
     trigger:
@@ -611,16 +616,16 @@ automation:
           entity_id: input_boolean.zon_onder
           state: 'on'
   
-  - alias: "Gordijn openen bij opstaan"
-    trigger:
-      platform: state
-      entity_id: input_boolean.slapen
-      to: 'off'
-    action:
-      service: cover.set_cover_position
-      data:
-        entity_id: cover.gordijn_voor
-        position: 15
+#  - alias: "Gordijn openen bij opstaan"
+#    trigger:
+#      platform: state
+#      entity_id: input_boolean.slapen
+#      to: 'off'
+#    action:
+#      service: cover.set_cover_position
+#      data:
+#        entity_id: cover.gordijn_voor
+#        position: 15
   - alias: "Gordijn omlaag in namiddag"
     trigger:
       platform: time
