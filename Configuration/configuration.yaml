@@ -20,8 +20,8 @@ homeassistant:
       hidden: true
     media_player.mycroft:
       friendly_name: "Plex woonkamer"
-#    remote.tv_woonkamer:
-#      hidden: true
+    remote.tv_woonkamer:
+      hidden: true
     sensor.power_production:
       hidden: true
     sensor.power_production_normal: 
@@ -115,10 +115,6 @@ sensor:
     host: 127.0.0.1
     port: 8124
     dsmr_version: 4
-
-# Text to speech
-#tts:
-#  platform: google
 
 device_tracker:
   - platform: nmap_tracker
@@ -293,8 +289,6 @@ input_boolean:
   #no initial values, handled by the recorder component
   slapen:
     icon: 'mdi:sleep'
-  film_kijken:
-    icon: 'mdi:theater'
 
 binary_sensor:
   - platform: template
@@ -318,13 +312,24 @@ binary_sensor:
     sensors:
       iemand_thuis:
         value_template: >
-          {% if (is_state('device_tracker.huaweip10litefritzbox','home')) %}
+          {% if (is_state('device_tracker.huaweip10litefritzbox', 'home')) %}
             true
           {% else %} 
             false
           {% endif %}
         entity_id:
           - device_tracker.huaweip10litefritzbox
+  - platform: template
+    sensors:
+      film_kijken:
+        value_template: >
+          {% if (states.remote.tv_woonkamer.attributes.current_activity | lower == 'watch a movie') %}
+            true
+          {% else %}
+            false
+          {% endif %}
+        entity_id:
+          - remote.tv_woonkamer
   
 scene:
   - name: "Slapen"
@@ -375,7 +380,6 @@ scene:
   - name: "Film start"
     entities:
       switch.ambilight: on
-      input_boolean.film_kijken: on
   - name: "Film actief"
     entities:
       light.spots_keuken: off
@@ -429,7 +433,7 @@ automation:
           entity_id: binary_sensor.donker_buiten
           state: 'on'
         - condition: state
-          entity_id: input_boolean.film_kijken
+          entity_id: binary_sensor.film_kijken
           state: 'off'
         - condition: state
           entity_id: input_boolean.slapen
@@ -535,10 +539,8 @@ automation:
   - alias: "Film kijken"
     trigger:
       platform: state
-      entity_id: remote.tv_woonkamer
-    condition:
-      condition: template
-      value_template: '{{ trigger.to_state.attributes.current_activity == "Watch a Movie" }}'
+      entity_id: binary_sensor.film_kijken
+      to: 'on'
     action:
       service: scene.turn_on
       entity_id: scene.film_start
@@ -568,21 +570,14 @@ automation:
   - alias: "Film gestopt"
     trigger:
       platform: state
-      entity_id: remote.tv_woonkamer
+      entity_id: binary_sensor.film_kijken
+      from: 'on'
+      to: 'off'
     condition:
-      condition: and
-      conditions:
-        - condition: state
-          entity_id: input_boolean.film_kijken
-          state: 'on'
-        - condition: template
-          value_template: '{{ trigger.to_state.attributes.current_activity != "Watch a Movie" }}'
-        - condition: state
-          entity_id: binary_sensor.donker_buiten
-          state: 'on'
+      condition: state
+      entity_id: binary_sensor.donker_buiten
+      state: 'on'
     action:
-      - service: input_boolean.turn_off
-        entity_id: input_boolean.film_kijken
       - service: scene.turn_on
         entity_id: scene.licht_normaal
   
