@@ -442,11 +442,14 @@ automation:
       service: scene.turn_on
       entity_id: scene.licht_normaal
 
-  - alias: "Lichten uit als niemand thuis is"
+  - alias: "Lichten uit"
     trigger:
-      platform: state
-      entity_id: binary_sensor.iemand_thuis
-      to: 'off'
+      - platform: state
+        entity_id: binary_sensor.iemand_thuis
+        to: 'off'
+      - platform: state
+        entity_id: binary_sensor.donker_buiten
+        state: 'off'
     action:
       service: light.turn_off
 
