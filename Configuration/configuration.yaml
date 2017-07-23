@@ -298,6 +298,9 @@ group:
       - sensor.dark_sky_cloud_coverage
 
 input_boolean:
+  iemand_thuis:
+    initial: on
+    icon: 'mdi:home-outline'
   slapen:
     initial: off
     icon: 'mdi:sleep'
@@ -320,7 +323,7 @@ scene:
       switch.boiler_keuken: off
       switch.verwarming_kort_afwezig: on
       cover.gordijn_voor:
-        position: 82
+        position: 90
       input_boolean.slapen: on
   - name: "Opstaan"
     entities:
@@ -395,6 +398,44 @@ automation:
       condition: state
       entity_id: sun.sun
       state: 'below_horizon'
+      
+  - alias: "Iemand thuis"
+    trigger:
+      - platform: state
+        entity_id: device_tracker.huaweip10litefritzbox
+        to: 'home'
+#      platform: template
+#      value_template: >
+#        {% if (is_state('device_tracker.huaweip10litefritzbox','home')) 
+#          or (is_state('device_tracker.2','home')) %}
+#          true
+#        {% endif %}
+    action:
+      service: input_boolean.turn_on
+      entity_id: input_boolean.iemand_thuis
+    condition:
+      condition: state
+      entity_id: input_boolean.iemand_thuis
+      state: 'off'
+  - alias: "Niemand thuis"
+    trigger:
+      platform: state
+      entity_id: device_tracker.huaweip10litefritzbox
+      from: 'home'
+#      platform: template
+#      value_template: >
+#        {% if (is_state('device_tracker.huaweip10litefritzbox','not_home')) 
+#          and (is_state('device_tracker.2','not_home')) %}
+#          true
+#        {% endif %}
+    action:
+      service: input_boolean.turn_off
+      entity_id: input_boolean.iemand_thuis
+    condition:
+      condition: state
+      entity_id: input_boolean.iemand_thuis
+      state: 'on'
+      
   - alias: "Zon onder"
     trigger:
       - platform: sun
@@ -431,17 +472,16 @@ automation:
       condition: and
       conditions:
         - condition: state
-          entity_id: device_tracker.huaweip10litefritzbox
-          state: 'home'
+          entity_id: input_boolean.iemand_thuis
+          state: 'on'
         - condition: state
           entity_id: input_boolean.film_kijken
           state: 'off'
-  - alias: "Lichten aan als Koen thuis komt"
+  - alias: "Lichten aan als iemand thuis komt"
     trigger:
       platform: state
-      entity_id: device_tracker.huaweip10litefritzbox
-      from: 'not_home'
-      to: 'home'
+      entity_id: input_boolean.iemand_thuis
+      to: 'on'
     action:
       service: scene.turn_on
       entity_id: scene.licht_normaal
@@ -457,21 +497,19 @@ automation:
         - condition: state
           entity_id: input_boolean.zon_onder
           state: 'on'
-  - alias: "Lichten uit als Koen weg gaat"
+  - alias: "Lichten uit als niemand thuis is"
     trigger:
       platform: state
-      entity_id: device_tracker.huaweip10litefritzbox
-      from: 'home'
-      to: 'not_home'
+      entity_id: input_boolean.iemand_thuis
+      to: 'off'
     action:
       service: light.turn_off
   
-  - alias: "Verwarming aan als Koen thuis komt"
+  - alias: "Verwarming aan als iemand thuis komt"
     trigger:
       platform: state
-      entity_id: device_tracker.huaweip10litefritzbox
-      from: 'not_home'
-      to: 'home'
+      entity_id: input_boolean.iemand_thuis
+      to: 'on'
     action:
       service: scene.turn_on
       entity_id: scene.verwarming_normaal
@@ -493,14 +531,13 @@ automation:
       entity_id: scene.verwarming_normaal
     condition:
       condition: state
-      entity_id: device_tracker.huaweip10litefritzbox
-      state: 'home'
-  - alias: "Verwarming laag als Koen weg gaat"
+      entity_id: input_boolean.iemand_thuis
+      state: 'on'
+  - alias: "Verwarming laag als niemand thuis is"
     trigger:
       platform: state
-      entity_id: device_tracker.huaweip10litefritzbox
-      from: 'home'
-      to: 'not_home'
+      entity_id: input_boolean.iemand_thuis
+      to: 'off'
     action:
       service: scene.turn_on
       entity_id: scene.verwarming_kort_weg
@@ -508,11 +545,11 @@ automation:
       condition: state
       entity_id: switch.verwarming_lang_afwezig
       state: 'off'
-  - alias: "Verwarming uit indien Koen lang weg"
+  - alias: "Verwarming uit indien iedereen lang weg is"
     trigger:
       platform: state
-      entity_id: device_tracker.huaweip10litefritzbox
-      to: 'not_home'
+      entity_id: input_boolean.iemand_thuis
+      to: 'off'
       for:
         hours: 10
     action:
@@ -616,16 +653,6 @@ automation:
           entity_id: input_boolean.zon_onder
           state: 'on'
   
-#  - alias: "Gordijn openen bij opstaan"
-#    trigger:
-#      platform: state
-#      entity_id: input_boolean.slapen
-#      to: 'off'
-#    action:
-#      service: cover.set_cover_position
-#      data:
-#        entity_id: cover.gordijn_voor
-#        position: 15
   - alias: "Gordijn omlaag in namiddag"
     trigger:
       platform: time
@@ -635,13 +662,3 @@ automation:
       data:
         entity_id: cover.gordijn_voor
         position: 50
-#  - alias: "Gordijn sluiten bij slapen"
-#    trigger:
-#      platform: state
-#      entity_id: input_boolean.slapen
-#      to: 'on'
-#    action:
-#      service: cover.set_cover_position
-#      data:
-#        entity_id: cover.gordijn_voor
-#        position: 82
