@@ -45,6 +45,9 @@ history:
 # View all events in a logbook
 logbook:
 
+recorder:
+  purge_days: 14
+
 # Track the sun
 sun:
 
