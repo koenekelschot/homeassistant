@@ -1,0 +1,20 @@
+entities:
+  - name: Router
+    url: "http://192.168.178.1"
+    icon: "mdi:router-wireless"
+    
+  - name: Plex
+    url: "http://sherlock:32400"
+    icon: "mdi:plex"
+    
+  - name: CouchPotato
+    url: "http://sherlock:5050"
+    icon: "mdi:theater"
+    
+  - name: Sonarr
+    url: "http://sherlocl:8989"
+    icon: "mdi:television-classic"
+    
+  - name: uTorrent
+    url: "http://sherlock:8082"
+    icon: "mdi:download"

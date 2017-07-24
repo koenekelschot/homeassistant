@@ -1,0 +1,40 @@
+- platform: mqtt
+  name: "Boiler keuken"
+  command_topic: "HW/sw/1/set"
+  state_topic: "HW/sw/1/state"
+  optimistic: false
+  
+- platform: mqtt
+  name: "Ambilight"
+  command_topic: "HW/sw/4/set"
+  state_topic: "HW/sw/4/state"
+  optimistic: false
+  
+- platform: mqtt
+  name: "Verwarming (thuis)"
+  command_topic: "HW/temp/set"
+  state_topic: "HW/temp/state"
+  optimistic: true
+  payload_on: "20"
+  
+- platform: mqtt
+  name: "Verwarming (kort afwezig)"
+  command_topic: "HW/temp/set"
+  state_topic: "HW/temp/state"
+  optimistic: true
+  payload_on: "16"
+  
+- platform: mqtt
+  name: "Verwarming (lang afwezig)"
+  command_topic: "HW/temp/set"
+  state_topic: "HW/temp/state"
+  optimistic: true
+  payload_on: "12"
+  
+- platform: mqtt
+  name: "Verwarming (comfort)"
+  command_topic: "HW/temp/set"
+  state_topic: "HW/temp/state"
+  optimistic: true
+  payload_on: "21"
+  

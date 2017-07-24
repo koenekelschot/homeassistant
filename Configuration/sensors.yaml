@@ -1,0 +1,41 @@
+- platform: buienradar
+  monitored_conditions:
+    - stationname
+    - symbol
+    - temperature
+    - groundtemperature
+    - windspeed
+    - winddirection
+    - precipitation
+    
+- platform: darksky
+  api_key: !secret darksky_api
+  monitored_conditions:
+    - cloud_cover
+    
+- platform: sonarr
+  api_key: !secret sonarr_api
+  monitored_conditions:
+    - upcoming
+    - wanted
+    - queue
+    - diskspace
+  days: 28
+  unit: TB
+  
+- platform: mqtt
+  name: "Verwarming"
+  state_topic: "HW/temp/state"
+  unit_of_measurement: "°C"
+  force_update: true
+  
+- platform: mqtt
+  name: "Temperatuur"
+  state_topic: "HW/temp/room"
+  unit_of_measurement: "°C"
+  force_update: true
+  
+- platform: dsmr
+  host: 127.0.0.1
+  port: 8124
+  dsmr_version: 4

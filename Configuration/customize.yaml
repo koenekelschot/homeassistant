@@ -1,0 +1,36 @@
+light.hue_color_lamp_3:
+  hidden: true
+  
+media_player.plex_web_firefox:
+  hidden: true
+  
+media_player.tablet:
+  hidden: true
+  
+media_player.mycroft:
+  friendly_name: "Plex woonkamer"
+  
+remote.tv_woonkamer:
+  hidden: true
+  
+sensor.power_production:
+  hidden: true
+  
+sensor.power_production_normal: 
+  hidden: true
+  
+sensor.power_production_low:
+  hidden: true
+  
+switch.verwarming_thuis:
+  hidden: true
+  
+switch.verwarming_kort_afwezig:
+  hidden: true
+  
+switch.verwarming_lang_afwezig:
+  hidden: true
+  
+switch.verwarming_comfort:
+  hidden: true
+  
