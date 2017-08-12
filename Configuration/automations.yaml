@@ -166,6 +166,10 @@
     condition: state
     entity_id: binary_sensor.donker_buiten
     state: 'on'
+  condition:
+    condition: state
+    entity_id: input_boolean.slapen
+    state: 'off'
   action:
     - service: scene.turn_on
       entity_id: scene.licht_normaal

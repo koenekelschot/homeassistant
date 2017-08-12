@@ -1,5 +1,6 @@
 - name: "Slapen"
   entities:
+    input_boolean.slapen: on
     remote.tv_woonkamer: off
     light.spots_keuken: off
     light.lamp_tv: off
@@ -11,7 +12,6 @@
     switch.verwarming_kort_afwezig: on
     cover.gordijn_voor:
       position: 90
-    input_boolean.slapen: on
     
 - name: "Opstaan"
   entities:
