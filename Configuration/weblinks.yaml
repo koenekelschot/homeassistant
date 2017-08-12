@@ -12,7 +12,7 @@ entities:
     icon: "mdi:theater"
     
   - name: Sonarr
-    url: "http://sherlocl:8989"
+    url: "http://sherlock:8989"
     icon: "mdi:television-classic"
     
   - name: uTorrent

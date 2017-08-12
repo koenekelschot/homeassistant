@@ -33,4 +33,7 @@ switch.verwarming_lang_afwezig:
   
 switch.verwarming_comfort:
   hidden: true
+
+binary_sensor.workday_sensor:
+  hidden: true
   

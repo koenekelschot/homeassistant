@@ -82,7 +82,7 @@
     service: scene.turn_on
     entity_id: scene.verwarming_kort_weg
 
-- alias: "Verwarming uit indien lang niemand thuis"
+- alias: "Verwarming uit"
   trigger:
     platform: state
     entity_id: binary_sensor.iemand_thuis
@@ -101,18 +101,14 @@
     service: switch.turn_off
     entity_id: switch.boiler_keuken
     
-- alias: "Boiler keuken aan (doordeweeks)"
+- alias: "Boiler keuken aan (werkdag)"
   trigger:
     platform: time
     at: "17:00:00"
   condition: 
-    condition: time
-    weekday:
-      - mon
-      - tue
-      - wed
-      - thu
-      - fri
+    condition: state
+    entity_id: binary_sensor.workday_sensor
+    state: 'on'
   action:
     service: switch.turn_on
     entity_id: switch.boiler_keuken
@@ -122,10 +118,9 @@
     platform: time
     at: "08:00:00"
   condition: 
-    condition: time
-    weekday:
-      - sat
-      - sun
+    condition: state
+    entity_id: binary_sensor.workday_sensor
+    state: 'off'
   action:
     service: switch.turn_on
     entity_id: switch.boiler_keuken
