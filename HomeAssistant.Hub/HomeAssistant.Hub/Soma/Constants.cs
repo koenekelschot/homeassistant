@@ -2,7 +2,7 @@
 
 namespace HomeAssistant.Hub.Soma
 {
-    public class Constants
+    public static class Constants
     {
         public static readonly Guid ShadeBatteryService = Guid.Parse("0000180f-0000-1000-8000-00805f9b34fb");
         public static readonly Guid ShadeBatteryCharacteristic = Guid.Parse("00002a19-0000-1000-8000-00805f9b34fb"); //returns battery value in percentage format, 0-100
