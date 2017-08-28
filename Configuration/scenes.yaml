@@ -10,13 +10,13 @@
     switch.ambilight: off
     switch.boiler_keuken: off
     switch.verwarming_kort_afwezig: on
-    cover.gordijn_voor:
-      position: 90
+    #cover.gordijn_voor:
+    #  position: 90
     
 - name: "Opstaan"
   entities:
-    cover.gordijn_voor:
-      position: 15
+    #cover.gordijn_voor:
+    #  position: 15
     input_boolean.slapen: off
     
 - name: "Verwarming (normaal)"

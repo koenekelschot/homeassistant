@@ -174,14 +174,25 @@
   action:
     - service: scene.turn_on
       entity_id: scene.licht_normaal
-
-- alias: "Gordijn omlaag in namiddag"
+      
+- alias: "Stand gordijn"
   trigger:
-    platform: time
-    at: "17:00:00"
+    platform: state
+    entity_id: sensor.positie_gordijn
   action:
     service: cover.set_cover_position
-    data:
+    data_template:
       entity_id: cover.gordijn_voor
-      position: 50
-      
+      position: > 
+        {{ states('sensor.positie_gordijn') }}
+
+#- alias: "Gordijn omlaag avond"
+#  trigger:
+#    platform: time
+#    at: "18:00:00"
+#  action:
+#    service: cover.set_cover_position
+#    data:
+#      entity_id: cover.gordijn_voor
+#      position: 60
+     

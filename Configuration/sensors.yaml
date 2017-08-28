@@ -34,9 +34,34 @@
   name: "Temperatuur"
   state_topic: "HW/temp/room"
   unit_of_measurement: "°C"
-  force_update: true
+#  force_update: true
   
 - platform: dsmr
   host: 127.0.0.1
   port: 8124
   dsmr_version: 4
+
+- platform: template
+  sensors:
+    positie_gordijn:
+      friendly_name: "Gewenste positie gordijn"
+      value_template: >
+        {% if (is_state("input_boolean.slapen", "on")) %}
+          90
+        {% else %}
+          {% if (now().strftime('%H') | int >= 20) %}
+            70
+          {% elif (now().strftime('%H') | int >= 18) %}
+            60
+          {% else %}
+            {% if (
+              states.sensor.temperatuur.state | int >= 21 and
+              states.sensor.br_irradiance.state | int >= 300
+            ) %}
+              60
+            {% else %}
+              15
+            {% endif %}
+          {% endif %}
+        {% endif %}
+        

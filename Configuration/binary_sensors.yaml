@@ -60,4 +60,3 @@
         {% endif %}
       entity_id:
         - remote.tv_woonkamer
-        
