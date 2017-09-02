@@ -12,6 +12,7 @@ using Windows.Devices.Enumeration;
 using Windows.Storage.Streams;
 
 #pragma warning disable S3242 // Method parameters should be declared with base types
+//IBluetoothLEDevice and IGattCharacteristic are internal, so disable warning
 namespace HomeAssistant.Hub.Soma
 {
     public class ShadesService
@@ -21,20 +22,10 @@ namespace HomeAssistant.Hub.Soma
         private static readonly Object _deviceListLock = new Object();
         //private Timer _deviceReconnectTimer;
         //private readonly TimeSpan _deviceReconnectInterval = TimeSpan.FromHours(4);
-        /*
-        private readonly IDictionary<Guid, IList<DeviceHandle>> _subscriptions = new Dictionary<Guid, IList<DeviceHandle>>();
-        private static readonly Object _subscriptionsLock = new Object();
-        */
+
         private static ShadesService _instance;
-
         public static ShadesService Instance => _instance ?? (_instance = new ShadesService());
-        /*
-        public delegate void BatteryLevelChangedEventHandler(object sender, string shadeName, uint value);
-        public delegate void PositionChangedEventHandler(object sender, string shadeName, uint value);
-        public event BatteryLevelChangedEventHandler BatteryLevelChanged;
-        public event PositionChangedEventHandler PositionChanged;
-        */
-
+        
         private ShadesService() {
             lock (_deviceListLock)
             {
@@ -123,44 +114,16 @@ namespace HomeAssistant.Hub.Soma
             });
         }
 
-        /*
-        public async Task SubscribeToBatteryLevel(string shadeName)
-        {
-            await SubscribeDeviceHandle(shadeName, Constants.ShadeBatteryService, Constants.ShadeBatteryCharacteristic);
-        }
-
-        public async Task SubscribeToPosition(string shadeName)
-        {
-            logger.Debug($"SubscribeToPosition({shadeName})");
-            await SubscribeDeviceHandle(shadeName, Constants.ShadeMotorService, Constants.ShadeMotorStateCharacteristic);
-        }
-        */
-
         private async Task<bool> ExecuteAction(string name, Guid characteristicId, byte[] actionValues)
         {
             DeviceHandle handle = await FindDeviceHandleWithName(name);
+            logger.Debug($"Handle: {handle?.Name ?? "null"}");
             if (handle == null)
             {
                 return false;
             }
             return await handle.SetCharacteristicValue(characteristicId, actionValues);
         }
-
-        /*
-        private async Task SubscribeDeviceHandle(string shadeName, Guid serviceId, Guid characteristicId)
-        {
-            logger.Debug($"SubscribeDeviceHandle({shadeName}, {serviceId}, {characteristicId})");
-            DeviceHandle handle = await FindDeviceHandleWithName(shadeName);
-            if (handle == null)
-            {
-                return;
-            }
-
-            SaveCharacteristicSubscription(handle, characteristicId);
-
-            await handle.SubscribeToCharacteristic(serviceId, characteristicId);
-        }
-        */
 
         /*
         private void SetupReconnectTimer()
@@ -188,69 +151,12 @@ namespace HomeAssistant.Hub.Soma
         }
         */
 
-        /*
-        private void SaveCharacteristicSubscription(DeviceHandle handle, Guid characteristicId)
-        {
-            logger.Debug($"SaveCharacteristicSubscription({handle}, {characteristicId})");
-            lock (_subscriptionsLock)
-            {
-                bool alreadySubscribedHandler = false;
-                foreach (var key in _subscriptions.Keys)
-                {
-                    alreadySubscribedHandler |= _subscriptions[key].Any(dh => handle.Name.Equals(dh.Name, StringComparison.InvariantCultureIgnoreCase));
-                }
-
-                if (!alreadySubscribedHandler)
-                {
-                    logger.Debug("Subscribed to handler");
-                    handle.CharacteristicValueChanged += Handle_CharacteristicValueChanged;
-                }
-
-                if (!_subscriptions.ContainsKey(characteristicId))
-                {
-                    _subscriptions.Add(characteristicId, new List<DeviceHandle>());
-                }
-
-                if (!_subscriptions[characteristicId].Any(dh => handle.Name.Equals(dh.Name, StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    logger.Debug("Saved handler subscription");
-                    _subscriptions[characteristicId].Add(handle);
-                }
-            }
-        }
-
-        private void Handle_CharacteristicValueChanged(DeviceHandle sender, Guid characteristicId, IBuffer buffer)
-        {
-            logger.Debug("handle.CharacteristicValueChanged");
-            lock (_subscriptionsLock)
-            {
-                if (_subscriptions.ContainsKey(characteristicId) &&
-                    _subscriptions[characteristicId].Any(dh => sender.Name.Equals(dh.Name, StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    if (characteristicId.Equals(Constants.ShadeBatteryCharacteristic))
-                    {
-                        uint batteryLevelValue = ReadValueFromBuffer<uint>(buffer);
-                        BatteryLevelChanged?.Invoke(this, sender.Name, NormalizeBatteryLevel(batteryLevelValue));
-                    }
-                    if (characteristicId.Equals(Constants.ShadeMotorStateCharacteristic))
-                    {
-                        PositionChanged?.Invoke(this, sender.Name, ReadValueFromBuffer<uint>(buffer));
-                    }
-                }
-            }
-        }
-        */
-
         private async Task<DeviceHandle> FindDeviceHandleWithName(string name)
         {
             DeviceHandle handle;
             lock (_deviceListLock)
             {
                 handle = _deviceList.FirstOrDefault(d => d.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
-                if (handle != null)
-                {
-                    logger.Debug($"Got device from cache.");
-                }
             }
 
             if (handle == null)
@@ -259,7 +165,6 @@ namespace HomeAssistant.Hub.Soma
                 
                 string deviceSelector = BluetoothLEDevice.GetDeviceSelectorFromDeviceName(name);
                 DeviceInformationCollection devices = await DeviceInformation.FindAllAsync(deviceSelector);
-                logger.Debug($"Found {devices.Count} devices");
                 DeviceInformation deviceInfo = devices.FirstOrDefault(d => d.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
                 BluetoothLEDevice device = null;
 
@@ -270,18 +175,13 @@ namespace HomeAssistant.Hub.Soma
 
                 if (device != null)
                 {
-                    handle = new DeviceHandle
-                    {
-                        Name = name,
-                        Characteristics = GetCharacteristicsForDevice(device)
-                    };
+                    handle = new DeviceHandle(name, device);
 
                     lock (_deviceListLock)
                     {
                         if (!_deviceList.Any(d => d.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase)))
                         {
                             _deviceList.Add(handle);
-                            logger.Debug($"Added device to list");
                         }
                     }
                 }
@@ -293,22 +193,6 @@ namespace HomeAssistant.Hub.Soma
             }
 
             return handle;
-        }
-
-        private List<GattCharacteristic> GetCharacteristicsForDevice(BluetoothLEDevice device)
-        {
-            logger.Debug("Getting characteristics");
-            List<GattCharacteristic> characteristics = new List<GattCharacteristic>();
-            var getServicesResult = device.GattServices;
-            
-            foreach (var service in getServicesResult)
-            {
-                var getCharacteristicsResult = service.GetAllCharacteristics();
-                characteristics.AddRange(getCharacteristicsResult);
-            }
-
-            logger.Debug($"Got {characteristics.Count} characteristics");
-            return characteristics;
         }
 
         private static T ReadValueFromBuffer<T>(IBuffer buffer) where T : IConvertible
@@ -332,17 +216,17 @@ namespace HomeAssistant.Hub.Soma
 
         private class DeviceHandle
         {
-            public string Name { get; set; }
-            public List<GattCharacteristic> Characteristics { set; get; } = new List<GattCharacteristic>();
+            public readonly string Name;
+            private readonly List<GattCharacteristic> Characteristics;
+            private readonly BluetoothLEDevice Device;
 
-            /*
-            private readonly IList<GattCharacteristic> _characteristicSubscriptions = new List<GattCharacteristic>();
-            private static readonly Object _characteristicSubscriptionsLock = new Object();
-
-            public delegate void ValueChangedEventHandler(DeviceHandle sender, Guid characteristicId, IBuffer buffer);
-            public event ValueChangedEventHandler CharacteristicValueChanged;
-            */
-
+            public DeviceHandle(string name, BluetoothLEDevice device)
+            {
+                Name = name;
+                Device = device;
+                Characteristics = GetCharacteristics();
+            }
+            
             public async Task<T> GetCharacteristicValue<T>(Guid characteristicId) where T : IConvertible
             {
                 var characteristic = Characteristics.FirstOrDefault(c => c.Uuid.Equals(characteristicId));
@@ -356,6 +240,7 @@ namespace HomeAssistant.Hub.Soma
             public async Task<bool> SetCharacteristicValue(Guid characteristicId, byte[] value)
             {
                 var characteristic = Characteristics.FirstOrDefault(c => c.Uuid.Equals(characteristicId));
+                logger.Debug($"Characteristic: {characteristic?.Uuid.ToString() ?? "null"}");
                 if (characteristic != null)
                 {
                     GattCommunicationStatus result = await characteristic.WriteValueAsync(value.AsBuffer(), GattWriteOption.WriteWithResponse);
@@ -364,39 +249,19 @@ namespace HomeAssistant.Hub.Soma
                 return false;
             }
 
-            /*
-            public async Task SubscribeToCharacteristic(Guid serviceId, Guid characteristicId)
+            private List<GattCharacteristic> GetCharacteristics()
             {
-                logger.Debug($"SubscribeToCharacteristic({serviceId}, {characteristicId})");
-                lock (_characteristicSubscriptionsLock)
+                var characteristics = new List<GattCharacteristic>();
+                var getServicesResult = Device.GattServices;
+
+                foreach (var service in getServicesResult)
                 {
-                    if (_characteristicSubscriptions.Select(c => c.Uuid).Any(uuid => uuid.Equals(characteristicId)))
-                    {
-                        return;
-                    }
+                    var getCharacteristicsResult = service.GetAllCharacteristics();
+                    characteristics.AddRange(getCharacteristicsResult);
                 }
 
-                logger.Debug("Not yet in _characteristicSubscriptions");
-                GattCharacteristic characteristic = GetCharacteristic(serviceId, characteristicId);
-                await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
-
-                lock (_characteristicSubscriptionsLock)
-                {
-                    if (!_characteristicSubscriptions.Select(c => c.Uuid).Any(uuid => uuid.Equals(characteristicId)))
-                    {
-                        _characteristicSubscriptions.Add(characteristic);
-                        logger.Debug("Subscribed to characteristic");
-                        characteristic.ValueChanged += Characteristic_ValueChanged;
-                    }
-                }
+                return characteristics;
             }
-
-            private void Characteristic_ValueChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
-            {
-                logger.Debug("characteristic.ValueChanged");
-                CharacteristicValueChanged?.Invoke(this, sender.Uuid, args.CharacteristicValue);
-            }
-            */
 
             private async Task<T> ReadCharacteristicValue<T>(GattCharacteristic characteristic) where T : IConvertible
             {
@@ -404,6 +269,10 @@ namespace HomeAssistant.Hub.Soma
                 if (readResult.Status == GattCommunicationStatus.Success)
                 {
                     return ReadValueFromBuffer<T>(readResult.Value);
+                }
+                else
+                {
+                    logger.Warn("Could not read characteristic value (unreachable)");
                 }
                 return default(T);
             }

@@ -5,7 +5,6 @@ using HomeAssistant.Hub.Mqtt;
 using HomeAssistant.Hub.Soma;
 using NLog;
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Configuration;
 using System.Linq;
@@ -20,10 +19,6 @@ namespace HomeAssistant.Hub
         private static readonly NameValueCollection AppSettings = ConfigurationManager.AppSettings;
         private static Timer _temperatureTimer;
         private static double? _targetTemperature;
-        private static Timer _shadesTimer;
-        private static volatile bool _shadesTimerCallbackRunning = false;
-        private static bool _shadesMoving = false;
-        private static List<Shade> _shades = new List<Shade>();
 
         private static HomeWizardClient _homeWizardClient;
         private static MqttPubSubClient _mqttClient;
@@ -113,11 +108,11 @@ namespace HomeAssistant.Hub
             {
                 case "open":
                     logger.Info("Opening shade");
-                    await SetShadePosition(message.DeviceId, "0");
+                    await SetShadePosition(message.DeviceId, "0", 0);
                     break;
                 case "close":
                     logger.Info("Closing shade");
-                    await SetShadePosition(message.DeviceId, "100");
+                    await SetShadePosition(message.DeviceId, "100", 0);
                     break;
                 case "stop":
                     logger.Info("Stopping shade");
@@ -125,39 +120,59 @@ namespace HomeAssistant.Hub
                     break;
                 default:
                     logger.Info("Set position of shade");
-                    await SetShadePosition(message.DeviceId, messageData);
+                    await SetShadePosition(message.DeviceId, messageData, 0);
                     break;
             }
         }
 
-        private static async Task SetShadePosition(string shadeName, string positionString)
+        private static async Task SetShadePosition(string shadeName, string positionString, int retryNumber)
         {
             if (uint.TryParse(positionString, out uint position))
             {
-                await _somaShadesService.SetPosition(shadeName, position);
-                UpdateShadeTargetPosition(shadeName, position);
-                await CheckShades();
+                bool result = await _somaShadesService.SetPosition(shadeName, position);
+                logger.Debug($"Setting position successfully? {result}");
+                if (!result && ++retryNumber <= 5)
+                {
+                    int secondsDelay = (int)Math.Pow(2, retryNumber);
+                    await Task.Delay(secondsDelay * 1000);
+                    await SetShadePosition(shadeName, positionString, retryNumber);
+                    return;
+                }
+                await CheckShadePosition(shadeName);
             }
         }
 
         private static async Task StopShade(string shadeName)
         {
             await _somaShadesService.Stop(shadeName);
-            var position = await _somaShadesService.GetPosition(shadeName);
-            logger.Info($"Stopped at position {position}");
-            UpdateShadeTargetPosition(shadeName, position);
-            await CheckShades();
+            await CheckShadePosition(shadeName);
         }
 
-        private static void UpdateShadeTargetPosition(string shadeName, uint? position)
+        private static async Task CheckShadePosition(string shade)
         {
+            var position = await _somaShadesService.GetPosition(shade);
             if (position.HasValue)
             {
-                var shade = _shades.First(s => s.Name.Equals(shadeName, StringComparison.InvariantCultureIgnoreCase));
-                shade.TargetPosition = position.Value;
+                PublishShadePosition(shade, position.Value);
             }
         }
-        
+
+        private static void InitializeShades()
+        {
+            var shades = AppSettings["soma_shades"].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Distinct();
+            var tasks = shades.Select(shade => CheckShadePosition(shade));
+            Task.Run(async () =>
+            {
+                await Task.WhenAll(tasks);
+            }).Wait();
+        }
+
+        private static void PublishShadePosition(string shadeName, uint position)
+        {
+            _mqttClient.PublishMessage(new ShadeMessage() { DeviceId = shadeName, Data = position.ToString() });
+            logger.Info($"Sent '{position.ToString()}' for {shadeName}");
+        }
+
         private static void InitializeTemperatureTimer()
         {
             _temperatureTimer = SetupTimer(true, async (object target) => {
@@ -182,83 +197,6 @@ namespace HomeAssistant.Hub
 
             _mqttClient.PublishMessage(message);
             logger.Info($"Sent '{message.Data}' as {message.TemperatureType} temperature");
-        }
-
-        private static void InitializeShades()
-        {
-            var shadeNames = AppSettings["soma_shades"].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Distinct();
-            _shades.AddRange(shadeNames.Select(name => new Shade(name)));
-            _shadesTimer = SetupTimer(true, async (object target) =>
-            {
-                await CheckShades();
-            });
-        }
-
-        private static async Task CheckShades()
-        {
-			if (_shadesTimerCallbackRunning)
-            {
-                return;
-            }
-            _shadesTimerCallbackRunning = true;
-
-            logger.Info("Checking shades");
-            var movingShades = _shades.Where(shade => shade.TargetPosition.HasValue);
-            logger.Info($"Found {movingShades.Count()} moving shades");
-            var tasks = _shades.Select(shade => CheckShadePosition(shade));
-            await Task.WhenAll(tasks);
-
-            if (movingShades.Any() && !_shadesMoving)
-            {
-                _shadesMoving = true;
-                ChangeShadesTimerInterval();
-            }
-            if (!movingShades.Any() && _shadesMoving)
-            {
-                _shadesMoving = false;
-                ChangeShadesTimerInterval();
-            }
-
-            _shadesTimerCallbackRunning = false;
-        }
-
-        private static async Task CheckShadePosition(Shade shade)
-        {
-			logger.Info("Checking position");
-			var position = await _somaShadesService.GetPosition(shade.Name);
-            if (position.HasValue)
-            {
-                if (!shade.LastPosition.HasValue)
-                {
-					shade.LastPosition = position.Value;
-                    PublishShadePosition(shade);
-                }
-
-                if (shade.TargetPosition.HasValue)
-                {
-					logger.Info($"Target: {shade.TargetPosition.Value} Current: {position.Value}");
-					var delta = 3;
-                    if (position.Value > shade.TargetPosition.Value - delta && position.Value < shade.TargetPosition.Value + delta)
-                    {
-                        shade.TargetPosition = null;
-                        shade.LastPosition = position.Value;
-                        PublishShadePosition(shade);
-                    }
-                }
-            }
-			logger.Info("Finished checking position");
-        }
-
-        private static void PublishShadePosition(Shade shade)
-        {
-            _mqttClient.PublishMessage(new ShadeMessage() { DeviceId = shade.Name, Data = shade.LastPosition.Value.ToString() });
-            logger.Info($"Sent '{shade.LastPosition.Value}' for {shade.Name}");
-        }
-
-        private static void ChangeShadesTimerInterval()
-        {
-            TimeSpan interval = _shadesMoving ? TimeSpan.FromSeconds(3) : GetTimerInterval();
-            _shadesTimer.Change(TimeSpan.Zero, interval);
         }
 
         private static Timer SetupTimer(bool fireImmediately, TimerCallback callback)

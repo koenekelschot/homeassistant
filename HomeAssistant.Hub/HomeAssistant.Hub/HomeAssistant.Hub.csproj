@@ -79,7 +79,6 @@
     <Compile Include="HomeWizard\Models\ApiResponse.cs" />
     <Compile Include="HomeWizard\Models\Sensors.cs" />
     <Compile Include="HomeWizard\HomeWizardResourceResolver.cs" />
-    <Compile Include="Models\Shade.cs" />
     <Compile Include="Models\TemperatureType.cs" />
     <Compile Include="Models\MessageType.cs" />
     <Compile Include="Models\Message.cs" />
