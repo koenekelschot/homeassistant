@@ -66,6 +66,11 @@
     <Reference Include="Windows.Foundation" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DependencyInjection\IServiceCollection.cs" />
+    <Compile Include="DependencyInjection\IServiceProvider.cs" />
+    <Compile Include="DependencyInjection\ServiceCollection.cs" />
+    <Compile Include="DependencyInjection\ServiceHelper.cs" />
+    <Compile Include="DependencyInjection\ServiceProvider.cs" />
     <Compile Include="Dsmr\Converters\ObisVersionConverter.cs" />
     <Compile Include="Dsmr\Converters\ObisTariffConverter.cs" />
     <Compile Include="Dsmr\Converters\ObisTimestampConverter.cs" />
@@ -103,7 +108,9 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Configuration\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
