@@ -10,6 +10,6 @@
         void RegisterSingleton<T>() where T : class;
         void RegisterSingleton<T>(T service) where T : class;
         void RegisterTransient<T>() where T : class;
-        void RegisterTransient<T>(T service) where T : class;
+        //void RegisterTransient<T>(T service) where T : class;
     }
 }

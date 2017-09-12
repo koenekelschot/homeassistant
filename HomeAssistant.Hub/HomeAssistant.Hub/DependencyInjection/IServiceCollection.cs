@@ -18,9 +18,9 @@
         //Transient lifetime services are created each time they are requested. This 
         //lifetime works best for lightweight, stateless services.
         IServiceCollection AddTransient<T>() where T : class;
-        IServiceCollection AddTransient<T>(T instance) where T : class;
+        //IServiceCollection AddTransient<T>(T instance) where T : class;
         IServiceCollection AddTransient<IT, T>() where T : class, IT where IT : class;
-        IServiceCollection AddTransient<IT, T>(T instance) where T : class, IT where IT : class;
+        //IServiceCollection AddTransient<IT, T>(T instance) where T : class, IT where IT : class;
 
         IServiceProvider BuildServiceProvider();
     }

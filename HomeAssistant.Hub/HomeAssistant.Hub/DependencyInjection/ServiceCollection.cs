@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace HomeAssistant.Hub.DependencyInjection
+﻿namespace HomeAssistant.Hub.DependencyInjection
 {
     public class ServiceCollection : IServiceCollection
     {
@@ -47,7 +45,7 @@ namespace HomeAssistant.Hub.DependencyInjection
             return this;
         }
 
-        public IServiceCollection AddTransient<IT, T>(T instance) where T : class, IT where IT : class
+        /*public IServiceCollection AddTransient<IT, T>(T instance) where T : class, IT where IT : class
         {
             ServiceHelper.ThrowIfNoInterface<IT>();
             return AddTransient<T>(instance);
@@ -57,7 +55,7 @@ namespace HomeAssistant.Hub.DependencyInjection
         {
             _serviceProvider.RegisterTransient<T>(instance);
             return this;
-        }
+        }*/
 
         public IServiceProvider BuildServiceProvider()
         {
@@ -66,7 +64,7 @@ namespace HomeAssistant.Hub.DependencyInjection
 
         public IServiceCollection Configure()
         {
-            throw new NotImplementedException();
+            return this;
         }
     }
 }
