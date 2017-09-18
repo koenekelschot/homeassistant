@@ -4,25 +4,25 @@ namespace HomeAssistant.Hub.DependencyInjection
 {
     internal static class ServiceHelper
     {
-        public static void ThrowIfNoInterface<IT>() where IT : class
+        public static void ThrowIfNoInterface<InterfaceType>() where InterfaceType : class
         {
-            if (!IsInterface<IT>())
+            if (!IsInterface<InterfaceType>())
             {
-                throw new NotSupportedException($"Type of {nameof(IT)} should be an interface");
+                throw new NotSupportedException($"Type of {nameof(InterfaceType)} should be an interface");
             }
         }
 
-        public static void ThrowIfInterface<T>() where T : class
+        public static void ThrowIfInterface<ServiceType>() where ServiceType : class
         {
-            if (IsInterface<T>())
+            if (IsInterface<ServiceType>())
             {
-                throw new NotSupportedException($"Type of {nameof(T)} shouldn't be an interface");
+                throw new NotSupportedException($"Type of {nameof(ServiceType)} shouldn't be an interface");
             }
         }
 
-        public static bool IsInterface<IT>() where IT : class
+        public static bool IsInterface<InterfaceType>() where InterfaceType : class
         {
-            return typeof(IT).IsInterface;
+            return typeof(InterfaceType).IsInterface;
         }
 
         public static void ThrowIfCanBeTreatedAsType(this Type CurrentType, Type TypeToCompareWith)

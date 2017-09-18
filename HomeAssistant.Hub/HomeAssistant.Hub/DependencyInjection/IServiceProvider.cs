@@ -2,14 +2,12 @@
 {
     public interface IServiceProvider
     {
-        T GetService<T>() where T : class;
-        T GetService<IT, T>() where T : class, IT where IT : class;
+        ServiceType GetService<ServiceType>() where ServiceType : class;
 
-        //T GetService<IT>() where T : class, IT;
+        void RegisterSingleton<ServiceType>(ServiceType instance) where ServiceType : class;
+        void RegisterSingleton<InterfaceType, ServiceType>(ServiceType instance) where ServiceType : class, InterfaceType where InterfaceType : class;
 
-        void RegisterSingleton<T>() where T : class;
-        void RegisterSingleton<T>(T service) where T : class;
-        void RegisterTransient<T>() where T : class;
-        //void RegisterTransient<T>(T service) where T : class;
+        void RegisterTransient<ServiceType>() where ServiceType : class;
+        void RegisterTransient<InterfaceType, ServiceType>() where ServiceType : class, InterfaceType where InterfaceType : class;
     }
 }

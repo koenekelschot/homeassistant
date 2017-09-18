@@ -6,21 +6,15 @@
 
         //Singleton lifetime services are created the first time they are requested 
         //and then every subsequent request will use the same instance.
-        IServiceCollection AddSingleton<T>() where T : class;
-        IServiceCollection AddSingleton<T>(T instance) where T : class;
-        IServiceCollection AddSingleton<IT, T>() where T : class, IT where IT : class;
-        IServiceCollection AddSingleton<IT, T>(T instance) where T : class, IT where IT : class;
-
-        //Scoped lifetime services are created once per request.
-        //IServiceCollection AddScoped<T>() where T : class;
-        //IServiceCollection AddScoped<IT, T>() where T : class, IT;
+        IServiceCollection AddSingleton<ServiceType>() where ServiceType : class;
+        IServiceCollection AddSingleton<ServiceType>(ServiceType instance) where ServiceType : class;
+        IServiceCollection AddSingleton<InterfaceType, ServiceType>() where ServiceType : class, InterfaceType where InterfaceType : class;
+        IServiceCollection AddSingleton<InterfaceType, ServiceType>(ServiceType instance) where ServiceType : class, InterfaceType where InterfaceType : class;
 
         //Transient lifetime services are created each time they are requested. This 
         //lifetime works best for lightweight, stateless services.
-        IServiceCollection AddTransient<T>() where T : class;
-        //IServiceCollection AddTransient<T>(T instance) where T : class;
-        IServiceCollection AddTransient<IT, T>() where T : class, IT where IT : class;
-        //IServiceCollection AddTransient<IT, T>(T instance) where T : class, IT where IT : class;
+        IServiceCollection AddTransient<ServiceType>() where ServiceType : class;
+        IServiceCollection AddTransient<InterfaceType, ServiceType>() where ServiceType : class, InterfaceType where InterfaceType : class;
 
         IServiceProvider BuildServiceProvider();
     }

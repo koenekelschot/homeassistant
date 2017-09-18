@@ -1,4 +1,5 @@
-﻿using HomeAssistant.Hub.Dsmr;
+﻿using HomeAssistant.Hub.DependencyInjection;
+using HomeAssistant.Hub.Dsmr;
 using HomeAssistant.Hub.HomeWizard;
 using HomeAssistant.Hub.Models;
 using HomeAssistant.Hub.Mqtt;
@@ -25,31 +26,70 @@ namespace HomeAssistant.Hub
         private static DsmrClient _dsmrClient;
         private static ShadesService _somaShadesService;
 
+        //static void Main(string[] args)
+        //{
+        //    Console.WriteLine(" Press [enter] to exit.");
+
+        //    string[] subscriptionTopics = {
+        //        AppSettings["mqtt_subscribe_set"],
+        //        AppSettings["mqtt_subscribe_dim"],
+        //        AppSettings["mqtt_subscribe_temp"],
+        //        AppSettings["mqtt_subscribe_shade"]
+        //    };
+
+        //    _dsmrClient = DsmrClient.Instance;
+        //    _homeWizardClient = HomeWizardClient.Instance;
+        //    _mqttClient = MqttPubSubClient.Instance;
+        //    _somaShadesService = ShadesService.Instance;
+
+        //    _mqttClient.MessageReceived += async (object sender, Message message) => { await OnMqttMessageReceived(message); };
+        //    _mqttClient.Subscribe(subscriptionTopics);
+
+        //    InitializeTemperatureTimer();
+        //    InitializeShades();
+
+        //    _dsmrClient.Start();
+        //    Console.ReadLine();
+        //    _dsmrClient.Stop();
+        //}
+
+        private static DependencyInjection.IServiceProvider ServiceProvider;
+
         static void Main(string[] args)
         {
-            Console.WriteLine(" Press [enter] to exit.");
+            var services = new ServiceCollection();
+            //services
+            //    .AddSingleton<TestSingleton>()
+            //    .AddSingleton<TestSingleton2>(new TestSingleton2() { Random = 42 })
+            //    .AddTransient<TestTransient>()
+            //    .AddSingleton<ITestSingleton, TestSingleton3>()
+            //    .AddSingleton<ITestSingleton, TestSingleton4>()
+            //    .AddTransient<Outer>().AddTransient<Inner>();
+            services
+                .AddTransient<Circular1>()
+                .AddTransient<Circular2>()
+                .AddTransient<Circular3>();
+            ServiceProvider = services.BuildServiceProvider();
+            Test();
+        }
 
-            string[] subscriptionTopics = {
-                AppSettings["mqtt_subscribe_set"],
-                AppSettings["mqtt_subscribe_dim"],
-                AppSettings["mqtt_subscribe_temp"],
-                AppSettings["mqtt_subscribe_shade"]
-            };
+        private static void Test()
+        {
+            //var test1 = ServiceProvider.GetService<TestSingleton>();
+            //var test2 = ServiceProvider.GetService<TestSingleton>();
+            //bool areInstancesEqual = test1.Instance.Equals(test2.Instance);
 
-            _dsmrClient = DsmrClient.Instance;
-            _homeWizardClient = HomeWizardClient.Instance;
-            _mqttClient = MqttPubSubClient.Instance;
-            _somaShadesService = ShadesService.Instance;
+            //var test3 = ServiceProvider.GetService<TestSingleton2>();
+            //bool isCustomInstance = test3.Random == 42;
 
-            _mqttClient.MessageReceived += async (object sender, Message message) => { await OnMqttMessageReceived(message); };
-            _mqttClient.Subscribe(subscriptionTopics);
+            //var test4 = ServiceProvider.GetService<TestTransient>();
+            //var test5 = ServiceProvider.GetService<TestTransient>();
+            //bool areNewInstances = !test4.Instance.Equals(test5.Instance);
 
-            InitializeTemperatureTimer();
-            InitializeShades();
+            //var test6 = ServiceProvider.GetService<ITestSingleton>();
 
-            _dsmrClient.Start();
-            Console.ReadLine();
-            _dsmrClient.Stop();
+            //var test7 = ServiceProvider.GetService<Outer>();
+            var circularTest = ServiceProvider.GetService<Circular1>();
         }
 
         private async static Task OnMqttMessageReceived(Message message)
@@ -104,7 +144,7 @@ namespace HomeAssistant.Hub
         {
             logger.Info($"Received '{message.Data}' for shade {message.DeviceId}");
             string messageData = message.Data.ToLowerInvariant();
-            switch(messageData)
+            switch (messageData)
             {
                 case "open":
                     logger.Info("Opening shade");
@@ -181,14 +221,14 @@ namespace HomeAssistant.Hub
                 PublishTemperature(_targetTemperature, TemperatureType.Target);
             });
         }
-        
+
         private static void PublishTemperature(double? temperature, TemperatureType type)
         {
             if (!temperature.HasValue)
             {
                 return;
             }
-            
+
             TemperatureMessage message = new TemperatureMessage
             {
                 TemperatureType = type,
@@ -210,6 +250,111 @@ namespace HomeAssistant.Hub
         {
             double timerInterval = double.Parse(AppSettings["timer_interval"]);
             return TimeSpan.FromMinutes(timerInterval);
+        }
+    }
+
+    public class TestSingleton
+    {
+        public readonly Guid Instance;
+
+        public TestSingleton()
+        {
+            Instance = Guid.NewGuid();
+        }
+    }
+
+    public class TestSingleton2
+    {
+        public readonly Guid Instance;
+        public int Random { get; set; }
+
+        public TestSingleton2()
+        {
+            Instance = Guid.NewGuid();
+        }
+    }
+
+    public class TestSingleton3 : ITestSingleton
+    {
+        public readonly Guid Instance;
+        public int Random { get; set; }
+
+        public TestSingleton3()
+        {
+            Instance = Guid.NewGuid();
+        }
+    }
+
+    public class TestSingleton4 : ITestSingleton
+    {
+        public readonly Guid Instance;
+        public int Random { get; set; }
+
+        public TestSingleton4()
+        {
+            Instance = Guid.NewGuid();
+        }
+    }
+
+    public interface ITestSingleton
+    {
+        int Random { get; set; }
+    }
+
+    public class TestTransient
+    {
+        public readonly Guid Instance;
+
+        public TestTransient()
+        {
+            Instance = Guid.NewGuid();
+        }
+    }
+
+    public class Outer
+    {
+        public readonly Inner inner;
+        public readonly string test;
+
+        public Outer(Inner inner, string test = "42")
+        {
+            this.inner = inner;
+            this.test = test;
+        }
+    }
+
+    public class Inner
+    {
+        public Inner() { }
+    }
+
+    public class Circular1
+    {
+        public readonly Circular2 _circularRef;
+
+        public Circular1(Circular2 circularRef)
+        {
+            _circularRef = circularRef;
+        }
+    }
+
+    public class Circular2
+    {
+        public readonly Circular3 _circularRef;
+
+        public Circular2(Circular3 circularRef)
+        {
+            _circularRef = circularRef;
+        }
+    }
+
+    public class Circular3
+    {
+        public readonly Circular1 _circularRef;
+
+        public Circular3(Circular1 circularRef)
+        {
+            _circularRef = circularRef;
         }
     }
 }

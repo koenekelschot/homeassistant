@@ -8,54 +8,46 @@
         {
             _serviceProvider = new ServiceProvider();
         }
-        
-        public IServiceCollection AddSingleton<IT, T>() where T : class, IT where IT : class
+
+        public IServiceCollection AddSingleton<ServiceType>() where ServiceType : class
         {
-            ServiceHelper.ThrowIfNoInterface<IT>();
-            return AddSingleton<T>();
+            return AddSingleton<ServiceType>(null);
         }
 
-        public IServiceCollection AddSingleton<T>() where T : class
+        public IServiceCollection AddSingleton<InterfaceType, ServiceType>() where ServiceType : class, InterfaceType where InterfaceType : class
         {
-            _serviceProvider.RegisterSingleton<T>();
+            return AddSingleton<InterfaceType, ServiceType>(null);
+        }
+
+        public IServiceCollection AddSingleton<ServiceType>(ServiceType instance) where ServiceType : class
+        {
+            ServiceHelper.ThrowIfInterface<ServiceType>();
+            _serviceProvider.RegisterSingleton<ServiceType>(instance);
             return this;
         }
 
-        public IServiceCollection AddSingleton<IT, T>(T instance) where T : class, IT where IT : class
+        public IServiceCollection AddSingleton<InterfaceType, ServiceType>(ServiceType instance) where ServiceType : class, InterfaceType where InterfaceType : class
         {
-            ServiceHelper.ThrowIfNoInterface<IT>();
-            return AddSingleton<T>(instance);
-        }
-
-        public IServiceCollection AddSingleton<T>(T instance) where T : class
-        {
-            _serviceProvider.RegisterSingleton<T>(instance);
+            ServiceHelper.ThrowIfNoInterface<InterfaceType>();
+            ServiceHelper.ThrowIfInterface<ServiceType>();
+            _serviceProvider.RegisterSingleton<InterfaceType, ServiceType>(instance);
             return this;
         }
 
-        public IServiceCollection AddTransient<IT, T>() where T : class, IT where IT : class
+        public IServiceCollection AddTransient<ServiceType>() where ServiceType : class
         {
-            ServiceHelper.ThrowIfNoInterface<IT>();
-            return AddTransient<T>();
-        }
-
-        public IServiceCollection AddTransient<T>() where T : class
-        {
-            _serviceProvider.RegisterTransient<T>();
+            ServiceHelper.ThrowIfInterface<ServiceType>();
+            _serviceProvider.RegisterTransient<ServiceType>();
             return this;
         }
 
-        /*public IServiceCollection AddTransient<IT, T>(T instance) where T : class, IT where IT : class
+        public IServiceCollection AddTransient<InterfaceType, ServiceType>() where ServiceType : class, InterfaceType where InterfaceType : class
         {
-            ServiceHelper.ThrowIfNoInterface<IT>();
-            return AddTransient<T>(instance);
-        }
-
-        public IServiceCollection AddTransient<T>(T instance) where T : class
-        {
-            _serviceProvider.RegisterTransient<T>(instance);
+            ServiceHelper.ThrowIfNoInterface<InterfaceType>();
+            ServiceHelper.ThrowIfInterface<ServiceType>();
+            _serviceProvider.RegisterTransient<InterfaceType, ServiceType>();
             return this;
-        }*/
+        }
 
         public IServiceProvider BuildServiceProvider()
         {

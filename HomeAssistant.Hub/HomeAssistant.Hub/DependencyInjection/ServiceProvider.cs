@@ -7,116 +7,129 @@ namespace HomeAssistant.Hub.DependencyInjection
 {
     public class ServiceProvider : IServiceProvider
     {
-        private readonly IDictionary<Type, Lifetime> _services;
-        private readonly IDictionary<Type, object> _singletons;
+        private readonly IDictionary<Type, Lifetime> _serviceTypes;
+        private readonly IDictionary<Type, object> _singletonInstances;
 
         internal ServiceProvider()
         {
-            _services = new Dictionary<Type, Lifetime>();
-            _singletons = new Dictionary<Type, object>();
+            _serviceTypes = new Dictionary<Type, Lifetime>();
+            _singletonInstances = new Dictionary<Type, object>();
         }
 
-        public T GetService<IT, T>() where T : class, IT where IT : class
+        public ServiceType GetService<ServiceType>() where ServiceType : class
         {
-            ServiceHelper.ThrowIfNoInterface<IT>();
-            return GetService<T>();
+            var serviceType = typeof(ServiceType);
+            object instance = TryGetInstance(serviceType, new List<Type>());
+            return (ServiceType)instance;
         }
 
-        public T GetService<T>() where T : class
+        public void RegisterSingleton<ServiceType>(ServiceType instance) where ServiceType : class
         {
-            var typeT = typeof(T);
-            ServiceHelper.ThrowIfInterface<T>();
-
-            object instance = TryGetInstance(typeT);
-
-            return (T)instance;
+            RegisterService<ServiceType>(instance, Lifetime.Singleton);
         }
 
-        public void RegisterSingleton<T>() where T : class
+        public void RegisterSingleton<InterfaceType, ServiceType>(ServiceType instance) where ServiceType : class, InterfaceType where InterfaceType : class
         {
-            RegisterService<T>(Lifetime.Singleton);
+            CheckInterfaceAlreadyRegistered<InterfaceType>();
+            RegisterSingleton<ServiceType>(instance);
         }
 
-        public void RegisterSingleton<T>(T service) where T : class
+        public void RegisterTransient<ServiceType>() where ServiceType : class
         {
-            RegisterService<T>(service, Lifetime.Singleton);
+            RegisterService<ServiceType>(null, Lifetime.Transient);
         }
 
-        public void RegisterTransient<T>() where T : class
+        public void RegisterTransient<InterfaceType, ServiceType>() where ServiceType : class, InterfaceType where InterfaceType : class
         {
-            RegisterService<T>(Lifetime.Transient);
+            CheckInterfaceAlreadyRegistered<InterfaceType>();
+            RegisterTransient<ServiceType>();
         }
 
-        /*public void RegisterTransient<T>(T service) where T : class
+        private void RegisterService<ServiceType>(ServiceType instance, Lifetime lifetime) where ServiceType : class
         {
-            RegisterService<T>(service, Lifetime.Transient);
-        }*/
+            var serviceType = typeof(ServiceType);
+            _serviceTypes.Keys.ToList().ForEach(st => ServiceHelper.ThrowIfCanBeTreatedAsType(st, serviceType));
+            _serviceTypes.Add(serviceType, lifetime);
 
-        private void RegisterService<T>(T service, Lifetime lifeTime) where T : class
-        {
-            RegisterService<T>(lifeTime);
-            _singletons.Add(typeof(T), service);
+            if (instance != null && !_singletonInstances.Keys.Any(s => ServiceHelper.CanBeTreatedAsType(s, serviceType)))
+            {
+                _singletonInstances.Add(serviceType, instance);
+            }
         }
 
-        private void RegisterService<T>(Lifetime lifeTime) where T : class
+        private void CheckInterfaceAlreadyRegistered<InterfaceType>() where InterfaceType : class
         {
-            var typeT = typeof(T);
-            _services.Keys.ToList().ForEach(s => ServiceHelper.ThrowIfCanBeTreatedAsType(s, typeT));
-            _services.Add(typeT, lifeTime);
-        }
+            var interfaceType = typeof(InterfaceType);
+            foreach (var serviceType in _serviceTypes.Keys)
+            {
+                var interfaces = serviceType.GetInterfaces();
+                interfaces.ToList().ForEach(i => ServiceHelper.ThrowIfCanBeTreatedAsType(interfaceType, i));
+            }        }
 
-        private object TryGetInstance(Type typeT)
+        private object TryGetInstance(Type serviceType, IList<Type> typeStack)
         {
-            object instance;
-            var returnType = _services.Keys.FirstOrDefault(s => ServiceHelper.CanBeTreatedAsType(s, typeT));
+            if (typeStack.Contains(serviceType))
+            {
+                throw new TypeLoadException($"Type {serviceType.Name} contains circular references");
+            }
+            typeStack.Add(serviceType);
+            
+            var returnType = _serviceTypes.Keys.FirstOrDefault(s => ServiceHelper.CanBeTreatedAsType(s, serviceType));
             if (returnType == null)
             {
-                throw new InvalidOperationException($"No type registered for {typeT.Name}");
+                throw new TypeLoadException($"No type registered for {serviceType.Name}");
             }
 
-            _services.TryGetValue(returnType, out Lifetime lifetime);
-            if (lifetime == Lifetime.Singleton)
-            {
-                if (_singletons.Keys.Any(s => ServiceHelper.CanBeTreatedAsType(s, typeT)))
-                {
-                    _singletons.TryGetValue(returnType, out instance);
-                }
-                else
-                {
-                    instance = CreateInstanceOf(returnType);
-                    _singletons.Add(typeT, instance);
-                }
-            }
-            else
-            {
-                instance = CreateInstanceOf(returnType);
-            }
-
+            object instance = GetInstanceOf(serviceType, typeStack);
             if (instance == null)
             {
-                throw new TypeAccessException($"Could not create instance of type {typeT.Name}");
+                throw new TypeLoadException($"Could not create instance of type {serviceType.Name}");
             }
             return instance;
         }
 
-        private object CreateInstanceOf(Type returnType)
+        private object GetInstanceOf(Type serviceType, IList<Type> typeStack)
         {
-            ConstructorInfo ctor = GetCtorWithFewestArguments(returnType); //shit I'm lazy
+            _serviceTypes.TryGetValue(serviceType, out Lifetime lifetime);
+            if (lifetime == Lifetime.Transient)
+            {
+                return CreateInstanceOf(serviceType, typeStack);
+            }
+
+            object instance;
+            if (_singletonInstances.Keys.Any(s => ServiceHelper.CanBeTreatedAsType(s, serviceType)))
+            {
+                _singletonInstances.TryGetValue(serviceType, out instance);
+            }
+            else
+            {
+                instance = CreateInstanceOf(serviceType, typeStack);
+                _singletonInstances.Add(serviceType, instance);
+            }
+            return instance;
+        }
+
+        private object CreateInstanceOf(Type serviceType, IList<Type> typeStack)
+        {
+            ConstructorInfo ctor = GetCtorWithFewestArguments(serviceType); //shit I'm lazy
             if (ctor != null)
             {
-                IList<object> parameters = new object[] { };
+                var parameterValues = new List<object>();
 
-                if (!ctor.GetParameters().All(p => p.IsOptional))
+                var allParameters = ctor.GetParameters();
+                var requiredParams = allParameters.Where(p => !p.IsOptional);
+                var optionalParams = allParameters.Where(p => p.IsOptional);
+
+                foreach (ParameterInfo requiredParam in requiredParams)
                 {
-                    ParameterInfo[] requiredParams = ctor.GetParameters().Where(p => !p.IsOptional).ToArray();
-                    
-                    foreach (ParameterInfo requiredParam in requiredParams)
-                    {
-                        parameters.Add(TryGetInstance(requiredParam.ParameterType));
-                    }
+                    parameterValues.Add(TryGetInstance(requiredParam.ParameterType, typeStack));
+                }
+                foreach (ParameterInfo optionalParam in optionalParams)
+                {
+                    parameterValues.Add(Type.Missing);
                 }
 
-                ctor.Invoke(parameters.ToArray());
+                return ctor.Invoke(parameterValues.ToArray());
             }
 
             return null;
