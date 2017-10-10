@@ -70,6 +70,13 @@ namespace HomeAssistant.Hub
                 .AddTransient<Circular2>()
                 .AddTransient<Circular3>();
             ServiceProvider = services.BuildServiceProvider();
+
+            //var builder = new ConfigurationBuilder()
+            //    .SetBasePath(env.ContentRootPath)
+            //    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            //Configuration = builder.Build(); --> IConfigurationRoot
+            //services.Configure<MySubOptions>(Configuration.GetSection("subsection"));
+
             Test();
         }
 

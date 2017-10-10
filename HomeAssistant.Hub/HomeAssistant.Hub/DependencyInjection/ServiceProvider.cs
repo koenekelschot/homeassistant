@@ -64,7 +64,8 @@ namespace HomeAssistant.Hub.DependencyInjection
             {
                 var interfaces = serviceType.GetInterfaces();
                 interfaces.ToList().ForEach(i => ServiceHelper.ThrowIfCanBeTreatedAsType(interfaceType, i));
-            }        }
+            }
+        }
 
         private object TryGetInstance(Type serviceType, IList<Type> typeStack)
         {
