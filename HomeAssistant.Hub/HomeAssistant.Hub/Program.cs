@@ -1,9 +1,12 @@
-﻿using HomeAssistant.Hub.Dsmr;
+﻿using HomeAssistant.Hub.Config;
 using HomeAssistant.Hub.HomeWizard;
 using HomeAssistant.Hub.Models;
 using HomeAssistant.Hub.Mqtt;
+using HomeAssistant.Hub.Services;
 using HomeAssistant.Hub.Soma;
 using NLog;
+using SimpleDI;
+using SimpleDI.Configuration;
 using System;
 using System.Collections.Specialized;
 using System.Configuration;
@@ -22,13 +25,17 @@ namespace HomeAssistant.Hub
 
         private static HomeWizardClient _homeWizardClient;
         private static MqttPubSubClient _mqttClient;
-        private static DsmrClient _dsmrClient;
         private static ShadesService _somaShadesService;
+
+        private static SimpleDI.IServiceProvider ServiceProvider;
+        private static IConfigurationRoot Configuration;
 
         static void Main(string[] args)
         {
+            ConfigureEnv();
             Console.WriteLine(" Press [enter] to exit.");
-
+            Startup();
+                                    
             string[] subscriptionTopics = {
                 AppSettings["mqtt_subscribe_set"],
                 AppSettings["mqtt_subscribe_dim"],
@@ -36,7 +43,6 @@ namespace HomeAssistant.Hub
                 AppSettings["mqtt_subscribe_shade"]
             };
 
-            _dsmrClient = DsmrClient.Instance;
             _homeWizardClient = HomeWizardClient.Instance;
             _mqttClient = MqttPubSubClient.Instance;
             _somaShadesService = ShadesService.Instance;
@@ -47,9 +53,19 @@ namespace HomeAssistant.Hub
             InitializeTemperatureTimer();
             InitializeShades();
 
-            _dsmrClient.Start();
             Console.ReadLine();
-            _dsmrClient.Stop();
+            Shutdown();
+        }
+
+        private static void ConfigureEnv()
+        {
+            var configBuilder = new ConfigurationBuilder();
+            Configuration = configBuilder.Build();
+
+            IServiceCollection services = new ServiceCollection()
+                .AddSingleton<DsmrService>()
+                .Configure<DsmrConfig>(Configuration.GetSection<DsmrConfig>(""));
+            ServiceProvider = services.BuildServiceProvider();
 
             //var services = new ServiceCollection()
             //    .AddSingleton<TestSingleton>()
@@ -59,6 +75,16 @@ namespace HomeAssistant.Hub
             //    .SetBasePath("json")
             //    .AddJsonFile("config1.json", optional: true)
             //    .Build();
+        }
+
+        private static void Startup()
+        {
+            ServiceProvider.GetService<DsmrService>().Start();
+        }
+
+        private static void Shutdown()
+        {
+            ServiceProvider.GetService<DsmrService>().Stop();
         }
 
         private async static Task OnMqttMessageReceived(Message message)
