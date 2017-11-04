@@ -37,6 +37,9 @@
     <Reference Include="DsmrParser, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DsmrParser.1.0.1\lib\net46\DsmrParser.dll</HintPath>
     </Reference>
+    <Reference Include="HomeWizard.Net, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\HomeWizard.Net.1.0.2\lib\net46\HomeWizard.Net.dll</HintPath>
+    </Reference>
     <Reference Include="M2Mqtt.Net, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\M2Mqtt.4.3.0.0\lib\net45\M2Mqtt.Net.dll</HintPath>
       <Private>True</Private>
@@ -78,8 +81,9 @@
     <Reference Include="Windows.Foundation" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Config\DsmrConfig.cs" />
+    <Compile Include="Dsmr\DsmrConfig.cs" />
     <Compile Include="HomeWizard\HomeWizardClient.cs" />
+    <Compile Include="HomeWizard\HomeWizardService.cs" />
     <Compile Include="HomeWizard\Models\HeatLink.cs" />
     <Compile Include="HomeWizard\Models\Device.cs" />
     <Compile Include="HomeWizard\Models\ApiResponse.cs" />
@@ -88,17 +92,19 @@
     <Compile Include="Models\TemperatureType.cs" />
     <Compile Include="Models\MessageType.cs" />
     <Compile Include="Models\Message.cs" />
-    <Compile Include="Mqtt\MqttTopicResolver.cs" />
-    <Compile Include="Mqtt\MqttMessageParser.cs" />
-    <Compile Include="Mqtt\MqttPubSubClient.cs" />
+    <Compile Include="Mqtt\MqttMessageParseService.cs" />
+    <Compile Include="Mqtt\MqttService.cs" />
+    <Compile Include="Mqtt\MqttClientConfig.cs" />
+    <Compile Include="Mqtt\MqttTopicConfig.cs" />
+    <Compile Include="Mqtt\MqttTopicResolveService.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Services\DsmrService.cs" />
+    <Compile Include="Dsmr\DsmrService.cs" />
     <Compile Include="Soma\ShadesService.cs" />
     <Compile Include="Soma\Constants.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Appsettings.env.json">
+    <None Include="Appsettings.template.json">
       <SubType>Designer</SubType>
     </None>
     <None Include="Appsettings.json">

@@ -20,9 +20,8 @@ namespace HomeAssistant.Hub
         private static Logger logger = LogManager.GetCurrentClassLogger();
         private static readonly NameValueCollection AppSettings = ConfigurationManager.AppSettings;
         private static Timer _temperatureTimer;
-        private static double? _targetTemperature;
+        private static decimal? _targetTemperature;
 
-        private static HomeWizardClient _homeWizardClient;
         private static ShadesService _somaShadesService;
 
         private static SimpleDI.IServiceProvider ServiceProvider;
@@ -34,7 +33,6 @@ namespace HomeAssistant.Hub
             Console.WriteLine(" Press [enter] to exit.");
             Startup();
 
-            _homeWizardClient = HomeWizardClient.Instance;
             _somaShadesService = ShadesService.Instance;
 
             InitializeTemperatureTimer();
@@ -51,23 +49,16 @@ namespace HomeAssistant.Hub
             Configuration = configBuilder.Build();
 
             IServiceCollection services = new ServiceCollection()
-                .AddSingleton<DsmrService>()
                 .AddSingleton<MqttService>()
                 .AddSingleton<MqttTopicResolveService>()
                 .AddSingleton<MqttMessageParseService>()
-                .Configure<DsmrConfig>(Configuration.GetSection<DsmrConfig>("Dsmr"))
-                .Configure<MqttClientConfig>(Configuration.GetSection<MqttClientConfig>("Mqtt:Client"))
-                .Configure<MqttTopicConfig>(Configuration.GetSection<MqttTopicConfig>("Mqtt:Topics"));
+                .AddSingleton<HomeWizardService>()
+                .AddSingleton<DsmrService>()
+                .Configure(Configuration.GetSection<MqttClientConfig>("Mqtt:Client"))
+                .Configure(Configuration.GetSection<MqttTopicConfig>("Mqtt:Topics"))
+                .Configure(Configuration.GetSection<HomeWizardConfig>("HomeWizard"))
+                .Configure(Configuration.GetSection<DsmrConfig>("Dsmr"));
             ServiceProvider = services.BuildServiceProvider();
-
-            //var services = new ServiceCollection()
-            //    .AddSingleton<TestSingleton>()
-            //    .AddTransient<TestTransient>();
-            //ServiceProvider = services.BuildServiceProvider();
-            //var builder = new ConfigurationBuilder()
-            //    .SetBasePath("json")
-            //    .AddJsonFile("config1.json", optional: true)
-            //    .Build();
         }
 
         private static void Startup()
@@ -125,14 +116,14 @@ namespace HomeAssistant.Hub
         private static async Task OnSwitchStateMessageReceived(SwitchStateMessage message)
         {
             logger.Info($"Received '{message.Data}' for switch {message.DeviceId}");
-            await _homeWizardClient.Update(message);
+            await ServiceProvider.GetService<HomeWizardService>().ToggleSwitch(message);
             ServiceProvider.GetService<MqttService>().PublishMessage(message);
         }
 
         private static async Task OnDimLevelMessageReceived(DimLevelMessage message)
         {
             logger.Info($"Received '{message.Data}' for switch {message.DeviceId}");
-            await _homeWizardClient.Update(message);
+            await ServiceProvider.GetService<HomeWizardService>().DimSwitch(message);
             ServiceProvider.GetService<MqttService>().PublishMessage(message);
         }
 
@@ -140,7 +131,7 @@ namespace HomeAssistant.Hub
         {
             logger.Info($"Received '{message.Data}' as temperature");
             _targetTemperature = message.Data;
-            await _homeWizardClient.Update(message);
+            await ServiceProvider.GetService<HomeWizardService>().AdjustTemperature(message);
             ServiceProvider.GetService<MqttService>().PublishMessage(message);
         }
 
@@ -220,13 +211,13 @@ namespace HomeAssistant.Hub
         private static void InitializeTemperatureTimer()
         {
             _temperatureTimer = SetupTimer(true, async (object target) => {
-                var roomTemperature = await _homeWizardClient.GetRoomTemperature();
+                var roomTemperature = await ServiceProvider.GetService<HomeWizardService>().GetRoomTemperature();
                 PublishTemperature(roomTemperature, TemperatureType.Room);
                 PublishTemperature(_targetTemperature, TemperatureType.Target);
             });
         }
 
-        private static void PublishTemperature(double? temperature, TemperatureType type)
+        private static void PublishTemperature(decimal? temperature, TemperatureType type)
         {
             if (!temperature.HasValue)
             {
