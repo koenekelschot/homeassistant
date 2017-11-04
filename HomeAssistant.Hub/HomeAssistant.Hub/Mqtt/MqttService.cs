@@ -1,33 +1,31 @@
-﻿using System.Configuration;
-using System.Text;
+﻿using System.Text;
 using HomeAssistant.Hub.Models;
 using uPLibrary.Networking.M2Mqtt;
 using uPLibrary.Networking.M2Mqtt.Messages;
 
 namespace HomeAssistant.Hub.Mqtt
 {
-    public sealed class MqttPubSubClient
+    public sealed class MqttService
     {
-        private static MqttPubSubClient _instance;
-        private MqttClient mqttClient;
+        private readonly MqttTopicResolveService _topicResolver;
+        private readonly MqttMessageParseService _messageParser;
+        private readonly MqttClient _mqttClient;
+        private readonly MqttClientConfig _settings;
 
         private static readonly Encoding MessageEncoding = Encoding.UTF8;
-
-        public static MqttPubSubClient Instance => _instance ?? (_instance = new MqttPubSubClient());
 
         public delegate void MessageReceivedEventHandler(object sender, Message message);
         public event MessageReceivedEventHandler MessageReceived;
 
-        private MqttPubSubClient()
+        public MqttService(MqttTopicResolveService topicResolver, MqttMessageParseService messageParser, MqttClientConfig settings)
         {
-            InitializeMqttClient();
-        }
+            _topicResolver = topicResolver;
+            _messageParser = messageParser;
+            _settings = settings;
 
-        private void InitializeMqttClient()
-        {
-            mqttClient = new MqttClient(
-                brokerHostName: ConfigurationManager.AppSettings["mqtt_hostname"],
-                brokerPort: int.Parse(ConfigurationManager.AppSettings["mqtt_port"]),
+            _mqttClient = new MqttClient(
+                brokerHostName: _settings.Hostname,
+                brokerPort: _settings.Port,
                 secure: false,
                 caCert: null,
                 clientCert: null,
@@ -36,12 +34,12 @@ namespace HomeAssistant.Hub.Mqtt
                 ProtocolVersion = MqttProtocolVersion.Version_3_1_1
             };
 
-            mqttClient.MqttMsgPublishReceived += OnMqttMsgPublishReceived;
+            _mqttClient.MqttMsgPublishReceived += OnMqttMsgPublishReceived;
 
-            mqttClient.Connect(
-                clientId: ConfigurationManager.AppSettings["mqtt_clientId"],
-                username: ConfigurationManager.AppSettings["mqtt_username"],
-                password: ConfigurationManager.AppSettings["mqtt_password"]);
+            _mqttClient.Connect(
+                clientId: _settings.ClientId,
+                username: _settings.Username,
+                password: _settings.Password);
         }
 
         public void Subscribe(string[] topicList)
@@ -52,25 +50,25 @@ namespace HomeAssistant.Hub.Mqtt
                 qosLevels[i] = MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE;
             }
 
-            mqttClient.Subscribe(topicList, qosLevels);
+            _mqttClient.Subscribe(topicList, qosLevels);
         }
 
         public void PublishMessage(Message message)
         {
-            string topic = MqttTopicResolver.ResolveTopicForMessage(message);
+            string topic = _topicResolver.ResolveTopicForMessage(message);
             if (string.IsNullOrWhiteSpace(topic))
             {
                 return;
             }
 
             byte[] payload = MessageEncoding.GetBytes(message.StringData);
-            mqttClient.Publish(topic, payload, MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE, true);
+            _mqttClient.Publish(topic, payload, MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE, true);
         }
 
         private void OnMqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs args)
         {
             string message = MessageEncoding.GetString(args.Message);
-            Message parsed = MqttMessageParser.ParseMessage(args.Topic, message);
+            Message parsed = _messageParser.ParseMessage(args.Topic, message);
 
             if (parsed != null)
             {

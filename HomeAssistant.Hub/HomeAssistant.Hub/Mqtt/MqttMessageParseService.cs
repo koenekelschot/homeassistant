@@ -4,42 +4,38 @@ using HomeAssistant.Hub.Models;
 
 namespace HomeAssistant.Hub.Mqtt
 {
-    public static class MqttMessageParser
+    public sealed class MqttMessageParseService
     {
-        private static string[] _topicNameParts;
-        private static string _payload;
-
-        public static Message ParseMessage(string topic, string payload)
+        public Message ParseMessage(string topic, string payload)
         {
-            _topicNameParts = topic.Split('/');
-            _payload = payload;
+            var topicNameParts = topic.Split('/');
 
-            if (_topicNameParts.Length <= 2 || string.IsNullOrWhiteSpace(_payload))
+            if (topicNameParts.Length <= 2 || string.IsNullOrWhiteSpace(payload))
             {
                 return null;
             }
 
-            switch (GetMessageType())
+            switch (GetMessageType(topicNameParts))
             {
                 case MessageType.SwitchState:
-                    return ParseSwitchStateMessage();
+                    return ParseSwitchStateMessage(topicNameParts, payload);
                 case MessageType.DimLevel:
-                    return ParseDimLevelMessage();
+                    return ParseDimLevelMessage(topicNameParts, payload);
                 case MessageType.Temperature:
-                    return ParseTemperatureMessage();
+                    return ParseTemperatureMessage(topicNameParts, payload);
                 case MessageType.Shade:
-                    return ParseShadeMessage();
+                    return ParseShadeMessage(topicNameParts, payload);
                 default:
                     return null;
             }
         }
 
-        private static MessageType GetMessageType()
+        private MessageType GetMessageType(string[] topicNameParts)
         {
-            switch (_topicNameParts[1])
+            switch (topicNameParts[1])
             {
                 case "sw":
-                    return GetSwitchMessageType();
+                    return GetSwitchMessageType(topicNameParts);
                 case "temp":
                     return MessageType.Temperature;
                 case "shade":
@@ -49,13 +45,13 @@ namespace HomeAssistant.Hub.Mqtt
             }
         }
 
-        private static MessageType GetSwitchMessageType()
+        private MessageType GetSwitchMessageType(string[] topicNameParts)
         {
-            if (_topicNameParts.Length < 4)
+            if (topicNameParts.Length < 4)
             {
                 return MessageType.Unknown;
             }
-            switch (_topicNameParts[3])
+            switch (topicNameParts[3])
             {
                 case "set":
                     return MessageType.SwitchState;
@@ -66,13 +62,13 @@ namespace HomeAssistant.Hub.Mqtt
             }
         }
 
-        private static SwitchStateMessage ParseSwitchStateMessage()
+        private SwitchStateMessage ParseSwitchStateMessage(string[] topicNameParts, string payload)
         {
             var states = new[] { "on", "off" };
-            string deviceId = GetSwitchId();
+            string deviceId = GetSwitchId(topicNameParts);
 
             if (string.IsNullOrWhiteSpace(deviceId) ||
-                !states.Any(state => state.Equals(_payload, StringComparison.InvariantCultureIgnoreCase)))
+                !states.Any(state => state.Equals(payload, StringComparison.InvariantCultureIgnoreCase)))
             {
                 return null;
             }
@@ -80,15 +76,15 @@ namespace HomeAssistant.Hub.Mqtt
             return new SwitchStateMessage
             {
                 DeviceId = deviceId,
-                Data = _payload
+                Data = payload
             };
         }
 
-        private static DimLevelMessage ParseDimLevelMessage()
+        private DimLevelMessage ParseDimLevelMessage(string[] topicNameParts, string payload)
         {
-            string deviceId = GetSwitchId();
+            string deviceId = GetSwitchId(topicNameParts);
 
-            if (string.IsNullOrWhiteSpace(deviceId) || !uint.TryParse(_payload, out uint dimLevel))
+            if (string.IsNullOrWhiteSpace(deviceId) || !uint.TryParse(payload, out uint dimLevel))
             {
                 return null;
             }
@@ -100,9 +96,9 @@ namespace HomeAssistant.Hub.Mqtt
             };
         }
 
-        private static TemperatureMessage ParseTemperatureMessage()
+        private TemperatureMessage ParseTemperatureMessage(string[] topicNameParts, string payload)
         {
-            if (_topicNameParts.Length < 3 || !double.TryParse(_payload, out double temperature))
+            if (topicNameParts.Length < 3 || !double.TryParse(payload, out double temperature))
             {
                 return null;
             }
@@ -114,9 +110,9 @@ namespace HomeAssistant.Hub.Mqtt
             };
         }
 
-        private static ShadeMessage ParseShadeMessage()
+        private ShadeMessage ParseShadeMessage(string[] topicNameParts, string payload)
         {
-			string deviceId = GetSwitchId();
+			string deviceId = GetSwitchId(topicNameParts);
 
             if (string.IsNullOrWhiteSpace(deviceId))
             {
@@ -126,17 +122,17 @@ namespace HomeAssistant.Hub.Mqtt
             return new ShadeMessage
             {
                 DeviceId = deviceId,
-                Data = _payload
+                Data = payload
             };
         }
 
-        private static string GetSwitchId()
+        private string GetSwitchId(string[] topicNameParts)
         {
-            if (_topicNameParts.Length < 3)
+            if (topicNameParts.Length < 3)
             {
                 return null;
             }
-            return _topicNameParts[2];
+            return topicNameParts[2];
         }
     }
 }

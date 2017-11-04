@@ -1,6 +1,5 @@
 ﻿using DsmrParser.Dsmr;
 using DsmrParser.Models;
-using HomeAssistant.Hub.Config;
 using NLog;
 using SimpleDI;
 using System;
@@ -12,9 +11,9 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HomeAssistant.Hub.Services
+namespace HomeAssistant.Hub.Dsmr
 {
-    public class DsmrService
+    public sealed class DsmrService
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 

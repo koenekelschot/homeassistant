@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace HomeAssistant.Hub.Config
+namespace HomeAssistant.Hub.Dsmr
 {
     public class DsmrConfig
     {
