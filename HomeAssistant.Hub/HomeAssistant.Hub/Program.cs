@@ -7,8 +7,6 @@ using NLog;
 using SimpleDI;
 using SimpleDI.Configuration;
 using System;
-using System.Collections.Specialized;
-using System.Configuration;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,26 +16,17 @@ namespace HomeAssistant.Hub
     static class Program
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        private static readonly NameValueCollection AppSettings = ConfigurationManager.AppSettings;
+
         private static Timer _temperatureTimer;
         private static decimal? _targetTemperature;
-
-        private static ShadesService _somaShadesService;
-
         private static SimpleDI.IServiceProvider ServiceProvider;
         private static IConfigurationRoot Configuration;
 
         static void Main(string[] args)
         {
             ConfigureEnv();
-            Console.WriteLine(" Press [enter] to exit.");
             Startup();
-
-            _somaShadesService = ShadesService.Instance;
-
-            InitializeTemperatureTimer();
-            InitializeShades();
-
+            Console.WriteLine(" Press [enter] to exit.");
             Console.ReadLine();
             Shutdown();
         }
@@ -54,10 +43,12 @@ namespace HomeAssistant.Hub
                 .AddSingleton<MqttMessageParseService>()
                 .AddSingleton<HomeWizardService>()
                 .AddSingleton<DsmrService>()
+                .AddSingleton<ShadesService>()
                 .Configure(Configuration.GetSection<MqttClientConfig>("Mqtt:Client"))
                 .Configure(Configuration.GetSection<MqttTopicConfig>("Mqtt:Topics"))
                 .Configure(Configuration.GetSection<HomeWizardConfig>("HomeWizard"))
-                .Configure(Configuration.GetSection<DsmrConfig>("Dsmr"));
+                .Configure(Configuration.GetSection<DsmrConfig>("Dsmr"))
+                .Configure(Configuration.GetSection<ShadesConfig>("Soma"));
             ServiceProvider = services.BuildServiceProvider();
         }
 
@@ -70,6 +61,9 @@ namespace HomeAssistant.Hub
                 await OnMqttMessageReceived(message);
             };
             ServiceProvider.GetService<MqttService>().Subscribe(GetMqttSubscriptionTopics());
+
+            InitializeTemperatureTimer();
+            InitializeShades();
         }
 
         private static void Shutdown()
@@ -164,7 +158,7 @@ namespace HomeAssistant.Hub
         {
             if (uint.TryParse(positionString, out uint position))
             {
-                bool result = await _somaShadesService.SetPosition(shadeName, position);
+                bool result = await ServiceProvider.GetService<ShadesService>().SetPosition(shadeName, position);
                 logger.Debug($"Setting position successfully? {result}");
                 if (!result && ++retryNumber <= 5)
                 {
@@ -179,23 +173,23 @@ namespace HomeAssistant.Hub
 
         private static async Task StopShade(string shadeName)
         {
-            await _somaShadesService.Stop(shadeName);
+            await ServiceProvider.GetService<ShadesService>().Stop(shadeName);
             await CheckShadePosition(shadeName);
         }
 
-        private static async Task CheckShadePosition(string shade)
+        private static async Task CheckShadePosition(string shadeName)
         {
-            var position = await _somaShadesService.GetPosition(shade);
+            var position = await ServiceProvider.GetService<ShadesService>().GetPosition(shadeName);
             if (position.HasValue)
             {
-                PublishShadePosition(shade, position.Value);
+                PublishShadePosition(shadeName, position.Value);
             }
         }
 
         private static void InitializeShades()
         {
-            var shades = AppSettings["soma_shades"].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Distinct();
-            var tasks = shades.Select(shade => CheckShadePosition(shade));
+            var shades = ServiceProvider.GetService<ShadesService>().GetConfiguredShades();
+            var tasks = shades.Select(shade => CheckShadePosition(shade.Name));
             Task.Run(async () =>
             {
                 await Task.WhenAll(tasks);
@@ -243,7 +237,7 @@ namespace HomeAssistant.Hub
 
         private static TimeSpan GetTimerInterval()
         {
-            double timerInterval = double.Parse(AppSettings["timer_interval"]);
+            double timerInterval = double.Parse(Configuration.Get<string>("TimerInterval"));
             return TimeSpan.FromMinutes(timerInterval);
         }
     }

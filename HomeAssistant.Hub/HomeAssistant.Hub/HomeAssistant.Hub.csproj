@@ -82,13 +82,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Dsmr\DsmrConfig.cs" />
-    <Compile Include="HomeWizard\HomeWizardClient.cs" />
+    <Compile Include="HomeWizard\HomeWizardConfig.cs" />
     <Compile Include="HomeWizard\HomeWizardService.cs" />
-    <Compile Include="HomeWizard\Models\HeatLink.cs" />
-    <Compile Include="HomeWizard\Models\Device.cs" />
-    <Compile Include="HomeWizard\Models\ApiResponse.cs" />
-    <Compile Include="HomeWizard\Models\Sensors.cs" />
-    <Compile Include="HomeWizard\HomeWizardResourceResolver.cs" />
     <Compile Include="Models\TemperatureType.cs" />
     <Compile Include="Models\MessageType.cs" />
     <Compile Include="Models\Message.cs" />
@@ -104,12 +99,8 @@
     <Compile Include="Soma\Constants.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Appsettings.template.json">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Appsettings.json">
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="Appsettings.template.json" />
+    <None Include="Appsettings.json" />
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
