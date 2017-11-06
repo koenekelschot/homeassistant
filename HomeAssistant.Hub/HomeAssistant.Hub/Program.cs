@@ -21,14 +21,24 @@ namespace HomeAssistant.Hub
         private static decimal? _targetTemperature;
         private static SimpleDI.IServiceProvider ServiceProvider;
         private static IConfigurationRoot Configuration;
+        private static MqttService _mqttService;
 
         static void Main(string[] args)
         {
-            ConfigureEnv();
-            Startup();
-            Console.WriteLine(" Press [enter] to exit.");
-            Console.ReadLine();
-            Shutdown();
+            try
+            {
+                ConfigureEnv();
+                Startup();
+                Console.WriteLine("Press [enter] to exit.");
+                Console.ReadLine();
+                Shutdown();
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+                logger.Error(e);
+            }
+            return;
         }
 
         private static void ConfigureEnv()
@@ -49,26 +59,37 @@ namespace HomeAssistant.Hub
                 .Configure(Configuration.GetSection<HomeWizardConfig>("HomeWizard"))
                 .Configure(Configuration.GetSection<DsmrConfig>("Dsmr"))
                 .Configure(Configuration.GetSection<ShadesConfig>("Soma"));
+
             ServiceProvider = services.BuildServiceProvider();
         }
 
         private static void Startup()
         {
-            ServiceProvider.GetService<DsmrService>().Start();
+            try
+            {
+                ServiceProvider.GetService<DsmrService>().Start();
 
-            //todo: GC???
-            ServiceProvider.GetService<MqttService>().MessageReceived += async (object sender, Message message) => {
-                await OnMqttMessageReceived(message);
-            };
-            ServiceProvider.GetService<MqttService>().Subscribe(GetMqttSubscriptionTopics());
+                _mqttService = ServiceProvider.GetService<MqttService>();
+                _mqttService.MessageReceived += async (object sender, Message message) =>
+                {
+                    await OnMqttMessageReceived(message);
+                };
+                _mqttService.Start(GetMqttSubscriptionTopics());
 
-            InitializeTemperatureTimer();
-            InitializeShades();
+                InitializeTemperatureTimer();
+                InitializeShades();
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Exception while starting application");
+                Console.WriteLine(e);
+            }
         }
 
         private static void Shutdown()
         {
             ServiceProvider.GetService<DsmrService>().Stop();
+            _mqttService?.Stop();
         }
 
         private static string[] GetMqttSubscriptionTopics()
@@ -111,14 +132,14 @@ namespace HomeAssistant.Hub
         {
             logger.Info($"Received '{message.Data}' for switch {message.DeviceId}");
             await ServiceProvider.GetService<HomeWizardService>().ToggleSwitch(message);
-            ServiceProvider.GetService<MqttService>().PublishMessage(message);
+            _mqttService.PublishMessage(message);
         }
 
         private static async Task OnDimLevelMessageReceived(DimLevelMessage message)
         {
             logger.Info($"Received '{message.Data}' for switch {message.DeviceId}");
             await ServiceProvider.GetService<HomeWizardService>().DimSwitch(message);
-            ServiceProvider.GetService<MqttService>().PublishMessage(message);
+            _mqttService.PublishMessage(message);
         }
 
         private static async Task OnTemperatureMessageReceived(TemperatureMessage message)
@@ -126,7 +147,7 @@ namespace HomeAssistant.Hub
             logger.Info($"Received '{message.Data}' as temperature");
             _targetTemperature = message.Data;
             await ServiceProvider.GetService<HomeWizardService>().AdjustTemperature(message);
-            ServiceProvider.GetService<MqttService>().PublishMessage(message);
+            _mqttService.PublishMessage(message);
         }
 
         private static async Task OnShadeMessageReceived(ShadeMessage message)
@@ -198,7 +219,7 @@ namespace HomeAssistant.Hub
 
         private static void PublishShadePosition(string shadeName, uint position)
         {
-            ServiceProvider.GetService<MqttService>().PublishMessage(new ShadeMessage() { DeviceId = shadeName, Data = position.ToString() });
+            _mqttService.PublishMessage(new ShadeMessage() { DeviceId = shadeName, Data = position.ToString() });
             logger.Info($"Sent '{position.ToString()}' for {shadeName}");
         }
 
@@ -224,7 +245,7 @@ namespace HomeAssistant.Hub
                 Data = temperature.Value
             };
 
-            ServiceProvider.GetService<MqttService>().PublishMessage(message);
+            _mqttService.PublishMessage(message);
             logger.Info($"Sent '{message.Data}' as {message.TemperatureType} temperature");
         }
 
@@ -237,7 +258,7 @@ namespace HomeAssistant.Hub
 
         private static TimeSpan GetTimerInterval()
         {
-            double timerInterval = double.Parse(Configuration.Get<string>("TimerInterval"));
+            double timerInterval = Configuration.Get<double>("TimerInterval");
             return TimeSpan.FromMinutes(timerInterval);
         }
     }

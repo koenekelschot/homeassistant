@@ -54,11 +54,11 @@
       <HintPath>..\packages\RestSharp.105.2.3\lib\net46\RestSharp.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="SimpleDI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SimpleDI.1.0.0\lib\net46\SimpleDI.dll</HintPath>
+    <Reference Include="SimpleDI, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SimpleDI.1.0.3\lib\net46\SimpleDI.dll</HintPath>
     </Reference>
-    <Reference Include="SimpleDI.Configuration, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SimpleDI.Configuration.1.0.1\lib\net46\SimpleDI.Configuration.dll</HintPath>
+    <Reference Include="SimpleDI.Configuration, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SimpleDI.Configuration.1.0.3\lib\net46\SimpleDI.Configuration.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />

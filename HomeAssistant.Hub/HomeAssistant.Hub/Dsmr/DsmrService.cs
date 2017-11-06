@@ -21,11 +21,6 @@ namespace HomeAssistant.Hub.Dsmr
         private static readonly Object _telegramLock = new Object();
         private static readonly Object _clientsLock = new Object();
 
-        //private IPAddress remoteHost;
-        //private int remotePort;
-        //private int localPort;
-        //private double intervalMinutes;
-        //private Parser parser;
         private Telegram lastReceivedTelegram;
         private Thread readerThread;
         private TcpClient readerClient;
@@ -37,10 +32,6 @@ namespace HomeAssistant.Hub.Dsmr
 
         public DsmrService(IOptions<DsmrConfig> settings)
         {
-            //remoteHost = IPAddress.Parse(ConfigurationManager.AppSettings["dsmr_remote_ip"]);
-            //remotePort = int.Parse(ConfigurationManager.AppSettings["dsmr_remote_port"]);
-            //localPort = int.Parse(ConfigurationManager.AppSettings["dsmr_local_port"]);
-            //intervalMinutes = double.Parse(ConfigurationManager.AppSettings["dsmr_interval"]);
             _parser = new Parser();
             _settings = settings.Value;
             
