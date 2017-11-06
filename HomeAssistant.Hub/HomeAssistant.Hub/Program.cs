@@ -27,11 +27,17 @@ namespace HomeAssistant.Hub
         {
             try
             {
+                logger.Info("Starting HomeAssistant.Hub");
                 ConfigureEnv();
                 Startup();
+                logger.Info("HomeAssistant.Hub started");
+
                 Console.WriteLine("Press [enter] to exit.");
                 Console.ReadLine();
+
+                logger.Info("Shutting down HomeAssistant.Hub");
                 Shutdown();
+                logger.Info("HomeAssistant.Hub shutdown");
             }
             catch(Exception e)
             {

@@ -18,7 +18,8 @@ namespace HomeAssistant.Hub.HomeWizard
         public HomeWizardService(IOptions<HomeWizardConfig> config)
         {
             var settings = config.Value;
-            _client = new HomeWizardClient(settings.IpAddress, settings.Password);
+            _client = new HomeWizardClient();
+            _client.Connect(settings.IpAddress, settings.Password);
         }
 
         public async Task ToggleSwitch(SwitchStateMessage message)
