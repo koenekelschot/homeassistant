@@ -1,53 +1,43 @@
-﻿using HomeAssistant.Hub.Dsmr.Models;
+﻿using DsmrParser.Dsmr;
+using DsmrParser.Models;
+using NLog;
+using SimpleDI;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using NLog;
 
 namespace HomeAssistant.Hub.Dsmr
 {
-    public class DsmrClient
+    public sealed class DsmrService
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        private static DsmrClient _instance;
+
         private volatile bool isRunning;
         private static readonly Object _telegramLock = new Object();
         private static readonly Object _clientsLock = new Object();
 
-        private IPAddress remoteHost;
-        private int remotePort;
-        private int localPort;
-        private double intervalMinutes;
-        private ObisParser parser;
         private Telegram lastReceivedTelegram;
         private Thread readerThread;
         private TcpClient readerClient;
         private TcpListener listener;
-        private readonly IList<TcpClientHandle> clients = new List<TcpClientHandle>();
 
-        public static DsmrClient Instance => _instance ?? (_instance = new DsmrClient());
+        private readonly Parser _parser;
+        private readonly DsmrConfig _settings;
+        private readonly IList<TcpClientHandle> _clients = new List<TcpClientHandle>();
 
-        private DsmrClient()
+        public DsmrService(IOptions<DsmrConfig> settings)
         {
-            InitializeDsmrClient();
-        }
-
-        private void InitializeDsmrClient()
-        {
-            remoteHost = IPAddress.Parse(ConfigurationManager.AppSettings["dsmr_remote_ip"]);
-            remotePort = int.Parse(ConfigurationManager.AppSettings["dsmr_remote_port"]);
-            localPort = int.Parse(ConfigurationManager.AppSettings["dsmr_local_port"]);
-            intervalMinutes = double.Parse(ConfigurationManager.AppSettings["dsmr_interval"]);
+            _parser = new Parser();
+            _settings = settings.Value;
+            
             isRunning = false;
-            parser = new ObisParser();
         }
-        
+
         public void Start()
         {
             if (isRunning)
@@ -86,7 +76,7 @@ namespace HomeAssistant.Hub.Dsmr
 
         private async Task ListenToConnections()
         {
-            listener = new TcpListener(IPAddress.Parse("127.0.0.1"), localPort);
+            listener = new TcpListener(IPAddress.Parse("127.0.0.1"), _settings.LocalPort);
             listener.Start();
 
             while (isRunning)
@@ -94,18 +84,18 @@ namespace HomeAssistant.Hub.Dsmr
                 TcpClient newClient = await listener.AcceptTcpClientAsync();
                 lock (_clientsLock)
                 {
-                    clients.Add(new TcpClientHandle(newClient));
+                    _clients.Add(new TcpClientHandle(newClient));
                     logger.Info("Client connected to DSMR");
                 }
             }
 
             lock (_clientsLock)
             {
-                foreach (var client in clients)
+                foreach (var client in _clients)
                 {
                     DisconnectClient(client);
                 }
-                clients.Clear();
+                _clients.Clear();
             }
         }
 
@@ -115,14 +105,14 @@ namespace HomeAssistant.Hub.Dsmr
             {
                 lock (_clientsLock)
                 {
-                    var disconnectClients = clients.Where(c => c.ShouldDisconnect).ToArray();
+                    var disconnectClients = _clients.Where(c => c.ShouldDisconnect).ToArray();
                     for (var i = disconnectClients.Length - 1; i >= 0; i--)
                     {
                         DisconnectClient(disconnectClients[i]);
-                        clients.Remove(disconnectClients[i]);
+                        _clients.Remove(disconnectClients[i]);
                     }
 
-                    var availableClients = clients.Where(c => !c.ShouldDisconnect);
+                    var availableClients = _clients.Where(c => !c.ShouldDisconnect);
                     foreach (var client in availableClients)
                     {
                         WriteDataToClient(client);
@@ -137,8 +127,8 @@ namespace HomeAssistant.Hub.Dsmr
         {
             try
             {
-                readerClient.Connect(remoteHost, remotePort);
-                await parser.ParseFromStream(readerClient.GetStream(), (object sender, Telegram telegram) =>
+                readerClient.Connect(_settings.RemoteHost, _settings.RemotePort);
+                await _parser.ParseFromStream(readerClient.GetStream(), (object sender, Telegram telegram) =>
                 {
                     lock (_telegramLock)
                     {
@@ -170,11 +160,11 @@ namespace HomeAssistant.Hub.Dsmr
                     return;
                 }
 
-                if (lastReceivedTelegram.Timestamp > client.LastSent.AddMinutes(intervalMinutes))
+                if (lastReceivedTelegram.Timestamp > client.LastSent.AddMinutes(_settings.IntervalMinutes))
                 {
                     try
                     {
-                        var message = ObisParser.TelegramEncoding.GetBytes(lastReceivedTelegram.ToString());
+                        var message = Parser.TelegramEncoding.GetBytes(lastReceivedTelegram.ToString());
                         client.Connection.GetStream().Write(message, 0, message.Length);
                         client.LastSent = DateTime.Now;
                         logger.Info("Sent DSMR telegram to client");

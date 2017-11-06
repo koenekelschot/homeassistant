@@ -28,7 +28,7 @@ namespace HomeAssistant.Hub.Models
     {
         public override MessageType Type => MessageType.Temperature;
         public TemperatureType TemperatureType { get; set; }
-        public double Data { get; set; }
+        public decimal Data { get; set; }
         public override string StringData => Convert.ToString(Data, CultureInfo.InvariantCulture);
     }
 

@@ -1,54 +1,53 @@
-﻿using System;
+﻿using HomeAssistant.Hub.Models;
+using HomeWizard.Net;
+using SimpleDI;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
-using HomeAssistant.Hub.HomeWizard.Models;
-using HomeAssistant.Hub.Models;
-using RestSharp;
 using System.Threading.Tasks;
 
 namespace HomeAssistant.Hub.HomeWizard
 {
-    public sealed class HomeWizardClient
+    public sealed class HomeWizardService
     {
-        private static HomeWizardClient _instance;
-        private static RestClient _restClient;
-
         private static readonly IDictionary SwitchStateCache = new Dictionary<string, string>();
 
-        public static HomeWizardClient Instance => _instance ?? (_instance = new HomeWizardClient());
+        private readonly HomeWizardClient _client;
 
-        private HomeWizardClient()
+        public HomeWizardService(IOptions<HomeWizardConfig> config)
         {
-            InitializeRestClient();
-        }
-        
-        private static void InitializeRestClient()
-        {
-            var baseUrl =
-                $"{ConfigurationManager.AppSettings["hw_hostname"]}/{ConfigurationManager.AppSettings["hw_password"]}";
-            _restClient = new RestClient(baseUrl);
+            var settings = config.Value;
+            _client = new HomeWizardClient();
+            _client.Connect(settings.IpAddress, settings.Password);
         }
 
-        public async Task Update(Message message)
+        public async Task ToggleSwitch(SwitchStateMessage message)
         {
-            string resource = HomeWizardResourceResolver.ResolveResourceForMessage(message);
-            if (resource == null || !ShouldUpdate(message))
+            if (!ShouldUpdate(message))
             {
                 return;
             }
 
-            UpdateSwitchState(message);
-            await _restClient.ExecuteTaskAsync(new RestRequest(resource));
+            await UpdateSwitchState(message);
         }
 
-        public async Task<double?> GetRoomTemperature()
+        public async Task DimSwitch(DimLevelMessage message)
         {
-            var response = await _restClient.ExecuteTaskAsync<ApiResponse<Sensors>>(new RestRequest("get-sensors"));
+            throw new NotImplementedException("Dimming currently not supported");
+        }
+
+        public async Task AdjustTemperature(TemperatureMessage message)
+        {
+            await _client.SetTargetTemperature(0, message.Data);
+        }
+
+        public async Task<decimal?> GetRoomTemperature()
+        {
+            var response = await _client.GetSensors();
             try
             {
-                var heatlink = response.Data.Response.HeatLinks.FirstOrDefault();
+                var heatlink = response.HeatLinks.FirstOrDefault();
                 return heatlink?.Rte;
             }
             catch (Exception)
@@ -69,7 +68,7 @@ namespace HomeAssistant.Hub.HomeWizard
                        StringComparison.InvariantCultureIgnoreCase);
         }
 
-        private static void UpdateSwitchState(Message message)
+        private async Task UpdateSwitchState(Message message)
         {
             if (message.Type != MessageType.SwitchState || string.IsNullOrWhiteSpace(message.DeviceId))
             {
@@ -77,6 +76,16 @@ namespace HomeAssistant.Hub.HomeWizard
             }
 
             StoreSwitchStateInCache(message.DeviceId, message.StringData);
+
+            long switchId = long.Parse(message.DeviceId);
+            if (message.StringData.Equals("on", StringComparison.InvariantCultureIgnoreCase))
+            {
+                await _client.SwitchOn(switchId);
+            }
+            else
+            {
+                await _client.SwitchOff(switchId);
+            }
         }
 
         private static void StoreSwitchStateInCache(string switchId, string state)

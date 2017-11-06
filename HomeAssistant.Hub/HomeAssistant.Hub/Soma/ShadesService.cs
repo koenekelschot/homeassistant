@@ -1,10 +1,10 @@
 ﻿using NLog;
+using SimpleDI;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
@@ -15,23 +15,24 @@ using Windows.Storage.Streams;
 //IBluetoothLEDevice and IGattCharacteristic are internal, so disable warning
 namespace HomeAssistant.Hub.Soma
 {
-    public class ShadesService
+    public sealed class ShadesService
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
+        private readonly ShadesConfig _settings;
         private readonly List<DeviceHandle> _deviceList;
         private static readonly Object _deviceListLock = new Object();
-        //private Timer _deviceReconnectTimer;
-        //private readonly TimeSpan _deviceReconnectInterval = TimeSpan.FromHours(4);
 
-        private static ShadesService _instance;
-        public static ShadesService Instance => _instance ?? (_instance = new ShadesService());
-        
-        private ShadesService() {
+        public ShadesService(IOptions<ShadesConfig> settings) {
+            _settings = settings.Value;
             lock (_deviceListLock)
             {
                 _deviceList = new List<DeviceHandle>();
             }
-            //SetupReconnectTimer();
+        }
+
+        public IEnumerable<Shade> GetConfiguredShades()
+        {
+            return _settings.Shades;
         }
 
         public async Task<uint?> GetBatteryLevel(string shadeName)
@@ -117,7 +118,6 @@ namespace HomeAssistant.Hub.Soma
         private async Task<bool> ExecuteAction(string name, Guid characteristicId, byte[] actionValues)
         {
             DeviceHandle handle = await FindDeviceHandleWithName(name);
-            logger.Debug($"Handle: {handle?.Name ?? "null"}");
             if (handle == null)
             {
                 return false;
@@ -125,34 +125,14 @@ namespace HomeAssistant.Hub.Soma
             return await handle.SetCharacteristicValue(characteristicId, actionValues);
         }
 
-        /*
-        private void SetupReconnectTimer()
-        {
-            _deviceReconnectTimer = new Timer(async (object target) =>
-            {
-                await ReconnectDeviceHandles();
-            }, null, _deviceReconnectInterval, _deviceReconnectInterval);
-        }
-
-        private async Task ReconnectDeviceHandles()
-        {
-			logger.Info("Reconnecting all devices.");
-			string[] names;
-            lock (_deviceListLock)
-            {
-                names = _deviceList.Select(dh => dh.Name).ToArray();
-                _deviceList.Clear();
-            }
-
-            foreach(string name in names)
-            {
-                await FindDeviceHandleWithName(name);
-            }
-        }
-        */
-
         private async Task<DeviceHandle> FindDeviceHandleWithName(string name)
         {
+            if (!_settings.Shades.Any(shade => shade.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                logger.Error($"Device with name {name} hass not been configured.");
+                return null;
+            }
+
             DeviceHandle handle;
             lock (_deviceListLock)
             {
