@@ -98,14 +98,14 @@ namespace HomeAssistant.Hub.Mqtt
 
         private TemperatureMessage ParseTemperatureMessage(string[] topicNameParts, string payload)
         {
-            if (topicNameParts.Length < 3 || !double.TryParse(payload, out double temperature))
+            if (topicNameParts.Length < 3 || !decimal.TryParse(payload, out decimal temperature))
             {
                 return null;
             }
 
             return new TemperatureMessage
             {
-                Data = temperature < 5.0d ? 5.0d : temperature > 35.0d ? 35.0d : temperature,
+                Data = temperature < 5.0m ? 5.0m : temperature > 35.0m ? 35.0m : temperature,
                 TemperatureType = TemperatureType.Target
             };
         }
