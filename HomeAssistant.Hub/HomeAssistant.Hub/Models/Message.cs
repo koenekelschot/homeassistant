@@ -38,4 +38,13 @@ namespace HomeAssistant.Hub.Models
         public string Data { get; set; }
         public override string StringData => Data;
     }
+
+    public class WebhookMessage : Message
+    {
+        public override MessageType Type => MessageType.Webhook;
+        public string[] UrlSegments { get; set; }
+        public string Method { get; set; }
+        public string Data { get; set; }
+        public override string StringData => Data;
+    }
 }

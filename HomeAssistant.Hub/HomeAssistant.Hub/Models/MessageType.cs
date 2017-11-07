@@ -6,6 +6,7 @@
         SwitchState,
         DimLevel,
         Temperature,
-        Shade
+        Shade,
+        Webhook
     }
 }
