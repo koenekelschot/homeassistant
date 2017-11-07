@@ -24,6 +24,9 @@ namespace HomeAssistant.Hub.Soma
 
         public ShadesService(IOptions<ShadesConfig> settings) {
             _settings = settings.Value;
+
+            ConfigureShades();
+
             lock (_deviceListLock)
             {
                 _deviceList = new List<DeviceHandle>();
@@ -62,7 +65,8 @@ namespace HomeAssistant.Hub.Soma
             }
             try
             {
-                return await handle.GetCharacteristicValue<uint>(Constants.ShadeMotorStateCharacteristic);
+                var position = await handle.GetCharacteristicValue<uint>(Constants.ShadeMotorStateCharacteristic);
+                return DescalePosition(shadeName, position);
             }
             catch (Exception)
             {
@@ -80,11 +84,13 @@ namespace HomeAssistant.Hub.Soma
 
         public async Task<bool> SetPosition(string shadeName, uint position)
         {
+            logger.Debug($"Setting position for {shadeName} to {position}");
             if (position < 0 || position > 100)
             {
                 return false;
             }
 
+            position = ScalePosition(shadeName, position);
             return await ExecuteAction(shadeName, Constants.ShadeMotorTargetCharacteristic, new byte[1]
             {
                 Convert.ToByte(position.ToString("X"), 16)
@@ -125,9 +131,65 @@ namespace HomeAssistant.Hub.Soma
             return await handle.SetCharacteristicValue(characteristicId, actionValues);
         }
 
+        private void ConfigureShades()
+        {
+            for (var i = 0; i < _settings.Shades.Length; i++)
+            {
+                var limitUp = Math.Max(0, _settings.Shades[i].PositionUp);
+                var limitDown = Math.Min(100, _settings.Shades[i].PositionDown);
+                _settings.Shades[i].PositionUp = Math.Min(limitUp, limitDown);
+                _settings.Shades[i].PositionDown = Math.Max(limitUp, limitDown);
+                logger.Debug($"Configured {_settings.Shades[i].Name}: [{_settings.Shades[i].PositionUp}-{_settings.Shades[i].PositionDown}]");
+            }
+        }
+
+        //Convert position to take upper and lower limits into account
+        //Should be used internally
+        private uint ScalePosition(string shadeName, uint normalPosition)
+        {
+            logger.Debug($"External position {shadeName}: {normalPosition}");
+            Shade shade = GetShade(shadeName);
+            if (shade == null)
+            {
+                return normalPosition;
+            }
+
+            uint scaledPosition = (uint)((shade.Range / 100.0) * normalPosition);
+            scaledPosition += shade.PositionUp;
+            logger.Debug($"Internal position {shadeName}: {scaledPosition}");
+            return scaledPosition;
+        }
+
+        //Convert position to ignore upper and lower limits
+        //Should be used to communicate position to outside world
+        private uint DescalePosition(string shadeName, uint scaledPosition)
+        {
+            logger.Debug($"Internal position {shadeName}: {scaledPosition}");
+            Shade shade = GetShade(shadeName);
+            if (shade == null)
+            {
+                return scaledPosition;
+            }
+
+            if (shade.Range == 0)
+            {
+                return shade.PositionDown;
+            }
+
+            uint normalPosition = scaledPosition - shade.PositionUp;
+            normalPosition = (uint)(normalPosition * (100.0 / shade.Range));
+            logger.Debug($"External position {shadeName}: {normalPosition}");
+            return normalPosition;
+        }
+
+        private Shade GetShade(string shadeName)
+        {
+            return _settings.Shades.FirstOrDefault(shade => shade.Name.Equals(shadeName, StringComparison.InvariantCultureIgnoreCase));
+        }
+
         private async Task<DeviceHandle> FindDeviceHandleWithName(string name)
         {
-            if (!_settings.Shades.Any(shade => shade.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase)))
+            if (GetShade(name) == null)
             {
                 logger.Error($"Device with name {name} hass not been configured.");
                 return null;
@@ -220,7 +282,6 @@ namespace HomeAssistant.Hub.Soma
             public async Task<bool> SetCharacteristicValue(Guid characteristicId, byte[] value)
             {
                 var characteristic = Characteristics.FirstOrDefault(c => c.Uuid.Equals(characteristicId));
-                logger.Debug($"Characteristic: {characteristic?.Uuid.ToString() ?? "null"}");
                 if (characteristic != null)
                 {
                     GattCommunicationStatus result = await characteristic.WriteValueAsync(value.AsBuffer(), GattWriteOption.WriteWithResponse);
@@ -250,10 +311,8 @@ namespace HomeAssistant.Hub.Soma
                 {
                     return ReadValueFromBuffer<T>(readResult.Value);
                 }
-                else
-                {
-                    logger.Warn("Could not read characteristic value (unreachable)");
-                }
+
+                logger.Warn("Could not read characteristic value (unreachable)");
                 return default(T);
             }
         }

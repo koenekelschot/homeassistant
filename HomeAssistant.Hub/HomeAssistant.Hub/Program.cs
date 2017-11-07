@@ -183,10 +183,13 @@ namespace HomeAssistant.Hub
 
         private static async Task SetShadePosition(string shadeName, string positionString, int retryNumber)
         {
-            if (uint.TryParse(positionString, out uint position))
+            if (uint.TryParse(positionString, out uint newPosition))
             {
-                bool result = await ServiceProvider.GetService<ShadesService>().SetPosition(shadeName, position);
+                var shadesService = ServiceProvider.GetService<ShadesService>();
+                var oldPosition = await shadesService.GetPosition(shadeName);
+                bool result = await shadesService.SetPosition(shadeName, newPosition);
                 logger.Debug($"Setting position successfully? {result}");
+
                 if (!result && ++retryNumber <= 5)
                 {
                     int secondsDelay = (int)Math.Pow(2, retryNumber);
@@ -194,7 +197,8 @@ namespace HomeAssistant.Hub
                     await SetShadePosition(shadeName, positionString, retryNumber);
                     return;
                 }
-                await CheckShadePosition(shadeName);
+
+                PublishShadePosition(shadeName, result ? newPosition : oldPosition.Value);
             }
         }
 
@@ -220,7 +224,7 @@ namespace HomeAssistant.Hub
             Task.Run(async () =>
             {
                 await Task.WhenAll(tasks);
-            }).Wait();
+            });
         }
 
         private static void PublishShadePosition(string shadeName, uint position)
