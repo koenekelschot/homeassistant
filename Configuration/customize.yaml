@@ -37,3 +37,12 @@ switch.verwarming_comfort:
 binary_sensor.workday_sensor:
   hidden: true
   
+sensor.current_time:
+  hidden: true
+
+sensor.sonarr:
+  hidden: true
+  
+sensor.couchpotato:
+  hidden: true
+  

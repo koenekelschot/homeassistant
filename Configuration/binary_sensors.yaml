@@ -16,7 +16,7 @@
 #          false
 #        {% endif %}
       value_template: >
-        {% if (states.sun.sun.attributes.elevation | int < 5) %}
+        {% if (states.sun.sun.attributes.elevation | int < 7) %}
           true
         {% else %}
           false

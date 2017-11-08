@@ -195,4 +195,23 @@
 #    data:
 #      entity_id: cover.gordijn_voor
 #      position: 60
-     
+
+- alias: "Nieuwe download Sonarr"
+  trigger:
+    platform: state
+    entity_id: sensor.sonarr
+  action:
+    service: notify.telegram
+    data_template:
+      title: "Sonarr"
+      message: "{{ states('sensor.sonarr') }}"
+      
+- alias: "Nieuwe download CouchPotato"
+  trigger:
+    platform: state
+    entity_id: sensor.couchpotato
+  action:
+    service: notify.telegram
+    data_template:
+      title: "CouchPotato"
+      message: "{{ states('sensor.couchpotato') }}"

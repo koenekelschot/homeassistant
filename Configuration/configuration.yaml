@@ -98,4 +98,14 @@ group: !include groups.yaml
 binary_sensor: !include binary_sensors.yaml
 scene: !include scenes.yaml
 automation: !include automations.yaml
-  
+
+telegram_bot:
+  - platform: polling
+    api_key: !secret telegram_api
+    allowed_chat_ids:
+      - !secret telegram_chatid
+
+notify:
+  - name: telegram
+    platform: telegram
+    chat_id: !secret telegram_chatid

@@ -13,16 +13,6 @@
   api_key: !secret darksky_api
   monitored_conditions:
     - cloud_cover
-    
-- platform: sonarr
-  api_key: !secret sonarr_api
-  monitored_conditions:
-    - upcoming
-    - wanted
-    - queue
-    - diskspace
-  days: 28
-  unit: TB
   
 - platform: mqtt
   name: "Verwarming"
@@ -34,12 +24,24 @@
   name: "Temperatuur"
   state_topic: "HW/temp/room"
   unit_of_measurement: "°C"
-#  force_update: true
+
+- platform: mqtt
+  name: "Sonarr"
+  state_topic: "downloads/sonarr"
+
+- platform: mqtt
+  name: "CouchPotato"
+  state_topic: "downloads/couchpotato"
   
 - platform: dsmr
   host: 127.0.0.1
   port: 8124
   dsmr_version: 4
+
+- platform: template
+  sensors:
+    current_time:
+      value_template: '{{ now().strftime("%H%M") }}'
 
 - platform: template
   sensors:
@@ -49,9 +51,12 @@
         {% if (is_state("input_boolean.slapen", "on")) %}
           90
         {% else %}
-          {% if (now().strftime('%H') | int >= 20) %}
+          {% if (
+            states.sensor.current_time.state | int >= 2000 or 
+            states.sensor.current_time.state | int < 700) 
+          %}
             70
-          {% elif (now().strftime('%H') | int >= 18) %}
+          {% elif (states.sensor.current_time.state | int >= 1800) %}
             60
           {% else %}
             {% if (
@@ -64,4 +69,9 @@
             {% endif %}
           {% endif %}
         {% endif %}
-        
+
+- platform: template
+  sensors:
+    verschil_positie_gordijn:
+      friendly_name: "Verschil positie gordijn"
+      value_template: '{{ (states.sensor.positie_gordijn.state | int - states.cover.gordijn_voor.attributes.current_position | int) | abs }}'
