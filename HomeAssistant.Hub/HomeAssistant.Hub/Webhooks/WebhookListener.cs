@@ -5,7 +5,7 @@ namespace HomeAssistant.Hub.Webhooks
 {
     public abstract class WebhookListener
     {
-        public delegate void MessageReceivedEventHandler(object sender, string message);
+        public delegate void MessageReceivedEventHandler(object sender, Message message);
         public abstract event MessageReceivedEventHandler MessageReceived;
 
         public abstract Task ProcessMessage(WebhookMessage message);

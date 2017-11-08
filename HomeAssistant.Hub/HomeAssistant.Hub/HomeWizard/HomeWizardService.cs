@@ -44,9 +44,9 @@ namespace HomeAssistant.Hub.HomeWizard
 
         public async Task<decimal?> GetRoomTemperature()
         {
-            var response = await _client.GetSensors();
             try
             {
+                var response = await _client.GetSensors();
                 var heatlink = response.HeatLinks.FirstOrDefault();
                 return heatlink?.Rte;
             }

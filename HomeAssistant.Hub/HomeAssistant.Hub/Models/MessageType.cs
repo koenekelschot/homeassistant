@@ -7,6 +7,7 @@
         DimLevel,
         Temperature,
         Shade,
-        Webhook
+        Webhook,
+        Download
     }
 }

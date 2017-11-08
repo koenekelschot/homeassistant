@@ -47,4 +47,11 @@ namespace HomeAssistant.Hub.Models
         public string Data { get; set; }
         public override string StringData => Data;
     }
+
+    public class DownloadMessage : Message
+    {
+        public override MessageType Type => MessageType.Download;
+        public string Data { get; set; }
+        public override string StringData => Data;
+    }
 }

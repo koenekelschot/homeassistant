@@ -12,5 +12,6 @@
         public string SubscribeShade { get; set; }  
         public string PublishShade { get; set; }
         public string ShadeBattery { get; set; }  
+        public string PublishDownload { get; set; }
     }
 }

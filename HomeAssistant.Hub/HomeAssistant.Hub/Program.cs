@@ -108,7 +108,7 @@ namespace HomeAssistant.Hub
             _mqttService = ServiceProvider.GetService<MqttService>();
             _mqttService.MessageReceived += async (object sender, Message message) =>
             {
-                await OnMqttMessageReceived(message);
+                await OnMessageReceived(message);
             };
             _mqttService.Start(new string[] {
                 Configuration.Get<string>("Mqtt:Topics:SubscribeSet"),
@@ -121,21 +121,21 @@ namespace HomeAssistant.Hub
         private static void InitializeWebhooks()
         {
             _sonarrWebhookService = ServiceProvider.GetService<SonarrWebhookService>();
-            _sonarrWebhookService.MessageReceived += async (object sender, string message) =>
+            _sonarrWebhookService.MessageReceived += async (object sender, Message message) =>
             {
-                await OnWebhookMessageReceived(message);
+                await OnMessageReceived(message);
             };
 
             _couchPotatoWebhookService = ServiceProvider.GetService<CouchPotatoWebhookService>();
-            _couchPotatoWebhookService.MessageReceived += async (object sender, string message) =>
+            _couchPotatoWebhookService.MessageReceived += async (object sender, Message message) =>
             {
-                await OnWebhookMessageReceived(message);
+                await OnMessageReceived(message);
             };
 
             ServiceProvider.GetService<WebhookService>().Start();
         }
 
-        private async static Task OnMqttMessageReceived(Message message)
+        private async static Task OnMessageReceived(Message message)
         {
             if (message == null)
             {
@@ -156,14 +156,12 @@ namespace HomeAssistant.Hub
                 case MessageType.Shade:
                     await OnShadeMessageReceived(message as ShadeMessage);
                     break;
+                case MessageType.Download:
+                    await OnDownloadMessageReceived(message as DownloadMessage);
+                    break;
                 default:
                     return;
             }
-        }
-
-        private async static Task OnWebhookMessageReceived(string message)
-        {
-            logger.Debug(message);
         }
 
         private static async Task OnSwitchStateMessageReceived(SwitchStateMessage message)
@@ -185,6 +183,12 @@ namespace HomeAssistant.Hub
             logger.Info($"Received '{message.Data}' as temperature");
             _targetTemperature = message.Data;
             await ServiceProvider.GetService<HomeWizardService>().AdjustTemperature(message);
+            _mqttService.PublishMessage(message);
+        }
+
+        private static async Task OnDownloadMessageReceived(DownloadMessage message)
+        {
+            logger.Info($"Received message from {message.DeviceId}");
             _mqttService.PublishMessage(message);
         }
 

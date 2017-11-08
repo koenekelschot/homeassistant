@@ -24,6 +24,8 @@ namespace HomeAssistant.Hub.Mqtt
                     return GetTemperatureTopic(message);
                 case MessageType.Shade:
                     return GetSwitchTopic(_settings.PublishShade, message);
+                case MessageType.Download:
+                    return GetSwitchTopic(_settings.PublishDownload, message);
                 default:
                     return null;
             }
@@ -31,7 +33,7 @@ namespace HomeAssistant.Hub.Mqtt
 
         private string GetSwitchTopic(string mainTopic, Message message)
         {
-            return message.DeviceId == null ? null : mainTopic.Replace("+", message.DeviceId);
+            return message.DeviceId == null ? null : mainTopic.Replace("+", message.DeviceId.ToLower());
         }
 
         private string GetTemperatureTopic(Message message)

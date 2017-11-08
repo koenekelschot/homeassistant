@@ -29,9 +29,38 @@ namespace HomeAssistant.Hub.Webhooks
             logger.Info("Got message for Sonarr");
 
             SonarrEvent parsedMessage = JsonConvert.DeserializeObject<SonarrEvent>(message.Data);
-            //logger.Info(parsedMessage.EventType);
+            if (parsedMessage == null)
+            {
+                logger.Warn("Failed to parse message from Sonarr");
+            }
 
-            MessageReceived?.Invoke(this, "Sonarr message goes here");
+            var eventType = parsedMessage.EventType.ToLower();
+            if (eventType.Equals("grab") || eventType.Equals("download"))
+            {
+                string action = eventType.Equals("download")
+                    ? parsedMessage.IsUpgrade ? "upgraded" : "downloaded"
+                    : "grabbed";
+
+                for (int i = 0; i < parsedMessage.Episodes.Length; i++)
+                {
+                    var episodeMessage = $"{action} {ProcessEpisode(parsedMessage, i)}".Trim();
+                    episodeMessage = Char.ToUpper(episodeMessage[0]) + episodeMessage.Substring(1);
+
+                    MessageReceived?.Invoke(this, new DownloadMessage { DeviceId = "Sonarr", Data = episodeMessage });
+                }
+            }
+        }
+
+        private string ProcessEpisode(SonarrEvent sonarrEvent, int episodeIndex)
+        {
+            string name = $"{sonarrEvent.Series.Title} {sonarrEvent.Episodes[episodeIndex].EpisodeString}";
+            string quality = !string.IsNullOrEmpty(sonarrEvent.Episodes[episodeIndex].Quality)
+                ? sonarrEvent.Episodes[episodeIndex].Quality
+                : sonarrEvent.Release?.Quality;
+
+            return string.IsNullOrEmpty(quality)
+                ? name
+                : $"{name} ({quality})";
         }
 
         private class SonarrEvent
@@ -40,7 +69,7 @@ namespace HomeAssistant.Hub.Webhooks
             public SonarrSeries Series { get; set; }
             public SonarrEpisode[] Episodes { get; set; }
             public SonarrRelease Release { get; set; }
-            public bool IsUpgrade { get; set; }
+            public bool IsUpgrade { get; set; } //Download only
         }
 
         private class SonarrSeries
@@ -59,6 +88,9 @@ namespace HomeAssistant.Hub.Webhooks
             public string Title { get; set; }
             public DateTime? AirDate { get; set; }
             public DateTime? AirDateUtc { get; set; }
+            public string Quality { get; set; }
+            public int QualityVersion { get; set; }
+            public string EpisodeString => $"S{SeasonNumber.ToString().PadLeft(2, '0')}E{EpisodeNumber.ToString().PadLeft(2, '0')}";
         }
 
         private class SonarrRelease

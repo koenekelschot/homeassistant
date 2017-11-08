@@ -9,4 +9,8 @@
     {
         public string Path { get; set; }
     }
+
+    public class SonarrWebhookConfig : WebhookListenerConfig { }
+
+    public class CouchPotatoWebhookConfig : WebhookListenerConfig { }
 }
