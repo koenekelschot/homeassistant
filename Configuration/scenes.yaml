@@ -10,13 +10,9 @@
     switch.ambilight: off
     switch.boiler_keuken: off
     switch.verwarming_kort_afwezig: on
-    #cover.gordijn_voor:
-    #  position: 90
     
 - name: "Opstaan"
   entities:
-    #cover.gordijn_voor:
-    #  position: 15
     input_boolean.slapen: off
     
 - name: "Verwarming (normaal)"
@@ -53,28 +49,57 @@
     
 - name: "Film actief"
   entities:
-    light.spots_keuken: off
-    light.lamp_tv: off
-    light.lamp_bank: off
-    light.lamp_dressoir: off
-    light.lamp_eettafel: off
+    light.spots_keuken:
+      state: off
+    light.lamp_tv:
+      state: on
+      brightness: 30
+    light.lamp_bank:
+      state: on
+      brightness: 30
+    light.lamp_dressoir:
+      state: on
+      brightness: 10
+    light.lamp_eettafel:
+      state: on
+      brightness: 110
     switch.ambilight: on
     
 - name: "Film gepauzeerd"
   entities:
-    light.spots_keuken: on
-    light.lamp_tv: on
-    light.lamp_bank: on
-    light.lamp_dressoir: on
-    light.lamp_eettafel: on
+    light.spots_keuken:
+      state: on
+      brightness: 240
+    light.lamp_tv:
+      state: on
+      brightness: 100
+    light.lamp_bank:
+      state: on
+      brightness: 100
+    light.lamp_dressoir:
+      state: on
+      brightness: 100
+    light.lamp_eettafel:
+      state: on
+      brightness: 155
     switch.ambilight: on
 
 - name: "Licht normaal"
   entities:
-    light.spots_keuken: on
-    light.lamp_tv: on
-    light.lamp_bank: on
-    light.lamp_dressoir: on
-    light.lamp_eettafel: on
+    light.spots_keuken:
+      state: on
+      brightness: 240
+    light.lamp_tv:
+      state: on
+      brightness: 220
+    light.lamp_bank:
+      state: on
+      brightness: 220
+    light.lamp_dressoir:
+      state: on
+      brightness: 220
+    light.lamp_eettafel:
+      state: on
+      brightness: 220
     switch.ambilight: off
     

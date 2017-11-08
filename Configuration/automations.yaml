@@ -186,16 +186,6 @@
       position: > 
         {{ states('sensor.positie_gordijn') }}
 
-#- alias: "Gordijn omlaag avond"
-#  trigger:
-#    platform: time
-#    at: "18:00:00"
-#  action:
-#    service: cover.set_cover_position
-#    data:
-#      entity_id: cover.gordijn_voor
-#      position: 60
-
 - alias: "Nieuwe download Sonarr"
   trigger:
     platform: state
