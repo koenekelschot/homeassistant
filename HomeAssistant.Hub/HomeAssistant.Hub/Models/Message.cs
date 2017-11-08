@@ -15,6 +15,7 @@ namespace HomeAssistant.Hub.Models
         public override MessageType Type => MessageType.SwitchState;
         public string Data { get; set; }
         public override string StringData => Data;
+        public bool IsOn => "on".Equals(Data, StringComparison.InvariantCultureIgnoreCase);
     }
 
     public class DimLevelMessage : Message

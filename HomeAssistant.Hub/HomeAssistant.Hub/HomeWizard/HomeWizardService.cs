@@ -2,7 +2,6 @@
 using HomeWizard.Net;
 using SimpleDI;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,30 +10,33 @@ namespace HomeAssistant.Hub.HomeWizard
 {
     public sealed class HomeWizardService
     {
-        private static readonly IDictionary SwitchStateCache = new Dictionary<string, string>();
-
         private readonly HomeWizardClient _client;
+        private readonly Dictionary<string, OnOff> _switchStateCache;
 
         public HomeWizardService(IOptions<HomeWizardConfig> config)
         {
             var settings = config.Value;
             _client = new HomeWizardClient();
             _client.Connect(settings.IpAddress, settings.Password);
+            _switchStateCache = new Dictionary<string, OnOff>();
         }
 
         public async Task ToggleSwitch(SwitchStateMessage message)
         {
-            if (!ShouldUpdate(message))
-            {
-                return;
-            }
+            OnOff? currentState = GetCurrentSwitchStateFromCache(message.DeviceId);
+            OnOff newState = message.IsOn ? OnOff.On : OnOff.Off;
 
-            await UpdateSwitchState(message);
+            if (newState != currentState)
+            {
+                await UpdateSwitchState(message);
+            }
         }
 
         public async Task DimSwitch(DimLevelMessage message)
         {
-            throw new NotImplementedException("Dimming currently not supported");
+            StoreSwitchStateInCache(message.DeviceId, message.Data == 0 ? OnOff.Off : OnOff.On);
+            long switchId = long.Parse(message.DeviceId);
+            await _client.DimSwitch(switchId, (int)message.Data);
         }
 
         public async Task AdjustTemperature(TemperatureMessage message)
@@ -56,29 +58,13 @@ namespace HomeAssistant.Hub.HomeWizard
             }
         }
 
-        private static bool ShouldUpdate(Message message)
+        private async Task UpdateSwitchState(SwitchStateMessage message)
         {
-            if (message.Type != MessageType.SwitchState)
-            {
-                return true;
-            }
-
-            return !string.IsNullOrWhiteSpace(message.DeviceId) &&
-                   !message.StringData.Equals(GetCurrentSwitchStateFromCache(message.DeviceId),
-                       StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        private async Task UpdateSwitchState(Message message)
-        {
-            if (message.Type != MessageType.SwitchState || string.IsNullOrWhiteSpace(message.DeviceId))
-            {
-                return;
-            }
-
-            StoreSwitchStateInCache(message.DeviceId, message.StringData);
+            OnOff state = message.IsOn ? OnOff.On : OnOff.Off;
+            StoreSwitchStateInCache(message.DeviceId, state);
 
             long switchId = long.Parse(message.DeviceId);
-            if (message.StringData.Equals("on", StringComparison.InvariantCultureIgnoreCase))
+            if (state == OnOff.On)
             {
                 await _client.SwitchOn(switchId);
             }
@@ -88,25 +74,31 @@ namespace HomeAssistant.Hub.HomeWizard
             }
         }
 
-        private static void StoreSwitchStateInCache(string switchId, string state)
+        private void StoreSwitchStateInCache(string switchId, OnOff state)
         {
-            if (SwitchStateCache.Contains(switchId))
+            if (_switchStateCache.ContainsKey(switchId))
             {
-                SwitchStateCache[switchId] = state;
+                _switchStateCache[switchId] = state;
             }
             else
             {
-                SwitchStateCache.Add(switchId, state);
+                _switchStateCache.Add(switchId, state);
             }
         }
 
-        private static string GetCurrentSwitchStateFromCache(string switchId)
+        private OnOff? GetCurrentSwitchStateFromCache(string switchId)
         {
-            if (SwitchStateCache.Contains(switchId))
+            if (_switchStateCache.ContainsKey(switchId))
             {
-                return SwitchStateCache[switchId] as string;
+                return _switchStateCache[switchId];
             }
             return null;
+        }
+
+        private enum OnOff
+        {
+            On,
+            Off
         }
     }
 }
