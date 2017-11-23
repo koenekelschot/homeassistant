@@ -186,6 +186,16 @@
       position: > 
         {{ states('sensor.positie_gordijn') }}
 
+- alias: "Stand gordijn Telegram"
+  trigger:
+    platform: state
+    entity_id: sensor.positie_gordijn
+  action:
+    service: notify.telegram
+    data_template:
+      title: "HomeAssistant - cover"
+      message: "{{ states('sensor.positie_gordijn') }}"
+        
 - alias: "Nieuwe download Sonarr"
   trigger:
     platform: state

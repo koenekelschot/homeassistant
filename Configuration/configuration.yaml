@@ -22,6 +22,10 @@ logger:
 
 # Enables the frontend
 frontend:
+  javascript_version: latest
+
+# Enables a map showing the location of tracked devices
+map:
 
 http:
   # Uncomment this to add a password (recommended!)
@@ -90,6 +94,7 @@ input_boolean:
   slapen:
     icon: 'mdi:sleep'
 
+panel_iframe: !include panels.yaml
 weblink: !include weblinks.yaml
 sensor: !include sensors.yaml
 light: !include lights.yaml 
