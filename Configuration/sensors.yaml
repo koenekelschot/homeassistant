@@ -79,3 +79,15 @@
     verschil_positie_gordijn:
       friendly_name: "Verschil positie gordijn"
       value_template: '{{ (states.sensor.positie_gordijn.state | int - states.cover.gordijn_voor.attributes.current_position | int) | abs }}'
+
+- platform: template
+  sensors:
+    above_cloud_lux:
+      friendly_name: "Above Cloud Lux"
+      unit_of_measurement: "Lux"
+      value_template: >-
+        {{ states.sun.sun.attributes.daylight | round(0) }}
+    lux:
+      friendly_name: "Exterior Lux"
+      unit_of_measurement: "lux"
+      value_template: '{{ ((100.1-states.sensor.dark_sky_cloud_coverage.state|float)/100 * states.sun.sun.attributes.daylight) | round(0)  }}'

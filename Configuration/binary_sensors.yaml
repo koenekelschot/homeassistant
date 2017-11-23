@@ -27,15 +27,34 @@
 
 - platform: template
   sensors:
-    donker_buiten_test:
+    donker_test:
+      #value_template: >
+      #  {% if (states.sensor.br_irradiance.state | int < 100) %}
+      #    true
+      #  {% else %} 
+      #    false
+      #  {% endif %}
       value_template: >
-        {% if (states.sensor.br_irradiance.state | int < 100) %}
+        {% if (states.sensor.lux | int < 500) %}
           true
-        {% else %} 
+        {% else %}
           false
         {% endif %}
       entity_id:
-        - sensor.br_irradiance
+      #  - sensor.br_irradiance
+        - sensor.lux
+
+- platform: template
+  sensors:
+    schemer_test:
+      value_template: >
+        {% if (states.sensor.lux | int < 1000) %}
+          true
+        {% else %}
+          false
+        {% endif %}
+      entity_id:
+        - sensor.lux
         
 - platform: template
   sensors:
