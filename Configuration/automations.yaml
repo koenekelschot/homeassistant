@@ -195,6 +195,16 @@
     data_template:
       title: "Sonarr"
       message: "{{ states('sensor.sonarr') }}"
+
+- alias: "Nieuwe download Radarr"
+  trigger:
+    platform: state
+    entity_id: sensor.radarr
+  action:
+    service: notify.telegram
+    data_template:
+      title: "Radarr"
+      message: "{{ states('sensor.radarr') }}"
       
 - alias: "Nieuwe download CouchPotato"
   trigger:

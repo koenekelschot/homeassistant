@@ -100,6 +100,7 @@
     <Compile Include="Soma\ShadesService.cs" />
     <Compile Include="Soma\Constants.cs" />
     <Compile Include="Webhooks\CouchPotato\CouchPotatoWebhookService.cs" />
+    <Compile Include="Webhooks\Radarr\RadarrWebhookService.cs" />
     <Compile Include="Webhooks\Sonarr\SonarrWebhookService.cs" />
     <Compile Include="Webhooks\WebhookConfig.cs" />
     <Compile Include="Webhooks\WebhookListener.cs" />

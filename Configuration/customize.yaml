@@ -42,6 +42,9 @@ sensor.current_time:
 
 sensor.sonarr:
   hidden: true
+
+sensor.radarr:
+  hidden: true
   
 sensor.couchpotato:
   hidden: true

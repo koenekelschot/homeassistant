@@ -12,5 +12,7 @@
 
     public class SonarrWebhookConfig : WebhookListenerConfig { }
 
+    public class RadarrWebhookConfig : WebhookListenerConfig { }
+
     public class CouchPotatoWebhookConfig : WebhookListenerConfig { }
 }

@@ -30,6 +30,10 @@
   state_topic: "downloads/sonarr"
 
 - platform: mqtt
+  name: "Radarr"
+  state_topic: "downloads/radarr"
+
+- platform: mqtt
   name: "CouchPotato"
   state_topic: "downloads/couchpotato"
   

@@ -14,7 +14,11 @@ entities:
   - name: Sonarr
     url: "http://sherlock:8989"
     icon: "mdi:television-classic"
-    
-  - name: uTorrent
-    url: "http://sherlock:8082"
+
+  - name: Radarr
+    url: "http://sherlock:7878"
+    icon: "mdi:theater"
+  
+  - name: Deluge
+    url: "http://sherlock:8112"
     icon: "mdi:download"

@@ -24,6 +24,7 @@ namespace HomeAssistant.Hub
         private static IConfigurationRoot Configuration;
         private static MqttService _mqttService;
         private static SonarrWebhookService _sonarrWebhookService;
+        private static RadarrWebhookService _radarrWebhookService;
         private static CouchPotatoWebhookService _couchPotatoWebhookService;
 
         static void Main(string[] args)
@@ -65,6 +66,7 @@ namespace HomeAssistant.Hub
                 .AddSingleton<ShadesService>()
                 .AddSingleton<WebhookService>()
                 .AddSingleton<SonarrWebhookService>()
+                .AddSingleton<RadarrWebhookService>()
                 .AddSingleton<CouchPotatoWebhookService>()
                 .Configure(Configuration.GetSection<MqttClientConfig>("Mqtt:Client"))
                 .Configure(Configuration.GetSection<MqttTopicConfig>("Mqtt:Topics"))
@@ -73,6 +75,7 @@ namespace HomeAssistant.Hub
                 .Configure(Configuration.GetSection<ShadesConfig>("Soma"))
                 .Configure(Configuration.GetSection<WebhookConfig>("Webhooks"))
                 .Configure(Configuration.GetSection<SonarrWebhookConfig>("Webhooks:Sonarr"))
+                .Configure(Configuration.GetSection<RadarrWebhookConfig>("Webhooks:Radarr"))
                 .Configure(Configuration.GetSection<CouchPotatoWebhookConfig>("Webhooks:CouchPotato"));
 
             ServiceProvider = services.BuildServiceProvider();
@@ -122,6 +125,12 @@ namespace HomeAssistant.Hub
         {
             _sonarrWebhookService = ServiceProvider.GetService<SonarrWebhookService>();
             _sonarrWebhookService.MessageReceived += async (object sender, Message message) =>
+            {
+                await OnMessageReceived(message);
+            };
+
+            _radarrWebhookService = ServiceProvider.GetService<RadarrWebhookService>();
+            _radarrWebhookService.MessageReceived += async (object sender, Message message) =>
             {
                 await OnMessageReceived(message);
             };
