@@ -55,12 +55,27 @@
         {% endif %}
       entity_id:
         - sensor.lux
+
+- platform: template
+  sensors:
+    tv_woonkamer_aan:
+      value_template: >
+        {% if (is_state('remote.tv_woonkamer', 'on')) %}
+          true
+        {% else %} 
+          false
+        {% endif %}
+      entity_id:
+        - remote.tv_woonkamer
         
 - platform: template
   sensors:
     iemand_thuis:
       value_template: >
-        {% if (is_state('device_tracker.huaweip10litefritzbox', 'home')) %}
+        {% if (
+          is_state('device_tracker.huaweip10litefritzbox', 'home') or
+          is_state('device_tracker.gladosfritzbox', 'home') or
+          is_state('sensor.tv_woonkamer_aan', 'on')) %}
           true
         {% else %} 
           false

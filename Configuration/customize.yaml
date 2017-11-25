@@ -1,6 +1,9 @@
 light.hue_color_lamp_3:
   hidden: true
   
+device_tracker.gladosfritzbox:
+  hidden: true
+  
 media_player.plex_web_firefox:
   hidden: true
   
