@@ -16,6 +16,8 @@ zone:
 
 logger:
   default: info
+  logs:
+    homeassistant.components.device_tracker.nmap_tracker: error
   
 # Show links to resources in log and frontend
 #introduction:
@@ -62,6 +64,8 @@ device_tracker:
     interval_seconds: 20
     home_interval: 8
     exclude:
+      - 192.168.178.20
+      - 192.168.178.23
       - 192.168.178.26
       - 192.168.178.30
       - 192.168.178.31
@@ -93,9 +97,25 @@ input_boolean:
   #no initial values, handled by the recorder component
   slapen:
     icon: 'mdi:sleep'
+  forceer_thuis:
+    initial: off
+  forceer_afwezig:
+    initial: off
+  verwarming_override:
+    initial: off
+
+input_datetime:
+  laatste_beweging_keuken:
+    has_date: true
+    has_time: true
+  laatste_beweging_werkkamer:
+    has_date: true
+    has_time: true
+  laatste_beweging_gang:
+    has_date: true
+    has_time: true
 
 panel_iframe: !include panels.yaml
-weblink: !include weblinks.yaml
 sensor: !include sensors.yaml
 light: !include lights.yaml 
 switch: !include switches.yaml
@@ -114,3 +134,29 @@ notify:
   - name: telegram
     platform: telegram
     chat_id: !secret telegram_chatid
+
+toon:
+  username: !secret eneco_user
+  password: !secret eneco_pass
+
+history_graph:
+  temperature:
+    name: "Temperatuur"
+    hours_to_show: 3
+    entities:
+      - sensor.temperatuur_keuken
+      - sensor.temperatuur_gang
+      - sensor.temperatuur_werkkamer
+      - sensor.current_temperature_toon
+  lux:
+    name: "Lichtniveau buiten"
+    entities:
+      - sensor.above_cloud_lux
+      - sensor.exterior_lux
+  lightlevels:
+    name: "Lichtniveau binnen"
+    hours_to_show: 3
+    entities:
+      - sensor.lichtniveau_keuken
+      - sensor.lichtniveau_gang
+      - sensor.lichtniveau_werkkamer

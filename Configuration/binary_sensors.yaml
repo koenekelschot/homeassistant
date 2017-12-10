@@ -35,26 +35,26 @@
       #    false
       #  {% endif %}
       value_template: >
-        {% if (states.sensor.lux | int < 500) %}
+        {% if (states.sensor.exterior_lux.state | int < 500) %}
           true
         {% else %}
           false
         {% endif %}
       entity_id:
       #  - sensor.br_irradiance
-        - sensor.lux
+        - sensor.exterior_lux
 
 - platform: template
   sensors:
     schemer_test:
       value_template: >
-        {% if (states.sensor.lux | int < 1000) %}
+        {% if (states.sensor.exterior_lux.state | int < 1250) %}
           true
         {% else %}
           false
         {% endif %}
       entity_id:
-        - sensor.lux
+        - sensor.exterior_lux
 
 - platform: template
   sensors:
@@ -73,15 +73,51 @@
     iemand_thuis:
       value_template: >
         {% if (
-          is_state('device_tracker.huaweip10litefritzbox', 'home') or
-          is_state('device_tracker.gladosfritzbox', 'home') or
-          is_state('sensor.tv_woonkamer_aan', 'on')) %}
+          is_state('input_boolean.forceer_afwezig', 'off') and (
+            is_state('input_boolean.forceer_thuis', 'on') or
+            is_state('device_tracker.huaweip10litefritzbox', 'home') or
+            is_state('device_tracker.gladosfritzbox', 'home') or
+            is_state('binary_sensor.tv_woonkamer_aan', 'on'))) %}
           true
         {% else %} 
           false
         {% endif %}
       entity_id:
+        - input_boolean.forceer_afwezig
+        - input_boolean.forceer_thuis
         - device_tracker.huaweip10litefritzbox
+        - device_tracker.gladosfritzbox
+        - binary_sensor.tv_woonkamer_aan
+
+- platform: template
+  sensors:
+    iemand_beneden:
+      value_template: >
+        {% if (
+          is_state('input_boolean.forceer_afwezig', 'off') and 
+          is_state('binary_sensor.tv_woonkamer_aan', 'on')) %}
+          true
+        {% else %}
+          false
+        {% endif %}
+      entity_id:
+        - input_boolean.forceer_afwezig
+        - binary_sensor.tv_woonkamer_aan
+
+- platform: template
+  sensors:
+    iemand_boven:
+      value_template: >
+        {% if (
+          is_state('input_boolean.forceer_afwezig', 'off') and 
+          is_state('device_tracker.gladosfritzbox', 'home')) %}
+          true
+        {% else %}
+          false
+        {% endif %}
+      entity_id:
+        - input_boolean.forceer_afwezig
+        - device_tracker.gladosfritzbox
         
 - platform: template
   sensors:

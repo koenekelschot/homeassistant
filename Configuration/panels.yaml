@@ -8,11 +8,6 @@ plex:
   url: "http://sherlock:32400"
   icon: "mdi:plex"
 
-couchpotato:
-  title: CouchPotato
-  url: "http://sherlock:5050"
-  icon: "mdi:theater"
-
 sonarr:
   title: Sonarr
   url: "http://sherlock:8989"

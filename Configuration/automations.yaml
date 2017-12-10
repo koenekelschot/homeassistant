@@ -1,3 +1,21 @@
+- alias: "Forceer thuis"
+  trigger:
+    platform: state
+    entity_id: input_boolean.forceer_thuis
+    to: 'on'
+  action:
+    service: input_boolean.turn_off
+    entity_id: input_boolean.forceer_afwezig
+
+- alias: "Forceer afwezig"
+  trigger:
+    platform: state
+    entity_id: input_boolean.forceer_afwezig
+    to: 'on'
+  action:
+    service: input_boolean.turn_off
+    entity_id: input_boolean.forceer_thuis
+
 - alias: "Opstaan"
   trigger:
     platform: time
@@ -64,8 +82,12 @@
       entity_id: binary_sensor.iemand_thuis
       state: 'on'
   action:
-    service: scene.turn_on
-    entity_id: scene.verwarming_normaal
+    - service: climate.set_operation_mode
+      data: 
+        entity_id: climate.toon_van_eneco
+        operation_mode: "heat"
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.verwarming_override
 
 - alias: "Verwarming laag"
   trigger:
@@ -75,12 +97,20 @@
     - platform: time
       at: "22:30:00"
   condition:
-    condition: state
-    entity_id: switch.verwarming_lang_afwezig
-    state: 'off'
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: climate.toon_van_eneco
+        state: 'Comfort'
+      - condition: state
+        entity_id: climate.toon_van_eneco
+        state: 'Home'
+        #docs kloppen niet, 'Thuis' moet 'Home' zijn
   action:
-    service: scene.turn_on
-    entity_id: scene.verwarming_kort_weg
+    service: climate.set_operation_mode
+    data: 
+      entity_id: climate.toon_van_eneco
+      operation_mode: "cool"
 
 - alias: "Verwarming uit"
   trigger:
@@ -89,9 +119,15 @@
     to: 'off'
     for:
       hours: 10
+  condition:
+    condition: state
+    entity_id: input_boolean.verwarming_override
+    state: 'off'
   action:
-    service: scene.turn_on
-    entity_id: scene.verwarming_lang_weg
+    service: climate.set_operation_mode
+    data: 
+      entity_id: climate.toon_van_eneco
+      operation_mode: "eco"
 
 - alias: "Boiler keuken uit"
   trigger:
@@ -183,8 +219,7 @@
     service: cover.set_cover_position
     data_template:
       entity_id: cover.gordijn_voor
-      position: > 
-        {{ states('sensor.positie_gordijn') }}
+      position: "{{ states('sensor.positie_gordijn') }}"
         
 - alias: "Nieuwe download Sonarr"
   trigger:
@@ -205,13 +240,92 @@
     data_template:
       title: "Radarr"
       message: "{{ states('sensor.radarr') }}"
-      
-- alias: "Nieuwe download CouchPotato"
+
+- alias: "Telegram opvragen temperatuur"
   trigger:
-    platform: state
-    entity_id: sensor.couchpotato
+    platform: event
+    event_type: telegram_command
+    event_data:
+      command: '/temperatuur'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "De temperatuur is {{ states.climate.toon_van_eneco.attributes.current_temperature }} °C"
+
+- alias: "Telegram mag verwarming aan"
+  trigger:
+    platform: time
+    at: "17:15:00"
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.iemand_thuis
+        state: 'off'
+      - condition: numeric_state
+        entity_id: sensor.br_temperature
+        below: 5
   action:
     service: notify.telegram
     data_template:
-      title: "CouchPotato"
-      message: "{{ states('sensor.couchpotato') }}"
+      message: "Het is op dit moment {{ states.sensor.br_temperature.state }} °C buiten, zal ik de verwarming vast aan zetten?"
+      data:
+        inline_keyboard:
+          - 'Ja graag:/verwarmingaan, Nee bedankt:/verwarminguit'
+
+- alias: "Telegram verwarming aan"
+  trigger:
+    platform: event
+    event_type: telegram_command
+    event_data:
+      command: '/verwarmingaan'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "Ok, de verwarming staat aan!"
+    - service: scene.turn_on
+      entity_id: scene.verwarming_normaal
+    - condition: state
+      entity_id: binary_sensor.iemand_thuis
+      state: 'off'
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.verwarming_override
+          
+- alias: "Beweging keuken"
+  trigger:
+    platform: state
+    entity_id: sensor.beweging_keuken
+    to: 'True'
+  action:
+    service: input_datetime.set_datetime
+    data_template:
+      entity_id: input_datetime.laatste_beweging_keuken
+      date: "{{ now().strftime('%Y-%m-%d') }}"
+      time: "{{ now().strftime('%H:%M:%S') }}"
+
+- alias: "Beweging werkkamer"
+  trigger:
+    platform: state
+    entity_id: sensor.beweging_werkkamer
+    to: 'True'
+  action:
+    service: input_datetime.set_datetime
+    data_template:
+      entity_id: input_datetime.laatste_beweging_werkkamer
+      date: "{{ now().strftime('%Y-%m-%d') }}"
+      time: "{{ now().strftime('%H:%M:%S') }}"
+
+- alias: "Beweging gang"
+  trigger:
+    platform: state
+    entity_id: sensor.beweging_gang
+    to: 'True'
+  action:
+    service: input_datetime.set_datetime
+    data_template:
+      entity_id: input_datetime.laatste_beweging_gang
+      date: "{{ now().strftime('%Y-%m-%d') }}"
+      time: "{{ now().strftime('%H:%M:%S') }}"

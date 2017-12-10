@@ -2,46 +2,23 @@
   entities:
     input_boolean.slapen: on
     remote.tv_woonkamer: off
-    light.spots_keuken: off
     light.lamp_tv: off
     light.lamp_bank: off
     light.lamp_dressoir: off
-    light.lamp_eettafel: off
+    light.lamp_tafel_midden: off
+    light.lamp_tafel_muur: off
+    light.lamp_keuken_deur: off
+    light.lamp_keuken_koelkast: off
+    light.lamp_keuken_raam_links: off
+    light.lamp_keuken_raam_rechts: off
     switch.ambilight: off
     switch.boiler_keuken: off
-    switch.verwarming_kort_afwezig: on
+    climate.toon_van_eneco:
+      operation_mode: "cool"
     
 - name: "Opstaan"
   entities:
     input_boolean.slapen: off
-    
-- name: "Verwarming (normaal)"
-  entities:
-    switch.verwarming_thuis: on
-    switch.verwarming_kort_afwezig: off
-    switch.verwarming_lang_afwezig: off
-    switch.verwarming_comfort: off
-    
-- name: "Verwarming (kort weg)"
-  entities:
-    switch.verwarming_thuis: off
-    switch.verwarming_kort_afwezig: on
-    switch.verwarming_lang_afwezig: off
-    switch.verwarming_comfort: off
-    
-- name: "Verwarming (lang weg)"
-  entities:
-    switch.verwarming_thuis: off
-    switch.verwarming_kort_afwezig: off
-    switch.verwarming_lang_afwezig: on
-    switch.verwarming_comfort: off
-    
-- name: "Verwarming (comfort)"
-  entities:
-    switch.verwarming_thuis: off
-    switch.verwarming_kort_afwezig: off
-    switch.verwarming_lang_afwezig: off
-    switch.verwarming_comfort: on
 
 - name: "Film start"
   entities:
@@ -49,8 +26,6 @@
     
 - name: "Film actief"
   entities:
-    light.spots_keuken:
-      state: off
     light.lamp_tv:
       state: on
       brightness: 30
@@ -59,17 +34,25 @@
       brightness: 30
     light.lamp_dressoir:
       state: on
-      brightness: 10
-    light.lamp_eettafel:
+      brightness: 30
+    light.lamp_tafel_midden:
       state: on
-      brightness: 110
+      brightness: 20
+    light.lamp_tafel_muur:
+      state: on
+      brightness: 20
+    light.lamp_keuken_deur:
+      state: off
+    light.lamp_keuken_koelkast:
+      state: off
+    light.lamp_keuken_raam_links:
+      state: off
+    light.lamp_keuken_raam_rechts:
+      state: off
     switch.ambilight: on
     
 - name: "Film gepauzeerd"
   entities:
-    light.spots_keuken:
-      state: on
-      brightness: 240
     light.lamp_tv:
       state: on
       brightness: 100
@@ -79,16 +62,28 @@
     light.lamp_dressoir:
       state: on
       brightness: 100
-    light.lamp_eettafel:
+    light.lamp_tafel_midden:
       state: on
-      brightness: 155
+      brightness: 90
+    light.lamp_tafel_muur:
+      state: on
+      brightness: 90
+    light.lamp_keuken_deur:
+      state: on
+      brightness: 160
+    light.lamp_keuken_koelkast:
+      state: on
+      brightness: 160
+    light.lamp_keuken_raam_links:
+      state: on
+      brightness: 160
+    light.lamp_keuken_raam_rechts:
+      state: on
+      brightness: 160
     switch.ambilight: on
 
 - name: "Licht normaal"
   entities:
-    light.spots_keuken:
-      state: on
-      brightness: 240
     light.lamp_tv:
       state: on
       brightness: 220
@@ -98,7 +93,22 @@
     light.lamp_dressoir:
       state: on
       brightness: 220
-    light.lamp_eettafel:
+    light.lamp_tafel_midden:
+      state: on
+      brightness: 200
+    light.lamp_tafel_muur:
+      state: on
+      brightness: 200
+    light.lamp_keuken_deur:
+      state: on
+      brightness: 220
+    light.lamp_keuken_koelkast:
+      state: on
+      brightness: 220
+    light.lamp_keuken_raam_links:
+      state: on
+      brightness: 220
+    light.lamp_keuken_raam_rechts:
       state: on
       brightness: 220
     switch.ambilight: off

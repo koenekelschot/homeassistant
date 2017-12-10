@@ -4,8 +4,16 @@
 kitchen:
   name: Keuken
   entities:
-    - light.spots_keuken
+    - light.lamp_keuken_deur
+    - light.lamp_keuken_koelkast
+    - light.lamp_keuken_raam_links
+    - light.lamp_keuken_raam_rechts
     - switch.boiler_keuken
+    - sensor.temperatuur_keuken
+    - sensor.lichtniveau_keuken
+    - sensor.batterij_hue_keuken
+    - sensor.beweging_keuken
+    - input_boolean.laatste_beweging_keuken
     
 living_room:
   name: Woonkamer
@@ -13,34 +21,42 @@ living_room:
     - light.lamp_tv
     - light.lamp_bank
     - light.lamp_dressoir
-    - light.lamp_eettafel
+    - light.lamp_tafel_midden
+    - light.lamp_tafel_muur
     - switch.ambilight
     - cover.gordijn_voor
-    - sensor.verwarming
-    - sensor.temperatuur
+    - sensor.current_temperature_toon
+
+hallway:
+  name: Gang
+  entities:
+    - sensor.temperatuur_gang
+    - sensor.lichtniveau_gang
+    - sensor.batterij_hue_gang
+    - sensor.beweging_gang
+    - input_boolean.laatste_beweging_gang
+
+office:
+  name: Werkkamer
+  entities:
+    - sensor.temperatuur_werkkamer
+    - sensor.lichtniveau_werkkamer
+    - sensor.batterij_hue_werkkamer
+    - sensor.beweging_werkkamer
+    - input_boolean.laatste_beweging_werkkamer
     
 people:
   name: People
   entities:
     - device_tracker.huaweip10litefritzbox
-    
-meter_reading:
+
+meter_readings:
   name: Meterwaarden
   entities:
-    - sensor.power_tariff
-    - sensor.power_consumption
-    - sensor.power_consumption_low
-    - sensor.power_consumption_normal
-    - sensor.gas_consumption
-    - sensor.hourly_gas_consumption
-    
-sonarr:
-  name: Sonarr
-  entities:
-    - sensor.sonarr_queue
-    - sensor.sonarr_disk_space
-    - sensor.sonarr_upcoming
-    - sensor.sonarr_wanted
+    - sensor.power_today
+    - sensor.power_current
+    - sensor.gas_today
+    - sensor.gas_current
     
 weather:
   name: Weer

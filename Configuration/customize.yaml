@@ -1,4 +1,7 @@
-light.hue_color_lamp_3:
+light.all_hue_lights:
+  hidden: true
+
+light.living_room:
   hidden: true
   
 device_tracker.gladosfritzbox:
@@ -15,27 +18,18 @@ media_player.mycroft:
   
 remote.tv_woonkamer:
   hidden: true
-  
-sensor.power_production:
-  hidden: true
-  
-sensor.power_production_normal: 
-  hidden: true
-  
-sensor.power_production_low:
-  hidden: true
-  
-switch.verwarming_thuis:
-  hidden: true
-  
-switch.verwarming_kort_afwezig:
-  hidden: true
-  
-switch.verwarming_lang_afwezig:
-  hidden: true
-  
-switch.verwarming_comfort:
-  hidden: true
+
+sensor.power_today:
+  friendly_name: "Stroom vandaag"
+
+sensor.power_current:
+  friendly_name: "Stroom nu"
+
+sensor.gas_today:
+  friendly_name: "Gas vandaag"
+
+sensor.gas_current:
+  friendly_name: "Gas nu"
 
 binary_sensor.workday_sensor:
   hidden: true
@@ -48,7 +42,3 @@ sensor.sonarr:
 
 sensor.radarr:
   hidden: true
-  
-sensor.couchpotato:
-  hidden: true
-  

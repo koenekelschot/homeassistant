@@ -13,17 +13,6 @@
   api_key: !secret darksky_api
   monitored_conditions:
     - cloud_cover
-  
-- platform: mqtt
-  name: "Verwarming"
-  state_topic: "HW/temp/state"
-  unit_of_measurement: "°C"
-  force_update: true
-  
-- platform: mqtt
-  name: "Temperatuur"
-  state_topic: "HW/temp/room"
-  unit_of_measurement: "°C"
 
 - platform: mqtt
   name: "Sonarr"
@@ -32,15 +21,6 @@
 - platform: mqtt
   name: "Radarr"
   state_topic: "downloads/radarr"
-
-- platform: mqtt
-  name: "CouchPotato"
-  state_topic: "downloads/couchpotato"
-  
-- platform: dsmr
-  host: 127.0.0.1
-  port: 8124
-  dsmr_version: 4
 
 - platform: template
   sensors:
@@ -64,7 +44,7 @@
             60
           {% else %}
             {% if (
-              states.sensor.temperatuur.state | int >= 21 and
+              states.climate.toon_van_eneco.attributes.current_temperature | int >= 21 and
               states.sensor.br_irradiance.state | int >= 300
             ) %}
               60
@@ -76,18 +56,93 @@
 
 - platform: template
   sensors:
-    verschil_positie_gordijn:
-      friendly_name: "Verschil positie gordijn"
-      value_template: '{{ (states.sensor.positie_gordijn.state | int - states.cover.gordijn_voor.attributes.current_position | int) | abs }}'
-
-- platform: template
-  sensors:
     above_cloud_lux:
       friendly_name: "Above Cloud Lux"
       unit_of_measurement: "Lux"
-      value_template: >-
-        {{ states.sun.sun.attributes.daylight | round(0) }}
-    lux:
+      value_template: '{{ states.sun.sun.attributes.daylight | round(0) }}'
+    exterior_lux:
       friendly_name: "Exterior Lux"
       unit_of_measurement: "lux"
-      value_template: '{{ ((100.1-states.sensor.dark_sky_cloud_coverage.state|float)/100 * states.sun.sun.attributes.daylight) | round(0)  }}'
+      value_template: '{{ ((100.1-states.sensor.dark_sky_cloud_coverage.state|float)/100 * states.sun.sun.attributes.daylight) | round(0) }}'
+
+- platform: template
+  sensors:
+    current_temperature_toon:
+      friendly_name: "Temperatuur Toon"
+      unit_of_measurement: '°C'
+      value_template: '{{ states.climate.toon_van_eneco.attributes.current_temperature }}'
+      
+- platform: rest
+  resource: !secret hue_temperature_keuken
+  value_template: '{{ value_json.config.battery }}'
+  unit_of_measurement: '%'
+  name: 'Batterij Hue keuken'
+  scan_interval: 3600
+  
+- platform: rest
+  resource: !secret hue_temperature_keuken
+  value_template: '{{ (value_json.state.temperature - 78) | float / 100 }}'
+  unit_of_measurement: '°C'
+  name: 'Temperatuur keuken'
+
+- platform: rest
+  resource: !secret hue_presence_keuken
+  value_template: '{{ value_json.state.presence }}'
+  name: 'Beweging keuken'
+  scan_interval: 2
+
+- platform: rest
+  resource: !secret hue_lightlevel_keuken
+  value_template: '{{ value_json.state.lightlevel }}'
+  unit_of_measurement: Lux
+  name: 'Lichtniveau keuken'
+
+- platform: rest
+  resource: !secret hue_temperature_werkkamer
+  value_template: '{{ value_json.config.battery }}'
+  unit_of_measurement: '%'
+  name: 'Batterij Hue werkkamer'
+  scan_interval: 3600
+  
+- platform: rest
+  resource: !secret hue_temperature_werkkamer
+  value_template: '{{ (value_json.state.temperature + 26) | float / 100 }}'
+  unit_of_measurement: '°C'
+  name: 'Temperatuur werkkamer'
+
+- platform: rest
+  resource: !secret hue_presence_werkkamer
+  value_template: '{{ value_json.state.presence }}'
+  name: 'Beweging werkkamer'
+  scan_interval: 2
+
+- platform: rest
+  resource: !secret hue_lightlevel_werkkamer
+  value_template: '{{ value_json.state.lightlevel }}'
+  unit_of_measurement: Lux
+  name: 'Lichtniveau werkkamer'
+
+- platform: rest
+  resource: !secret hue_temperature_gang
+  value_template: '{{ value_json.config.battery }}'
+  unit_of_measurement: '%'
+  name: 'Batterij Hue gang'
+  scan_interval: 3600
+  
+- platform: rest
+  resource: !secret hue_temperature_gang
+  value_template: '{{ (value_json.state.temperature - 182) | float / 100 }}'
+  unit_of_measurement: '°C'
+  name: 'Temperatuur gang'
+
+- platform: rest
+  resource: !secret hue_presence_gang
+  value_template: '{{ value_json.state.presence }}'
+  name: 'Beweging gang'
+  scan_interval: 1
+
+- platform: rest
+  resource: !secret hue_lightlevel_gang
+  value_template: '{{ value_json.state.lightlevel }}'
+  unit_of_measurement: Lux
+  name: 'Lichtniveau gang'
