@@ -62,7 +62,7 @@ namespace HomeAssistant.Hub
                 .AddSingleton<MqttTopicResolveService>()
                 .AddSingleton<MqttMessageParseService>()
                 .AddSingleton<HomeWizardService>()
-                .AddSingleton<DsmrService>()
+                //.AddSingleton<DsmrService>()
                 .AddSingleton<ShadesService>()
                 .AddSingleton<WebhookService>()
                 .AddSingleton<SonarrWebhookService>()
@@ -71,7 +71,7 @@ namespace HomeAssistant.Hub
                 .Configure(Configuration.GetSection<MqttClientConfig>("Mqtt:Client"))
                 .Configure(Configuration.GetSection<MqttTopicConfig>("Mqtt:Topics"))
                 .Configure(Configuration.GetSection<HomeWizardConfig>("HomeWizard"))
-                .Configure(Configuration.GetSection<DsmrConfig>("Dsmr"))
+                //.Configure(Configuration.GetSection<DsmrConfig>("Dsmr"))
                 .Configure(Configuration.GetSection<ShadesConfig>("Soma"))
                 .Configure(Configuration.GetSection<WebhookConfig>("Webhooks"))
                 .Configure(Configuration.GetSection<SonarrWebhookConfig>("Webhooks:Sonarr"))
@@ -85,7 +85,7 @@ namespace HomeAssistant.Hub
         {
             try
             {
-                ServiceProvider.GetService<DsmrService>().Start();
+                //ServiceProvider.GetService<DsmrService>().Start();
 
                 InitializeMqtt();
                 InitializeWebhooks();
@@ -101,7 +101,7 @@ namespace HomeAssistant.Hub
 
         private static void Shutdown()
         {
-            ServiceProvider.GetService<DsmrService>().Stop();
+            //ServiceProvider.GetService<DsmrService>().Stop();
             _mqttService?.Stop();
             ServiceProvider.GetService<WebhookService>().Stop();
         }

@@ -47,11 +47,12 @@ namespace HomeAssistant.Hub.Soma
             }
             try
             {
-                uint batteryLevelValue = await handle.GetCharacteristicValue<uint>(Constants.ShadeBatteryCharacteristic);
+                uint batteryLevelValue = await handle.GetCharacteristicValue<uint>(Constants.ShadeBatteryCharacteristic, 0);
                 return NormalizeBatteryLevel(batteryLevelValue);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                logger.Error(e, "Couldn't get battery level");
                 return null;
             }
         }
@@ -65,11 +66,12 @@ namespace HomeAssistant.Hub.Soma
             }
             try
             {
-                var position = await handle.GetCharacteristicValue<uint>(Constants.ShadeMotorStateCharacteristic);
+                var position = await handle.GetCharacteristicValue<uint>(Constants.ShadeMotorStateCharacteristic, 0);
                 return DescalePosition(shadeName, position);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                logger.Error(e, "Couldn't get position");
                 return null;
             }
         }
@@ -213,6 +215,7 @@ namespace HomeAssistant.Hub.Soma
                 if (deviceInfo != null)
                 {
                     device = await BluetoothLEDevice.FromIdAsync(deviceInfo.Id);
+                    logger.Debug($"Found device with name {name}.");
                 }
 
                 if (device != null)
@@ -244,6 +247,7 @@ namespace HomeAssistant.Hub.Soma
                 byte[] result = new byte[buffer.Length];
                 reader.ReadBytes(result);
                 string resultString = Convert.ToString(result[0]);
+                logger.Debug($"Read value: {resultString}");
                 TypeConverter converter = TypeDescriptor.GetConverter(typeof(T));
                 return (T)converter.ConvertFromInvariantString(resultString);
             }
@@ -269,12 +273,25 @@ namespace HomeAssistant.Hub.Soma
                 Characteristics = GetCharacteristics();
             }
             
-            public async Task<T> GetCharacteristicValue<T>(Guid characteristicId) where T : IConvertible
+            public async Task<T> GetCharacteristicValue<T>(Guid characteristicId, int retry) where T : IConvertible
             {
-                var characteristic = Characteristics.FirstOrDefault(c => c.Uuid.Equals(characteristicId));
-                if (characteristic != null)
+                try
                 {
-                    return await ReadCharacteristicValue<T>(characteristic);
+                    logger.Debug($"Reading characteristic: {characteristicId}");
+                    var characteristic = Characteristics.FirstOrDefault(c => c.Uuid.Equals(characteristicId));
+                    if (characteristic != null)
+                    {
+                        return await ReadCharacteristicValue<T>(characteristic);
+                    }
+                }
+                catch (Exception e) when (e is ArgumentException || e is ObjectDisposedException)
+                {
+                    if (retry < 4)
+                    {
+                        retry++;
+                        await Task.Delay(2000);
+                        return await GetCharacteristicValue<T>(characteristicId, retry);
+                    }
                 }
                 return default(T);
             }
