@@ -2,16 +2,16 @@
   entities:
     input_boolean.slapen: on
     remote.tv_woonkamer: off
-    light.lamp_tv: off
-    light.lamp_bank: off
-    light.lamp_dressoir: off
-    light.lamp_tafel_midden: off
-    light.lamp_tafel_muur: off
-    light.lamp_keuken_deur: off
-    light.lamp_keuken_koelkast: off
-    light.lamp_keuken_raam_links: off
-    light.lamp_keuken_raam_rechts: off
-    switch.ambilight: off
+    #light.lamp_tv: off
+    #light.lamp_bank: off
+    #light.lamp_dressoir: off
+    #light.lamp_tafel_midden: off
+    #light.lamp_tafel_muur: off
+    #light.lamp_keuken_deur: off
+    #light.lamp_keuken_koelkast: off
+    #light.lamp_keuken_raam_links: off
+    #light.lamp_keuken_raam_rechts: off
+    #switch.ambilight: off
     switch.boiler_keuken: off
     climate.toon_van_eneco:
       operation_mode: "cool"
@@ -37,10 +37,10 @@
       brightness: 30
     light.lamp_tafel_midden:
       state: on
-      brightness: 20
+      brightness: 15
     light.lamp_tafel_muur:
       state: on
-      brightness: 20
+      brightness: 15
     light.lamp_keuken_deur:
       state: off
     light.lamp_keuken_koelkast:
@@ -112,4 +112,16 @@
       state: on
       brightness: 220
     switch.ambilight: off
-    
+
+- name: "Licht beneden uit"
+  entities:
+    light.lamp_tv: off
+    light.lamp_bank: off
+    light.lamp_dressoir: off
+    light.lamp_tafel_midden: off
+    light.lamp_tafel_muur: off
+    light.lamp_keuken_deur: off
+    light.lamp_keuken_koelkast: off
+    light.lamp_keuken_raam_links: off
+    light.lamp_keuken_raam_rechts: off
+    switch.ambilight: off

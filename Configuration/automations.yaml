@@ -1,4 +1,14 @@
+- alias: "Start HomeAssistant"
+  initial_state: 'on'
+  trigger:
+    platform: homeassistant
+    event: start
+  action:
+    service: switch.turn_on
+    entity_id: switch.flux
+
 - alias: "Forceer thuis"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: input_boolean.forceer_thuis
@@ -8,6 +18,7 @@
     entity_id: input_boolean.forceer_afwezig
 
 - alias: "Forceer afwezig"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: input_boolean.forceer_afwezig
@@ -17,6 +28,7 @@
     entity_id: input_boolean.forceer_thuis
 
 - alias: "Opstaan"
+  initial_state: 'on'
   trigger:
     platform: time
     at: "07:30:00"
@@ -25,18 +37,19 @@
     entity_id: scene.opstaan
 
 - alias: "Lichten aan"
+  initial_state: 'on'
   trigger:
     - platform: state
       entity_id: binary_sensor.donker_buiten
       to: 'on'
     - platform: state
-      entity_id: binary_sensor.iemand_thuis
+      entity_id: binary_sensor.iemand_beneden
       to: 'on'
   condition:
     condition: and
     conditions:
       - condition: state
-        entity_id: binary_sensor.iemand_thuis
+        entity_id: binary_sensor.iemand_beneden
         state: 'on'
       - condition: state
         entity_id: binary_sensor.donker_buiten
@@ -52,20 +65,41 @@
     entity_id: scene.licht_normaal
 
 - alias: "Lichten uit"
+  initial_state: 'on'
   trigger:
     - platform: state
       entity_id: binary_sensor.iemand_thuis
       to: 'off'
+      for:
+        minutes: 5
     - platform: state
       entity_id: binary_sensor.donker_buiten
       to: 'off'
   action:
     service: light.turn_off
 
+- alias: "Lichten beneden uit"
+  initial_state: 'on'
+  trigger: 
+    platform: state
+    entity_id: binary_sensor.iemand_beneden
+    to: 'off'
+  condition: 
+    condition: state
+    entity_id: binary_sensor.iemand_thuis
+    state: 'on'
+  action:
+    service: scene.turn_on
+    entity_id: scene.licht_beneden_uit
+
 - alias: "Verwarming aan"
+  initial_state: 'on'
   trigger:
     - platform: state
       entity_id: binary_sensor.iemand_thuis
+      to: 'on'
+    - platform: state
+      entity_id: input_boolean.verwarming_override
       to: 'on'
     - platform: time
       at: "09:00:00"
@@ -78,18 +112,43 @@
     - condition: state
       entity_id: input_boolean.slapen
       state: 'off'
-    - condition: state
-      entity_id: binary_sensor.iemand_thuis
-      state: 'on'
+#    - condition: state
+#      entity_id: binary_sensor.iemand_thuis
+#      state: 'on'
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: binary_sensor.iemand_thuis
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.verwarming_override
+        state: 'on'
   action:
     - service: climate.set_operation_mode
       data: 
         entity_id: climate.toon_van_eneco
         operation_mode: "heat"
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.verwarming_override
+#    - service: input_boolean.turn_off
+#      entity_id: input_boolean.verwarming_override
+
+- alias: "Verwarming override uit na thuiskomst"
+  initial_state: on
+  trigger:
+    platform: state
+    entity_id: binary_sensor.iemand_thuis
+    to: 'on'
+    for:
+      minutes: 2
+  condition:
+    condition: state
+    entity_id: input_boolean.verwarming_override
+    state: 'on'
+  action:
+    service: input_boolean.turn_off
+    entity_id: input_boolean.verwarming_override
 
 - alias: "Verwarming laag"
+  initial_state: 'on'
   trigger:
     - platform: state
       entity_id: binary_sensor.iemand_thuis
@@ -113,6 +172,7 @@
       operation_mode: "cool"
 
 - alias: "Verwarming uit"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: binary_sensor.iemand_thuis
@@ -130,14 +190,16 @@
       operation_mode: "eco"
 
 - alias: "Boiler keuken uit"
+  initial_state: 'on'
   trigger:
     platform: time
-    at: "23:59:00"
+    at: "00:00:00"
   action:
     service: switch.turn_off
     entity_id: switch.boiler_keuken
     
 - alias: "Boiler keuken aan (werkdag)"
+  initial_state: 'on'
   trigger:
     platform: time
     at: "17:00:00"
@@ -150,6 +212,7 @@
     entity_id: switch.boiler_keuken
   
 - alias: "Boiler keuken aan (weekend)"
+  initial_state: 'on'
   trigger:
     platform: time
     at: "08:00:00"
@@ -162,6 +225,7 @@
     entity_id: switch.boiler_keuken
 
 - alias: "Film kijken"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: binary_sensor.film_kijken
@@ -171,6 +235,7 @@
     entity_id: scene.film_start
   
 - alias: "Film gepauzeerd"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: media_player.mycroft
@@ -184,6 +249,7 @@
     entity_id: scene.film_gepauzeerd
   
 - alias: "Film gestart/hervat"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: media_player.mycroft
@@ -193,6 +259,7 @@
     entity_id: scene.film_actief
     
 - alias: "Film gestopt"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: binary_sensor.film_kijken
@@ -212,6 +279,7 @@
       entity_id: scene.licht_normaal
       
 - alias: "Stand gordijn"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.positie_gordijn
@@ -222,6 +290,7 @@
       position: "{{ states('sensor.positie_gordijn') }}"
         
 - alias: "Nieuwe download Sonarr"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.sonarr
@@ -232,6 +301,7 @@
       message: "{{ states('sensor.sonarr') }}"
 
 - alias: "Nieuwe download Radarr"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.radarr
@@ -242,17 +312,19 @@
       message: "{{ states('sensor.radarr') }}"
 
 - alias: "Telegram opvragen temperatuur"
+  initial_state: 'on'
   trigger:
     platform: event
     event_type: telegram_command
     event_data:
       command: '/temperatuur'
   action:
-    - service: notify.telegram
-      data_template:
-        message: "De temperatuur is {{ states.climate.toon_van_eneco.attributes.current_temperature }} °C"
+    service: notify.telegram
+    data_template:
+      message: "De temperatuur is {{ states.climate.toon_van_eneco.attributes.current_temperature }} °C"
 
 - alias: "Telegram mag verwarming aan"
+  initial_state: 'on'
   trigger:
     platform: time
     at: "17:15:00"
@@ -277,55 +349,164 @@
           - 'Ja graag:/verwarmingaan, Nee bedankt:/verwarminguit'
 
 - alias: "Telegram verwarming aan"
+  initial_state: 'on'
   trigger:
-    platform: event
-    event_type: telegram_command
-    event_data:
-      command: '/verwarmingaan'
+    - platform: event
+      event_type: telegram_command
+      event_data:
+        command: '/verwarmingaan'
+    - platform: event
+      event_type: telegram_callback
+      event_data:
+        data: '/verwarmingaan'
   action:
     - service: notify.telegram
       data_template:
         message: "Ok, de verwarming staat aan!"
-    - service: scene.turn_on
-      entity_id: scene.verwarming_normaal
+#    - service: scene.turn_on
+#      entity_id: scene.verwarming_normaal
     - condition: state
       entity_id: binary_sensor.iemand_thuis
       state: 'off'
     - service: input_boolean.turn_on
       entity_id: input_boolean.verwarming_override
-          
+
+      
 - alias: "Beweging keuken"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.beweging_keuken
     to: 'True'
   action:
-    service: input_datetime.set_datetime
-    data_template:
-      entity_id: input_datetime.laatste_beweging_keuken
-      date: "{{ now().strftime('%Y-%m-%d') }}"
-      time: "{{ now().strftime('%H:%M:%S') }}"
+    - service: input_datetime.set_datetime
+      data_template:
+        entity_id: input_datetime.laatste_beweging_keuken
+        date: "{{ now().strftime('%Y-%m-%d') }}"
+        time: "{{ now().strftime('%H:%M:%S') }}"
+    - service: timer.start
+      entity_id: timer.beweging_keuken
 
-- alias: "Beweging werkkamer"
+- alias: "Beweging woonkamer"
+  initial_state: 'on'
   trigger:
     platform: state
-    entity_id: sensor.beweging_werkkamer
+    entity_id: sensor.beweging_woonkamer
     to: 'True'
   action:
-    service: input_datetime.set_datetime
-    data_template:
-      entity_id: input_datetime.laatste_beweging_werkkamer
-      date: "{{ now().strftime('%Y-%m-%d') }}"
-      time: "{{ now().strftime('%H:%M:%S') }}"
-
-- alias: "Beweging gang"
+    - service: input_datetime.set_datetime
+      data_template:
+        entity_id: input_datetime.laatste_beweging_woonkamer
+        date: "{{ now().strftime('%Y-%m-%d') }}"
+        time: "{{ now().strftime('%H:%M:%S') }}"
+    - service: timer.start
+      entity_id: timer.beweging_woonkamer
+      
+- alias: "Beweging gang aan"
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.beweging_gang
     to: 'True'
   action:
-    service: input_datetime.set_datetime
-    data_template:
-      entity_id: input_datetime.laatste_beweging_gang
-      date: "{{ now().strftime('%Y-%m-%d') }}"
-      time: "{{ now().strftime('%H:%M:%S') }}"
+    - service: input_datetime.set_datetime
+      data_template:
+        entity_id: input_datetime.laatste_beweging_gang
+        date: "{{ now().strftime('%Y-%m-%d') }}"
+        time: "{{ now().strftime('%H:%M:%S') }}"
+    - service: timer.start
+      entity_id: timer.beweging_gang
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: binary_sensor.donker_buiten
+        state: 'on'
+      - condition: state
+        entity_id: light.lamp_gang
+        state: 'off'
+    - service: light.turn_on
+      entity_id: light.lamp_gang
+
+- alias: "Beweging gang uit"
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.beweging_gang
+  action:
+    service: light.turn_off
+    entity_id: light.lamp_gang
+
+- alias: "Beweging overloop aan"
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.beweging_overloop
+    to: 'True'
+  action:
+    - service: input_datetime.set_datetime
+      data_template:
+        entity_id: input_datetime.laatste_beweging_overloop
+        date: "{{ now().strftime('%Y-%m-%d') }}"
+        time: "{{ now().strftime('%H:%M:%S') }}"
+    - service: timer.start
+      entity_id: timer.beweging_overloop
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: binary_sensor.donker_buiten
+        state: 'on'
+      - condition: state
+        entity_id: light.lamp_overloop
+        state: 'off'
+    - service: light.turn_on
+      entity_id: light.lamp_overloop
+      
+- alias: "Beweging overloop uit"
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.beweging_overloop
+  action:
+    service: light.turn_off
+    entity_id: light.lamp_overloop
+      
+- alias: "Beweging werkkamer aan"
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.beweging_werkkamer
+    to: 'True'
+  action:
+    - service: input_datetime.set_datetime
+      data_template:
+        entity_id: input_datetime.laatste_beweging_werkkamer
+        date: "{{ now().strftime('%Y-%m-%d') }}"
+        time: "{{ now().strftime('%H:%M:%S') }}"
+    - service: timer.start
+      entity_id: timer.beweging_werkkamer
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: binary_sensor.donker_buiten
+        state: 'on'
+      - condition: state
+        entity_id: light.lamp_werkkamer
+        state: 'off'
+    - service: light.turn_on
+      entity_id: light.lamp_werkkamer
+
+- alias: "Beweging werkkamer uit"
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.beweging_werkkamer
+  action:
+    service: light.turn_off
+    entity_id: light.lamp_werkkamer
+  

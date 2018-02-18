@@ -79,12 +79,13 @@ mqtt:
 
 media_player:
   - platform: plex
+    scan_interval: 2
 
 remote:
   - platform: harmony
     name: "TV Woonkamer"
     host: 192.168.178.20
-    scan_interval: 10
+    scan_interval: 2
 
 cover:
   - platform: mqtt
@@ -114,15 +115,38 @@ input_datetime:
   laatste_beweging_gang:
     has_date: true
     has_time: true
+  laatste_beweging_woonkamer:
+    has_date: true
+    has_time: true
+  laatste_beweging_overloop:
+    has_date: true
+    has_time: true
+
+timer:
+  beweging_keuken:
+    duration: '00:05:00'
+  beweging_woonkamer:
+    duration: '00:10:00'
+  beweging_gang:
+    duration: '00:03:00'
+  beweging_overloop:
+    duration: '00:03:00'
+  beweging_werkkamer:
+    duration: '00:10:00'
 
 panel_iframe: !include panels.yaml
 sensor: !include sensors.yaml
-light: !include lights.yaml 
+#light: !include lights.yaml 
 switch: !include switches.yaml
 group: !include groups.yaml
 binary_sensor: !include binary_sensors.yaml
 scene: !include scenes.yaml
 automation: !include automations.yaml
+
+hue:
+  bridges:
+    - host: 192.168.178.23
+      allow_unreachable: false
 
 telegram_bot:
   - platform: polling
@@ -147,6 +171,8 @@ history_graph:
       - sensor.temperatuur_keuken
       - sensor.temperatuur_gang
       - sensor.temperatuur_werkkamer
+      - sensor.temperatuur_woonkamer
+      - sensor.temperatuur_overloop
       - sensor.current_temperature_toon
   lux:
     name: "Lichtniveau buiten"
@@ -160,3 +186,5 @@ history_graph:
       - sensor.lichtniveau_keuken
       - sensor.lichtniveau_gang
       - sensor.lichtniveau_werkkamer
+      - sensor.lichtniveau_woonkamer
+      - sensor.lichtniveau_overloop

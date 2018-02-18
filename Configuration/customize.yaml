@@ -37,6 +37,9 @@ binary_sensor.workday_sensor:
 sensor.current_time:
   hidden: true
 
+sensor.current_temperature_toon:
+  hidden: true
+
 sensor.sonarr:
   hidden: true
 

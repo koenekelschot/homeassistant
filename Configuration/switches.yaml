@@ -9,4 +9,16 @@
   command_topic: "HW/sw/4/set"
   state_topic: "HW/sw/4/state"
   optimistic: false
-  
+
+- platform: flux
+  lights:
+    - light.lamp_gang
+    - light.lamp_overloop
+    - light.lamp_werkkamer
+  name: 'Flux'
+  start_time: '07:30'
+  start_colortemp: 5000
+  sunset_colortemp: 3400
+  stop_colortemp: 1600
+#  brightness: 160
+  mode: mired

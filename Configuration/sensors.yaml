@@ -39,15 +39,18 @@
             states.sensor.current_time.state | int >= 2000 or 
             states.sensor.current_time.state | int < 700) 
           %}
-            70
-          {% elif (states.sensor.current_time.state | int >= 1800) %}
-            60
+            75
+          {% elif (
+            states.sensor.current_time.state | int >= 1600 and
+            is_state("binary_sensor.donker_buiten", "on")) 
+          %}
+            65
           {% else %}
             {% if (
               states.climate.toon_van_eneco.attributes.current_temperature | int >= 21 and
               states.sensor.br_irradiance.state | int >= 300
             ) %}
-              60
+              65
             {% else %}
               15
             {% endif %}
@@ -62,7 +65,7 @@
       value_template: '{{ states.sun.sun.attributes.daylight | round(0) }}'
     exterior_lux:
       friendly_name: "Exterior Lux"
-      unit_of_measurement: "lux"
+      unit_of_measurement: "Lux"
       value_template: '{{ ((100.1-states.sensor.dark_sky_cloud_coverage.state|float)/100 * states.sun.sun.attributes.daylight) | round(0) }}'
 
 - platform: template
@@ -131,7 +134,7 @@
   
 - platform: rest
   resource: !secret hue_temperature_gang
-  value_template: '{{ (value_json.state.temperature - 182) | float / 100 }}'
+  value_template: '{{ (value_json.state.temperature - 212) | float / 100 }}'
   unit_of_measurement: '°C'
   name: 'Temperatuur gang'
 
@@ -146,3 +149,53 @@
   value_template: '{{ value_json.state.lightlevel }}'
   unit_of_measurement: Lux
   name: 'Lichtniveau gang'
+
+- platform: rest
+  resource: !secret hue_temperature_woonkamer
+  value_template: '{{ value_json.config.battery }}'
+  unit_of_measurement: '%'
+  name: 'Batterij Hue woonkamer'
+  scan_interval: 3600
+  
+- platform: rest
+  resource: !secret hue_temperature_woonkamer
+  value_template: '{{ value_json.state.temperature | float / 100 }}'
+  unit_of_measurement: '°C'
+  name: 'Temperatuur woonkamer'
+
+- platform: rest
+  resource: !secret hue_presence_woonkamer
+  value_template: '{{ value_json.state.presence }}'
+  name: 'Beweging woonkamer'
+  scan_interval: 2
+
+- platform: rest
+  resource: !secret hue_lightlevel_woonkamer
+  value_template: '{{ value_json.state.lightlevel }}'
+  unit_of_measurement: Lux
+  name: 'Lichtniveau woonkamer'
+
+- platform: rest
+  resource: !secret hue_temperature_overloop
+  value_template: '{{ value_json.config.battery }}'
+  unit_of_measurement: '%'
+  name: 'Batterij Hue overloop'
+  scan_interval: 3600
+  
+- platform: rest
+  resource: !secret hue_temperature_overloop
+  value_template: '{{ (value_json.state.temperature + 115) | float / 100 }}'
+  unit_of_measurement: '°C'
+  name: 'Temperatuur overloop'
+
+- platform: rest
+  resource: !secret hue_presence_overloop
+  value_template: '{{ value_json.state.presence }}'
+  name: 'Beweging overloop'
+  scan_interval: 1
+
+- platform: rest
+  resource: !secret hue_lightlevel_overloop
+  value_template: '{{ value_json.state.lightlevel }}'
+  unit_of_measurement: Lux
+  name: 'Lichtniveau overloop'
