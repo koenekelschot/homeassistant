@@ -263,14 +263,12 @@ namespace HomeAssistant.Hub.Soma
         private class DeviceHandle
         {
             public readonly string Name;
-            private readonly List<GattCharacteristic> Characteristics;
             private readonly BluetoothLEDevice Device;
 
             public DeviceHandle(string name, BluetoothLEDevice device)
             {
                 Name = name;
                 Device = device;
-                Characteristics = GetCharacteristics();
             }
             
             public async Task<T> GetCharacteristicValue<T>(Guid characteristicId, int retry) where T : IConvertible
@@ -278,10 +276,13 @@ namespace HomeAssistant.Hub.Soma
                 try
                 {
                     logger.Debug($"Reading characteristic: {characteristicId}");
-                    var characteristic = Characteristics.FirstOrDefault(c => c.Uuid.Equals(characteristicId));
-                    if (characteristic != null)
+                    foreach (var service in Device.GattServices)
                     {
-                        return await ReadCharacteristicValue<T>(characteristic);
+                        var characteristic = service.GetCharacteristics(characteristicId).FirstOrDefault();
+                        if (characteristic != null)
+                        {
+                            return await ReadCharacteristicValue<T>(characteristic);
+                        }
                     }
                 }
                 catch (Exception e) when (e is ArgumentException || e is ObjectDisposedException)
@@ -298,27 +299,16 @@ namespace HomeAssistant.Hub.Soma
 
             public async Task<bool> SetCharacteristicValue(Guid characteristicId, byte[] value)
             {
-                var characteristic = Characteristics.FirstOrDefault(c => c.Uuid.Equals(characteristicId));
-                if (characteristic != null)
+                foreach (var service in Device.GattServices)
                 {
-                    GattCommunicationStatus result = await characteristic.WriteValueAsync(value.AsBuffer(), GattWriteOption.WriteWithResponse);
-                    return result == GattCommunicationStatus.Success;
+                    var characteristic = service.GetCharacteristics(characteristicId).FirstOrDefault();
+                    if (characteristic != null)
+                    {
+                        GattCommunicationStatus result = await characteristic.WriteValueAsync(value.AsBuffer(), GattWriteOption.WriteWithResponse);
+                        return result == GattCommunicationStatus.Success;
+                    }
                 }
                 return false;
-            }
-
-            private List<GattCharacteristic> GetCharacteristics()
-            {
-                var characteristics = new List<GattCharacteristic>();
-                var getServicesResult = Device.GattServices;
-
-                foreach (var service in getServicesResult)
-                {
-                    var getCharacteristicsResult = service.GetAllCharacteristics();
-                    characteristics.AddRange(getCharacteristicsResult);
-                }
-
-                return characteristics;
             }
 
             private async Task<T> ReadCharacteristicValue<T>(GattCharacteristic characteristic) where T : IConvertible

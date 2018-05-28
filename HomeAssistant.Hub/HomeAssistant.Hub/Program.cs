@@ -1,5 +1,4 @@
-﻿using HomeAssistant.Hub.Dsmr;
-using HomeAssistant.Hub.HomeWizard;
+﻿using HomeAssistant.Hub.HomeWizard;
 using HomeAssistant.Hub.Models;
 using HomeAssistant.Hub.Mqtt;
 using HomeAssistant.Hub.Soma;
@@ -25,7 +24,6 @@ namespace HomeAssistant.Hub
         private static MqttService _mqttService;
         private static SonarrWebhookService _sonarrWebhookService;
         private static RadarrWebhookService _radarrWebhookService;
-        private static CouchPotatoWebhookService _couchPotatoWebhookService;
 
         static void Main(string[] args)
         {
@@ -62,21 +60,17 @@ namespace HomeAssistant.Hub
                 .AddSingleton<MqttTopicResolveService>()
                 .AddSingleton<MqttMessageParseService>()
                 .AddSingleton<HomeWizardService>()
-                //.AddSingleton<DsmrService>()
                 .AddSingleton<ShadesService>()
                 .AddSingleton<WebhookService>()
                 .AddSingleton<SonarrWebhookService>()
                 .AddSingleton<RadarrWebhookService>()
-                .AddSingleton<CouchPotatoWebhookService>()
                 .Configure(Configuration.GetSection<MqttClientConfig>("Mqtt:Client"))
                 .Configure(Configuration.GetSection<MqttTopicConfig>("Mqtt:Topics"))
                 .Configure(Configuration.GetSection<HomeWizardConfig>("HomeWizard"))
-                //.Configure(Configuration.GetSection<DsmrConfig>("Dsmr"))
                 .Configure(Configuration.GetSection<ShadesConfig>("Soma"))
                 .Configure(Configuration.GetSection<WebhookConfig>("Webhooks"))
                 .Configure(Configuration.GetSection<SonarrWebhookConfig>("Webhooks:Sonarr"))
-                .Configure(Configuration.GetSection<RadarrWebhookConfig>("Webhooks:Radarr"))
-                .Configure(Configuration.GetSection<CouchPotatoWebhookConfig>("Webhooks:CouchPotato"));
+                .Configure(Configuration.GetSection<RadarrWebhookConfig>("Webhooks:Radarr"));
 
             ServiceProvider = services.BuildServiceProvider();
         }
@@ -85,8 +79,6 @@ namespace HomeAssistant.Hub
         {
             try
             {
-                //ServiceProvider.GetService<DsmrService>().Start();
-
                 InitializeMqtt();
                 InitializeWebhooks();
                 InitializeTemperatureTimer();
@@ -101,7 +93,6 @@ namespace HomeAssistant.Hub
 
         private static void Shutdown()
         {
-            //ServiceProvider.GetService<DsmrService>().Stop();
             _mqttService?.Stop();
             ServiceProvider.GetService<WebhookService>().Stop();
         }
@@ -131,12 +122,6 @@ namespace HomeAssistant.Hub
 
             _radarrWebhookService = ServiceProvider.GetService<RadarrWebhookService>();
             _radarrWebhookService.MessageReceived += async (object sender, Message message) =>
-            {
-                await OnMessageReceived(message);
-            };
-
-            _couchPotatoWebhookService = ServiceProvider.GetService<CouchPotatoWebhookService>();
-            _couchPotatoWebhookService.MessageReceived += async (object sender, Message message) =>
             {
                 await OnMessageReceived(message);
             };
