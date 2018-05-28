@@ -70,8 +70,6 @@
     - platform: state
       entity_id: binary_sensor.iemand_thuis
       to: 'off'
-      for:
-        minutes: 5
     - platform: state
       entity_id: binary_sensor.donker_buiten
       to: 'off'
@@ -84,6 +82,8 @@
     platform: state
     entity_id: binary_sensor.iemand_beneden
     to: 'off'
+    for:
+      minutes: 5
   condition: 
     condition: state
     entity_id: binary_sensor.iemand_thuis

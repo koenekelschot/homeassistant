@@ -1,5 +1,6 @@
 [Ss]ecrets.yaml
 [Kk]nown_devices.yaml
+[Ee]ntity_registry.yaml
 *.conf
 
 # Add any directories, files, or patterns you don't want to be tracked by version control
@@ -26,6 +27,7 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+__pycache__/
 
 # Visual Studio 2015 cache/options directory
 .vs/

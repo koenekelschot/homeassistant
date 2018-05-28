@@ -80,6 +80,8 @@ mqtt:
 media_player:
   - platform: plex
     scan_interval: 2
+  - platform: denon
+    host: 192.168.178.27
 
 remote:
   - platform: harmony
@@ -136,7 +138,6 @@ timer:
 
 panel_iframe: !include panels.yaml
 sensor: !include sensors.yaml
-#light: !include lights.yaml 
 switch: !include switches.yaml
 group: !include groups.yaml
 binary_sensor: !include binary_sensors.yaml
@@ -162,6 +163,8 @@ notify:
 toon:
   username: !secret eneco_user
   password: !secret eneco_pass
+  consumer_key: !secret eneco_dev_key
+  consumer_secret: !secret eneco_dev_secret
 
 history_graph:
   temperature:
