@@ -1,0 +1,173 @@
+homeassistant:
+  customize:
+    sensor.current_temperature_toon:
+      hidden: true
+
+input_boolean:
+  verwarming_override:
+    initial: off
+    
+toon:
+  username: !secret eneco_user
+  password: !secret eneco_pass
+  consumer_key: !secret eneco_dev_key
+  consumer_secret: !secret eneco_dev_secret
+
+sensor:
+  - platform: template
+    sensors:
+      current_temperature_toon:
+        friendly_name: "Temperatuur Toon"
+        unit_of_measurement: '°C'
+        value_template: '{{ states.climate.toon_van_eneco.attributes.current_temperature }}'
+        
+automation:
+  - alias: "Verwarming aan"
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.iemand_thuis
+        to: 'on'
+      - platform: state
+        entity_id: input_boolean.verwarming_override
+        to: 'on'
+      - platform: time
+        at: "09:00:00"
+    condition:
+      condition: and
+      conditions:
+      - condition: time
+        after: "07:00:00"
+        before: "22:30:00"
+      - condition: state
+        entity_id: input_boolean.slapen
+        state: 'off'
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.iemand_thuis
+          state: 'on'
+        - condition: state
+          entity_id: input_boolean.verwarming_override
+          state: 'on'
+    action:
+      - service: climate.set_operation_mode
+        data: 
+          entity_id: climate.toon_van_eneco
+          operation_mode: "heat"
+
+  - alias: "Verwarming override uit na thuiskomst"
+    initial_state: on
+    trigger:
+      platform: state
+      entity_id: binary_sensor.iemand_thuis
+      to: 'on'
+      for:
+        minutes: 2
+    condition:
+      condition: state
+      entity_id: input_boolean.verwarming_override
+      state: 'on'
+    action:
+      service: input_boolean.turn_off
+      entity_id: input_boolean.verwarming_override
+
+  - alias: "Verwarming laag"
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.iemand_thuis
+        to: 'off'
+      - platform: time
+        at: "22:30:00"
+    condition:
+      condition: or
+      conditions:
+        - condition: state
+          entity_id: climate.toon_van_eneco
+          state: 'Comfort'
+        - condition: state
+          entity_id: climate.toon_van_eneco
+          state: 'Home'
+          #docs kloppen niet, 'Thuis' moet 'Home' zijn
+    action:
+      service: climate.set_operation_mode
+      data: 
+        entity_id: climate.toon_van_eneco
+        operation_mode: "cool"
+
+  - alias: "Verwarming uit"
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.iemand_thuis
+      to: 'off'
+      for:
+        hours: 10
+    condition:
+      condition: state
+      entity_id: input_boolean.verwarming_override
+      state: 'off'
+    action:
+      service: climate.set_operation_mode
+      data: 
+        entity_id: climate.toon_van_eneco
+        operation_mode: "eco"
+
+  - alias: "Telegram opvragen temperatuur"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: telegram_command
+      event_data:
+        command: '/temperatuur'
+    action:
+      service: notify.telegram
+      data_template:
+        message: "De temperatuur is {{ states.climate.toon_van_eneco.attributes.current_temperature }} °C"
+
+  - alias: "Telegram mag verwarming aan"
+    initial_state: 'on'
+    trigger:
+      platform: time
+      at: "17:15:00"
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.workday_sensor
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.iemand_thuis
+          state: 'off'
+        - condition: numeric_state
+          entity_id: sensor.br_temperature
+          below: 5
+    action:
+      service: notify.telegram
+      data_template:
+        message: "Het is op dit moment {{ states.sensor.br_temperature.state }} °C buiten, zal ik de verwarming vast aan zetten?"
+        data:
+          inline_keyboard:
+            - 'Ja graag:/verwarmingaan, Nee bedankt:/verwarminguit'
+
+  - alias: "Telegram verwarming aan"
+    initial_state: 'on'
+    trigger:
+      - platform: event
+        event_type: telegram_command
+        event_data:
+          command: '/verwarmingaan'
+      - platform: event
+        event_type: telegram_callback
+        event_data:
+          data: '/verwarmingaan'
+    action:
+      - service: notify.telegram
+        data_template:
+          message: "Ok, de verwarming staat aan!"
+      - condition: state
+        entity_id: binary_sensor.iemand_thuis
+        state: 'off'
+      - service: input_boolean.turn_on
+        entity_id: input_boolean.verwarming_override

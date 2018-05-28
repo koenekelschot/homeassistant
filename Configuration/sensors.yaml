@@ -14,48 +14,10 @@
   monitored_conditions:
     - cloud_cover
 
-- platform: mqtt
-  name: "Sonarr"
-  state_topic: "downloads/sonarr"
-
-- platform: mqtt
-  name: "Radarr"
-  state_topic: "downloads/radarr"
-
 - platform: template
   sensors:
     current_time:
       value_template: '{{ now().strftime("%H%M") }}'
-
-- platform: template
-  sensors:
-    positie_gordijn:
-      friendly_name: "Gewenste positie gordijn"
-      value_template: >
-        {% if (is_state("input_boolean.slapen", "on")) %}
-          90
-        {% else %}
-          {% if (
-            states.sensor.current_time.state | int >= 2000 or 
-            states.sensor.current_time.state | int < 700) 
-          %}
-            75
-          {% elif (
-            states.sensor.current_time.state | int >= 1600 and
-            is_state("binary_sensor.donker_buiten", "on")) 
-          %}
-            65
-          {% else %}
-            {% if (
-              states.climate.toon_van_eneco.attributes.current_temperature | int >= 21 and
-              states.sensor.br_irradiance.state | int >= 300
-            ) %}
-              65
-            {% else %}
-              15
-            {% endif %}
-          {% endif %}
-        {% endif %}
 
 - platform: template
   sensors:
@@ -67,14 +29,7 @@
       friendly_name: "Exterior Lux"
       unit_of_measurement: "Lux"
       value_template: '{{ ((100.1-states.sensor.dark_sky_cloud_coverage.state|float)/100 * states.sun.sun.attributes.daylight) | round(0) }}'
-
-- platform: template
-  sensors:
-    current_temperature_toon:
-      friendly_name: "Temperatuur Toon"
-      unit_of_measurement: '°C'
-      value_template: '{{ states.climate.toon_van_eneco.attributes.current_temperature }}'
-      
+ 
 - platform: rest
   resource: !secret hue_temperature_keuken
   value_template: '{{ value_json.config.battery }}'
@@ -87,12 +42,6 @@
   value_template: '{{ (value_json.state.temperature - 78) | float / 100 }}'
   unit_of_measurement: '°C'
   name: 'Temperatuur keuken'
-
-- platform: rest
-  resource: !secret hue_presence_keuken
-  value_template: '{{ value_json.state.presence }}'
-  name: 'Beweging keuken'
-  scan_interval: 2
 
 - platform: rest
   resource: !secret hue_lightlevel_keuken
@@ -114,12 +63,6 @@
   name: 'Temperatuur werkkamer'
 
 - platform: rest
-  resource: !secret hue_presence_werkkamer
-  value_template: '{{ value_json.state.presence }}'
-  name: 'Beweging werkkamer'
-  scan_interval: 2
-
-- platform: rest
   resource: !secret hue_lightlevel_werkkamer
   value_template: '{{ value_json.state.lightlevel }}'
   unit_of_measurement: Lux
@@ -137,12 +80,6 @@
   value_template: '{{ (value_json.state.temperature - 212) | float / 100 }}'
   unit_of_measurement: '°C'
   name: 'Temperatuur gang'
-
-- platform: rest
-  resource: !secret hue_presence_gang
-  value_template: '{{ value_json.state.presence }}'
-  name: 'Beweging gang'
-  scan_interval: 1
 
 - platform: rest
   resource: !secret hue_lightlevel_gang
@@ -164,12 +101,6 @@
   name: 'Temperatuur woonkamer'
 
 - platform: rest
-  resource: !secret hue_presence_woonkamer
-  value_template: '{{ value_json.state.presence }}'
-  name: 'Beweging woonkamer'
-  scan_interval: 2
-
-- platform: rest
   resource: !secret hue_lightlevel_woonkamer
   value_template: '{{ value_json.state.lightlevel }}'
   unit_of_measurement: Lux
@@ -187,12 +118,6 @@
   value_template: '{{ (value_json.state.temperature + 115) | float / 100 }}'
   unit_of_measurement: '°C'
   name: 'Temperatuur overloop'
-
-- platform: rest
-  resource: !secret hue_presence_overloop
-  value_template: '{{ value_json.state.presence }}'
-  name: 'Beweging overloop'
-  scan_interval: 1
 
 - platform: rest
   resource: !secret hue_lightlevel_overloop

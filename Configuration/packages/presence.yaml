@@ -1,0 +1,280 @@
+device_tracker:
+  - platform: nmap_tracker
+    hosts: 192.168.178.1-64
+    interval_seconds: 20
+    home_interval: 8
+    exclude:
+      - 192.168.178.20
+      - 192.168.178.23
+      - 192.168.178.26
+      - 192.168.178.30
+      - 192.168.178.31
+
+input_boolean:
+  forceer_thuis:
+    initial: off
+  forceer_afwezig:
+    initial: off
+    
+input_datetime:
+  laatste_beweging_keuken:
+    has_date: true
+    has_time: true
+  laatste_beweging_werkkamer:
+    has_date: true
+    has_time: true
+  laatste_beweging_gang:
+    has_date: true
+    has_time: true
+  laatste_beweging_woonkamer:
+    has_date: true
+    has_time: true
+  laatste_beweging_overloop:
+    has_date: true
+    has_time: true
+
+timer:
+  beweging_keuken:
+    duration: '00:05:00'
+  beweging_woonkamer:
+    duration: '00:10:00'
+  beweging_gang:
+    duration: '00:03:00'
+  beweging_overloop:
+    duration: '00:03:00'
+  beweging_werkkamer:
+    duration: '00:10:00'
+    
+binary_sensor:
+  - platform: template
+    sensors:
+      iemand_thuis:
+        value_template: >
+          {% if (
+            is_state('input_boolean.forceer_afwezig', 'off') and (
+              is_state('input_boolean.forceer_thuis', 'on') or
+              is_state('device_tracker.huaweip10litefritzbox', 'home') or
+              is_state('binary_sensor.iemand_beneden', 'on') or
+              is_state('binary_sensor.iemand_boven', 'on'))) %}
+            true
+          {% else %} 
+            false
+          {% endif %}
+
+  - platform: template
+    sensors:
+      iemand_beneden:
+        value_template: >
+          {% if (
+            is_state('input_boolean.forceer_afwezig', 'off') and (
+              is_state('binary_sensor.tv_woonkamer_aan', 'on') or
+              is_state('timer.beweging_keuken', 'active') or
+              is_state('timer.beweging_woonkamer', 'active') or
+              is_state('timer.beweging_gang', 'active'))) %}
+            true
+          {% else %}
+            false
+          {% endif %}
+
+  - platform: template
+    sensors:
+      iemand_boven:
+        value_template: >
+          {% if (
+            is_state('input_boolean.forceer_afwezig', 'off') and (
+              is_state('timer.beweging_overloop', 'active') or
+              is_state('timer.beweging_werkkamer', 'active'))) %}
+            true
+          {% else %}
+            false
+          {% endif %}
+
+sensor:
+  - platform: rest
+    resource: !secret hue_presence_keuken
+    value_template: '{{ value_json.state.presence }}'
+    name: 'Beweging keuken'
+    scan_interval: 2
+    
+  - platform: rest
+    resource: !secret hue_presence_werkkamer
+    value_template: '{{ value_json.state.presence }}'
+    name: 'Beweging werkkamer'
+    scan_interval: 2
+    
+  - platform: rest
+    resource: !secret hue_presence_gang
+    value_template: '{{ value_json.state.presence }}'
+    name: 'Beweging gang'
+    scan_interval: 1
+    
+  - platform: rest
+    resource: !secret hue_presence_woonkamer
+    value_template: '{{ value_json.state.presence }}'
+    name: 'Beweging woonkamer'
+    scan_interval: 2
+    
+  - platform: rest
+    resource: !secret hue_presence_overloop
+    value_template: '{{ value_json.state.presence }}'
+    name: 'Beweging overloop'
+    scan_interval: 1
+  
+automation:
+  - alias: "Forceer thuis"
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: input_boolean.forceer_thuis
+      to: 'on'
+    action:
+      service: input_boolean.turn_off
+      entity_id: input_boolean.forceer_afwezig
+
+  - alias: "Forceer afwezig"
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: input_boolean.forceer_afwezig
+      to: 'on'
+    action:
+      service: input_boolean.turn_off
+      entity_id: input_boolean.forceer_thuis
+  
+  - alias: "Beweging keuken"
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: sensor.beweging_keuken
+      to: 'True'
+    action:
+      - service: input_datetime.set_datetime
+        data_template:
+          entity_id: input_datetime.laatste_beweging_keuken
+          date: "{{ now().strftime('%Y-%m-%d') }}"
+          time: "{{ now().strftime('%H:%M:%S') }}"
+      - service: timer.start
+        entity_id: timer.beweging_keuken
+
+  - alias: "Beweging woonkamer"
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: sensor.beweging_woonkamer
+      to: 'True'
+    action:
+      - service: input_datetime.set_datetime
+        data_template:
+          entity_id: input_datetime.laatste_beweging_woonkamer
+          date: "{{ now().strftime('%Y-%m-%d') }}"
+          time: "{{ now().strftime('%H:%M:%S') }}"
+      - service: timer.start
+        entity_id: timer.beweging_woonkamer
+        
+  - alias: "Beweging gang aan"
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: sensor.beweging_gang
+      to: 'True'
+    action:
+      - service: input_datetime.set_datetime
+        data_template:
+          entity_id: input_datetime.laatste_beweging_gang
+          date: "{{ now().strftime('%Y-%m-%d') }}"
+          time: "{{ now().strftime('%H:%M:%S') }}"
+      - service: timer.start
+        entity_id: timer.beweging_gang
+      - condition: and
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.donker_buiten
+          state: 'on'
+        - condition: state
+          entity_id: light.lamp_gang
+          state: 'off'
+      - service: light.turn_on
+        entity_id: light.lamp_gang
+
+  - alias: "Beweging gang uit"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.beweging_gang
+    action:
+      service: light.turn_off
+      entity_id: light.lamp_gang
+
+  - alias: "Beweging overloop aan"
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: sensor.beweging_overloop
+      to: 'True'
+    action:
+      - service: input_datetime.set_datetime
+        data_template:
+          entity_id: input_datetime.laatste_beweging_overloop
+          date: "{{ now().strftime('%Y-%m-%d') }}"
+          time: "{{ now().strftime('%H:%M:%S') }}"
+      - service: timer.start
+        entity_id: timer.beweging_overloop
+      - condition: and
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.donker_buiten
+          state: 'on'
+        - condition: state
+          entity_id: light.lamp_overloop
+          state: 'off'
+      - service: light.turn_on
+        entity_id: light.lamp_overloop
+        
+  - alias: "Beweging overloop uit"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.beweging_overloop
+    action:
+      service: light.turn_off
+      entity_id: light.lamp_overloop
+        
+  - alias: "Beweging werkkamer aan"
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: sensor.beweging_werkkamer
+      to: 'True'
+    action:
+      - service: input_datetime.set_datetime
+        data_template:
+          entity_id: input_datetime.laatste_beweging_werkkamer
+          date: "{{ now().strftime('%Y-%m-%d') }}"
+          time: "{{ now().strftime('%H:%M:%S') }}"
+      - service: timer.start
+        entity_id: timer.beweging_werkkamer
+      - condition: and
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.donker_buiten
+          state: 'on'
+        - condition: state
+          entity_id: light.lamp_werkkamer
+          state: 'off'
+      - service: light.turn_on
+        entity_id: light.lamp_werkkamer
+
+  - alias: "Beweging werkkamer uit"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.beweging_werkkamer
+    action:
+      service: light.turn_off
+      entity_id: light.lamp_werkkamer

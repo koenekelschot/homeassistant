@@ -1,10 +1,4 @@
 - platform: mqtt
-  name: "Boiler keuken"
-  command_topic: "HW/sw/1/set"
-  state_topic: "HW/sw/1/state"
-  optimistic: false
-  
-- platform: mqtt
   name: "Ambilight"
   command_topic: "HW/sw/4/set"
   state_topic: "HW/sw/4/state"
@@ -20,5 +14,4 @@
   start_colortemp: 5000
   sunset_colortemp: 3400
   stop_colortemp: 1600
-#  brightness: 160
   mode: mired

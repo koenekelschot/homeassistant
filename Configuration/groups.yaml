@@ -1,7 +1,23 @@
 # By default, every group appears in the HOME tab. 
 # If you create a group default_view it will REPLACE the contents 
 # of the HOME tab so you can customize the HOME tab as you wish.
+#default_view:
+#  view: yes
+#  name: Beneden
+#  entities:
+#    - group.living_room
+#    - group.kitchen
+#    - group.hallway
+
+#upstairs:
+#  view: yes
+#  name: Boven
+#  entities:
+#    - group.corridor
+#    - group.office
+
 kitchen:
+  view: no
   name: Keuken
   entities:
     - light.lamp_keuken_deur
@@ -16,6 +32,7 @@ kitchen:
     - input_boolean.laatste_beweging_keuken
     
 living_room:
+  view: no
   name: Woonkamer
   entities:
     - light.lamp_tv
@@ -32,6 +49,7 @@ living_room:
     - input_boolean.laatste_beweging_woonkamer
 
 hallway:
+  view: no
   name: Gang
   entities:
     - light.lamp_gang
@@ -42,6 +60,7 @@ hallway:
     - input_boolean.laatste_beweging_gang
 
 corridor:
+  view: no
   name: Overloop
   entities:
     - light.lamp_overloop
@@ -52,6 +71,7 @@ corridor:
     - input_boolean.laatste_beweging_overloop
     
 office:
+  view: no
   name: Werkkamer
   entities:
     - light.lamp_werkkamer
@@ -62,11 +82,13 @@ office:
     - input_boolean.laatste_beweging_werkkamer
     
 people:
+  view: no
   name: People
   entities:
     - device_tracker.huaweip10litefritzbox
 
 meter_readings:
+  view: no
   name: Meterwaarden
   entities:
     - sensor.power_today
@@ -75,6 +97,7 @@ meter_readings:
     - sensor.gas_current
     
 weather:
+  view: no
   name: Weer
   entities:
     - sun.sun

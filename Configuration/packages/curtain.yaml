@@ -1,0 +1,49 @@
+cover:
+  - platform: mqtt
+    name: "Gordijn voor"
+    set_position_topic: "soma/shade/rise201/set"
+    state_topic: "soma/shade/rise201/state"
+    retain: false
+
+sensor:
+  - platform: template
+    sensors:
+      positie_gordijn:
+        friendly_name: "Gewenste positie gordijn"
+        value_template: >
+          {% if (is_state("input_boolean.slapen", "on")) %}
+            90
+          {% else %}
+            {% if (
+              states.sensor.current_time.state | int >= 2000 or 
+              states.sensor.current_time.state | int < 700) 
+            %}
+              75
+            {% elif (
+              states.sensor.current_time.state | int >= 1600 and
+              is_state("binary_sensor.donker_buiten", "on")) 
+            %}
+              65
+            {% else %}
+              {% if (
+                states.climate.toon_van_eneco.attributes.current_temperature | int >= 21 and
+                states.sensor.br_irradiance.state | int >= 300
+              ) %}
+                65
+              {% else %}
+                15
+              {% endif %}
+            {% endif %}
+          {% endif %}
+    
+automation:
+  - alias: "Stand gordijn"
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: sensor.positie_gordijn
+    action:
+      service: cover.set_cover_position
+      data_template:
+        entity_id: cover.gordijn_voor
+        position: "{{ states('sensor.positie_gordijn') }}"

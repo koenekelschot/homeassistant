@@ -26,50 +26,7 @@
         {% else %} 
           false
         {% endif %}
-        
-- platform: template
-  sensors:
-    iemand_thuis:
-      value_template: >
-        {% if (
-          is_state('input_boolean.forceer_afwezig', 'off') and (
-            is_state('input_boolean.forceer_thuis', 'on') or
-            is_state('device_tracker.huaweip10litefritzbox', 'home') or
-            is_state('binary_sensor.iemand_beneden', 'on') or
-            is_state('binary_sensor.iemand_boven', 'on'))) %}
-          true
-        {% else %} 
-          false
-        {% endif %}
-
-- platform: template
-  sensors:
-    iemand_beneden:
-      value_template: >
-        {% if (
-          is_state('input_boolean.forceer_afwezig', 'off') and (
-            is_state('binary_sensor.tv_woonkamer_aan', 'on') or
-            is_state('timer.beweging_keuken', 'active') or
-            is_state('timer.beweging_woonkamer', 'active') or
-            is_state('timer.beweging_gang', 'active'))) %}
-          true
-        {% else %}
-          false
-        {% endif %}
-
-- platform: template
-  sensors:
-    iemand_boven:
-      value_template: >
-        {% if (
-          is_state('input_boolean.forceer_afwezig', 'off') and (
-            is_state('timer.beweging_overloop', 'active') or
-            is_state('timer.beweging_werkkamer', 'active'))) %}
-          true
-        {% else %}
-          false
-        {% endif %}
-        
+       
 - platform: template
   sensors:
     film_kijken:

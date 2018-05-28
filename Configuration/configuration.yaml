@@ -6,6 +6,7 @@ homeassistant:
   unit_system: metric
   time_zone: Europe/Amsterdam
   customize: !include customize.yaml
+  packages: !include_dir_named packages
 
 zone:
   name: Work
@@ -58,18 +59,6 @@ recorder:
 # Track the sun
 sun:
 
-device_tracker:
-  - platform: nmap_tracker
-    hosts: 192.168.178.1-64
-    interval_seconds: 20
-    home_interval: 8
-    exclude:
-      - 192.168.178.20
-      - 192.168.178.23
-      - 192.168.178.26
-      - 192.168.178.30
-      - 192.168.178.31
-
 mqtt:
   broker: 127.0.0.1
   port: 1883
@@ -89,52 +78,9 @@ remote:
     host: 192.168.178.20
     scan_interval: 2
 
-cover:
-  - platform: mqtt
-    name: "Gordijn voor"
-    set_position_topic: "soma/shade/rise201/set"
-    state_topic: "soma/shade/rise201/state"
-    retain: false
-
 input_boolean:
-  #no initial values, handled by the recorder component
   slapen:
     icon: 'mdi:sleep'
-  forceer_thuis:
-    initial: off
-  forceer_afwezig:
-    initial: off
-  verwarming_override:
-    initial: off
-
-input_datetime:
-  laatste_beweging_keuken:
-    has_date: true
-    has_time: true
-  laatste_beweging_werkkamer:
-    has_date: true
-    has_time: true
-  laatste_beweging_gang:
-    has_date: true
-    has_time: true
-  laatste_beweging_woonkamer:
-    has_date: true
-    has_time: true
-  laatste_beweging_overloop:
-    has_date: true
-    has_time: true
-
-timer:
-  beweging_keuken:
-    duration: '00:05:00'
-  beweging_woonkamer:
-    duration: '00:10:00'
-  beweging_gang:
-    duration: '00:03:00'
-  beweging_overloop:
-    duration: '00:03:00'
-  beweging_werkkamer:
-    duration: '00:10:00'
 
 panel_iframe: !include panels.yaml
 sensor: !include sensors.yaml
@@ -159,12 +105,6 @@ notify:
   - name: telegram
     platform: telegram
     chat_id: !secret telegram_chatid
-
-toon:
-  username: !secret eneco_user
-  password: !secret eneco_pass
-  consumer_key: !secret eneco_dev_key
-  consumer_secret: !secret eneco_dev_secret
 
 history_graph:
   temperature:
