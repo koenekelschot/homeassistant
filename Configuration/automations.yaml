@@ -100,9 +100,21 @@
 - alias: "Film gestart/hervat"
   initial_state: 'on'
   trigger:
-    platform: state
-    entity_id: media_player.mycroft
-    to: "playing"
+    - platform: state
+      entity_id: media_player.mycroft
+      to: "playing"
+    - platform: state
+      entity_id: binary_sensor.donker_buiten
+      to: 'on'
+  condition:
+    condition: and
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.donker_buiten
+      state: 'on'
+    - condition: state
+      entity_id: binary_sensor.film_kijken
+      state: 'on'
   action:
     service: scene.turn_on
     entity_id: scene.film_actief

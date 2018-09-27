@@ -8,28 +8,12 @@
     - winddirection
     - precipitation
     - irradiance
-    
-- platform: darksky
-  api_key: !secret darksky_api
-  monitored_conditions:
-    - cloud_cover
 
 - platform: template
   sensors:
     current_time:
       value_template: '{{ now().strftime("%H%M") }}'
 
-- platform: template
-  sensors:
-    above_cloud_lux:
-      friendly_name: "Above Cloud Lux"
-      unit_of_measurement: "Lux"
-      value_template: '{{ states.sun.sun.attributes.daylight | round(0) }}'
-    exterior_lux:
-      friendly_name: "Exterior Lux"
-      unit_of_measurement: "Lux"
-      value_template: '{{ ((100.1-states.sensor.dark_sky_cloud_coverage.state|float)/100 * states.sun.sun.attributes.daylight) | round(0) }}'
- 
 - platform: rest
   resource: !secret hue_temperature_keuken
   value_template: '{{ value_json.config.battery }}'
@@ -39,7 +23,7 @@
   
 - platform: rest
   resource: !secret hue_temperature_keuken
-  value_template: '{{ (value_json.state.temperature - 78) | float / 100 }}'
+  value_template: '{{ (value_json.state.temperature + 167) | float / 100 }}'
   unit_of_measurement: '°C'
   name: 'Temperatuur keuken'
 
@@ -48,6 +32,7 @@
   value_template: '{{ value_json.state.lightlevel }}'
   unit_of_measurement: Lux
   name: 'Lichtniveau keuken'
+  scan_interval: 30
 
 - platform: rest
   resource: !secret hue_temperature_werkkamer
@@ -58,7 +43,7 @@
   
 - platform: rest
   resource: !secret hue_temperature_werkkamer
-  value_template: '{{ (value_json.state.temperature + 26) | float / 100 }}'
+  value_template: '{{ (value_json.state.temperature + 31) | float / 100 }}'
   unit_of_measurement: '°C'
   name: 'Temperatuur werkkamer'
 
@@ -77,7 +62,7 @@
   
 - platform: rest
   resource: !secret hue_temperature_gang
-  value_template: '{{ (value_json.state.temperature - 212) | float / 100 }}'
+  value_template: '{{ (value_json.state.temperature - 12) | float / 100 }}'
   unit_of_measurement: '°C'
   name: 'Temperatuur gang'
 
@@ -96,7 +81,7 @@
   
 - platform: rest
   resource: !secret hue_temperature_woonkamer
-  value_template: '{{ value_json.state.temperature | float / 100 }}'
+  value_template: '{{ (value_json.state.temperature + 233) | float / 100 }}'
   unit_of_measurement: '°C'
   name: 'Temperatuur woonkamer'
 
@@ -115,7 +100,7 @@
   
 - platform: rest
   resource: !secret hue_temperature_overloop
-  value_template: '{{ (value_json.state.temperature + 115) | float / 100 }}'
+  value_template: '{{ (value_json.state.temperature + 177 ) | float / 100 }}'
   unit_of_measurement: '°C'
   name: 'Temperatuur overloop'
 

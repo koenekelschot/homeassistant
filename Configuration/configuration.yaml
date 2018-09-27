@@ -32,7 +32,7 @@ map:
 
 http:
   # Uncomment this to add a password (recommended!)
-  # api_password: PASSWORD
+  api_password: !secret api_password
   # Uncomment this if you are using SSL or running in Docker etc
   # base_url: example.duckdns.org:8123
 
@@ -81,6 +81,16 @@ remote:
 input_boolean:
   slapen:
     icon: 'mdi:sleep'
+  donker_override:
+    initial: off
+
+input_number:
+  donker_buiten_threshold:
+    name: "Donker buiten"
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
 
 panel_iframe: !include panels.yaml
 sensor: !include sensors.yaml
@@ -93,7 +103,7 @@ automation: !include automations.yaml
 hue:
   bridges:
     - host: 192.168.178.23
-      allow_unreachable: false
+      allow_unreachable: true
 
 telegram_bot:
   - platform: polling
@@ -117,11 +127,11 @@ history_graph:
       - sensor.temperatuur_woonkamer
       - sensor.temperatuur_overloop
       - sensor.current_temperature_toon
-  lux:
-    name: "Lichtniveau buiten"
-    entities:
-      - sensor.above_cloud_lux
-      - sensor.exterior_lux
+#  lux:
+#    name: "Lichtniveau buiten"
+#    entities:
+#      - sensor.above_cloud_lux
+#      - sensor.exterior_lux
   lightlevels:
     name: "Lichtniveau binnen"
     hours_to_show: 3

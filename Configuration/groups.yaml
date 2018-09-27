@@ -109,5 +109,5 @@ weather:
     - sensor.br_temperature
     - sensor.br_ground_temperature
     - sensor.br_stationname
-    - sensor.dark_sky_cloud_coverage
+#    - sensor.dark_sky_cloud_coverage
     

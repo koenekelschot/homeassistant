@@ -1,9 +1,13 @@
 cover:
-  - platform: mqtt
-    name: "Gordijn voor"
-    set_position_topic: "soma/shade/rise201/set"
-    state_topic: "soma/shade/rise201/state"
-    retain: false
+  - platform: command_line
+    covers:
+      gordijn_voor:
+        friendly_name: "Gordijn voor"
+        command_open: "wget http://192.168.178.55:8080/moveup/CC:94:B6:F1:1D:DD --delete-after -qO-"
+        command_close: "wget http://192.168.178.55:8080/movedown/CC:94:B6:F1:1D:DD --delete-after -qO-"
+        command_stop: "wget http://192.168.178.55:8080/stop/CC:94:B6:F1:1D:DD --delete-after -qO-"
+        command_position: "wget http://192.168.178.55:8080/setposition/CC:94:B6:F1:1D:DD/{position} --delete-after -qO-"
+        command_state: "wget http://192.168.178.55:8080/getposition/CC:94:B6:F1:1D:DD --delete-after -qO-"
 
 sensor:
   - platform: template
@@ -12,26 +16,26 @@ sensor:
         friendly_name: "Gewenste positie gordijn"
         value_template: >
           {% if (is_state("input_boolean.slapen", "on")) %}
-            90
+            0
           {% else %}
             {% if (
               states.sensor.current_time.state | int >= 2000 or 
               states.sensor.current_time.state | int < 700) 
             %}
-              75
+              25
             {% elif (
               states.sensor.current_time.state | int >= 1600 and
               is_state("binary_sensor.donker_buiten", "on")) 
             %}
-              65
+              35
             {% else %}
               {% if (
                 states.climate.toon_van_eneco.attributes.current_temperature | int >= 21 and
                 states.sensor.br_irradiance.state | int >= 300
               ) %}
-                65
+                35
               {% else %}
-                15
+                90
               {% endif %}
             {% endif %}
           {% endif %}
