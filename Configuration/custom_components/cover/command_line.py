@@ -168,13 +168,3 @@ class CommandCover(CoverDevice):
                     "Position is no integer (0-100): %s",
                     position)
                 return
-#            if self._set_position_template is not None:
-#                try:
-#                    position = self._set_position_template.async_render(
-#                        **kwargs)
-#                except TemplateError as ex:
-#                    _LOGGER.error(ex)
-#                    self._state = None
-#
-#            mqtt.async_publish(self.hass, self._position_topic,
-#                               position, self._qos, self._retain)
