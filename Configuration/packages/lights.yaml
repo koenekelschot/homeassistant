@@ -1,0 +1,268 @@
+input_boolean:
+  donker_override:
+    initial: off
+
+input_number:
+  donker_buiten_threshold:
+    name: "Donker buiten"
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "Lux"
+
+binary_sensor:
+- platform: template
+  sensors:
+    donker_buiten:
+      value_template: >
+        {% if (states.sensor.veranda_light_level.state | int < states.input_number.donker_buiten_threshold.state | int) %}
+          true
+        {% elif (is_state('input_boolean.donker_override', 'on')) %}
+          true
+        {% else %}
+          false
+        {% endif %}
+
+scene:
+- name: "Licht beneden normaal"
+  entities:
+    light.lamp_tv:
+      state: on
+      brightness: 220
+    light.lamp_bank:
+      state: on
+      brightness: 220
+    light.lamp_dressoir:
+      state: on
+      brightness: 220
+    light.lamp_tafel_midden:
+      state: on
+      brightness: 200
+    light.lamp_tafel_muur:
+      state: on
+      brightness: 200
+    light.lamp_keuken_deur:
+      state: on
+      brightness: 220
+    light.lamp_keuken_koelkast:
+      state: on
+      brightness: 220
+    light.lamp_keuken_raam_links:
+      state: on
+      brightness: 220
+    light.lamp_keuken_raam_rechts:
+      state: on
+      brightness: 220
+#    switch.ambilight: off
+
+- name: "Licht beneden uit"
+  entities:
+    light.lamp_tv: off
+    light.lamp_bank: off
+    light.lamp_dressoir: off
+    light.lamp_tafel_midden: off
+    light.lamp_tafel_muur: off
+    light.lamp_keuken_deur: off
+    light.lamp_keuken_koelkast: off
+    light.lamp_keuken_raam_links: off
+    light.lamp_keuken_raam_rechts: off
+#    switch.ambilight: off
+    light.lamp_gang: off
+
+- name: "Licht beneden film kijken"
+  entities:
+    light.lamp_tv:
+      state: on
+      brightness: 30
+    light.lamp_bank:
+      state: on
+      brightness: 30
+    light.lamp_dressoir:
+      state: on
+      brightness: 30
+    light.lamp_tafel_midden:
+      state: on
+      brightness: 15
+    light.lamp_tafel_muur:
+      state: on
+      brightness: 15
+    light.lamp_keuken_deur:
+      state: off
+    light.lamp_keuken_koelkast:
+      state: off
+    light.lamp_keuken_raam_links:
+      state: off
+    light.lamp_keuken_raam_rechts:
+      state: off
+#    switch.ambilight: on
+
+- name: "Licht beneden film pauze"
+  entities:
+    light.lamp_tv:
+      state: on
+      brightness: 100
+    light.lamp_bank:
+      state: on
+      brightness: 100
+    light.lamp_dressoir:
+      state: on
+      brightness: 100
+    light.lamp_tafel_midden:
+      state: on
+      brightness: 90
+    light.lamp_tafel_muur:
+      state: on
+      brightness: 90
+    light.lamp_keuken_deur:
+      state: on
+      brightness: 160
+    light.lamp_keuken_koelkast:
+      state: on
+      brightness: 160
+    light.lamp_keuken_raam_links:
+      state: on
+      brightness: 160
+    light.lamp_keuken_raam_rechts:
+      state: on
+      brightness: 160
+#    switch.ambilight: on
+
+automation:
+  - alias: "Licht beneden aan"
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.donker_buiten
+        to: 'on'
+      - platform: state
+        entity_id: binary_sensor.iemand_beneden
+        to: 'on'
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.iemand_beneden
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.donker_buiten
+          state: 'on'
+  #      - condition: state
+  #        entity_id: binary_sensor.film_kijken
+  #        state: 'off'
+        - condition: state
+          entity_id: input_boolean.slapen
+          state: 'off'
+    action:
+      service: scene.turn_on
+      entity_id: scene.licht_beneden_normaal
+
+  - alias: "Licht uit"
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.iemand_thuis
+        to: 'off'
+      - platform: state
+        entity_id: binary_sensor.donker_buiten
+        to: 'off'
+      - platform: state
+        entity_id: input_boolean.slapen
+        to: 'on'
+    action:
+      service: light.turn_off
+      entity_id: all
+
+  - alias: "Licht beneden uit"
+    initial_state: 'on'
+    trigger: 
+      platform: state
+      entity_id: binary_sensor.iemand_beneden
+      to: 'off'
+      for:
+        minutes: 5 
+        #get off the damn couch and trigger the motion sensors
+    condition: 
+      condition: state
+      entity_id: binary_sensor.iemand_thuis
+      state: 'on'
+    action:
+      service: scene.turn_on
+      entity_id: scene.licht_beneden_uit
+
+  - alias: "Licht gang aan"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.started
+      event_data:
+        entity_id: timer.beweging_gang
+    condition:
+      condition: state
+      entity_id: binary_sensor.donker_buiten
+      state: 'on'
+    action:
+      service: light.turn_on
+      entity_id: light.lamp_gang
+
+  - alias: "Licht gang uit"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.beweging_gang
+    action:
+      service: light.turn_off
+      entity_id: light.lamp_gang
+
+  - alias: "Licht overloop aan"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.started
+      event_data:
+        entity_id: timer.beweging_overloop
+    condition:
+      condition: state
+      entity_id: binary_sensor.donker_buiten
+      state: 'on'
+    action:
+      service: light.turn_on
+      entity_id: light.lamp_overloop
+        
+  - alias: "Licht overloop uit"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.beweging_overloop
+    action:
+      service: light.turn_off
+      entity_id: light.lamp_overloop
+
+  - alias: "Licht werkkamer aan"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.started
+      event_data:
+        entity_id: timer.beweging_werkkamer
+    condition:
+      condition: state
+      entity_id: binary_sensor.donker_buiten
+      state: 'on'
+    action:
+      service: light.turn_on
+      entity_id: light.lamp_werkkamer
+
+  - alias: "Licht werkkamer uit"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.beweging_werkkamer
+    action:
+      service: light.turn_off
+      entity_id: light.lamp_werkkamer

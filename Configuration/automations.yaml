@@ -1,140 +1,22 @@
-- alias: "Start HomeAssistant"
-  initial_state: 'on'
+- id: hass_start
+  alias: Start HomeAssistant
   trigger:
+  - event: start
     platform: homeassistant
-    event: start
   action:
-    service: switch.turn_on
+  - data:
+      entity_id: switch.flux
     entity_id: switch.flux
-
-- alias: "Opstaan"
+    service: switch.turn_on
   initial_state: 'on'
+- id: '1558982905019'
+  alias: Opstaan
   trigger:
+  - at: 07:30
     platform: time
-    at: "07:30:00"
+  condition: []
   action:
-    service: scene.turn_on
-    entity_id: scene.opstaan
-
-- alias: "Lichten aan"
-  initial_state: 'on'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.donker_buiten
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.iemand_beneden
-      to: 'on'
-  condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.iemand_beneden
-        state: 'on'
-      - condition: state
-        entity_id: binary_sensor.donker_buiten
-        state: 'on'
-      - condition: state
-        entity_id: binary_sensor.film_kijken
-        state: 'off'
-      - condition: state
-        entity_id: input_boolean.slapen
-        state: 'off'
-  action:
-    service: scene.turn_on
-    entity_id: scene.licht_normaal
-
-- alias: "Lichten uit"
-  initial_state: 'on'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.iemand_thuis
-      to: 'off'
-    - platform: state
-      entity_id: binary_sensor.donker_buiten
-      to: 'off'
-  action:
-    service: light.turn_off
-
-- alias: "Lichten beneden uit"
-  initial_state: 'on'
-  trigger: 
-    platform: state
-    entity_id: binary_sensor.iemand_beneden
-    to: 'off'
-    for:
-      minutes: 5
-  condition: 
-    condition: state
-    entity_id: binary_sensor.iemand_thuis
-    state: 'on'
-  action:
-    service: scene.turn_on
-    entity_id: scene.licht_beneden_uit
-
-    
-- alias: "Film kijken"
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: binary_sensor.film_kijken
-    to: 'on'
-  action:
-    service: scene.turn_on
-    entity_id: scene.film_start
-  
-- alias: "Film gepauzeerd"
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: media_player.mycroft
-    from: "playing"
-  condition:
-    condition: state
-    entity_id: binary_sensor.donker_buiten
-    state: 'on'
-  action:
-    service: scene.turn_on
-    entity_id: scene.film_gepauzeerd
-  
-- alias: "Film gestart/hervat"
-  initial_state: 'on'
-  trigger:
-    - platform: state
-      entity_id: media_player.mycroft
-      to: "playing"
-    - platform: state
-      entity_id: binary_sensor.donker_buiten
-      to: 'on'
-  condition:
-    condition: and
-    conditions:
-    - condition: state
-      entity_id: binary_sensor.donker_buiten
-      state: 'on'
-    - condition: state
-      entity_id: binary_sensor.film_kijken
-      state: 'on'
-  action:
-    service: scene.turn_on
-    entity_id: scene.film_actief
-    
-- alias: "Film gestopt"
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: binary_sensor.film_kijken
-    from: 'on'
-    to: 'off'
-  condition:
-    condition: and
-    conditions:
-    - condition: state
-      entity_id: binary_sensor.donker_buiten
-      state: 'on'
-    - condition: state
+  - data:
       entity_id: input_boolean.slapen
-      state: 'off'
-  action:
-    - service: scene.turn_on
-      entity_id: scene.licht_normaal
+    service: input_boolean.turn_off
+  initial_state: 'on'

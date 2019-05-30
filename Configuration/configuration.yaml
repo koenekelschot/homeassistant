@@ -1,10 +1,16 @@
 homeassistant:
+  # Name of the location where Home Assistant is running
   name: Home
+  # Location required to calculate the time the sun rises and sets
   latitude: !secret latitude_home
   longitude: !secret longitude_home
+  # Impacts weather/sunrise data (altitude above sea level in meters)
   elevation: 6
+  # metric for Metric, imperial for Imperial
   unit_system: metric
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   time_zone: Europe/Amsterdam
+  # Customization file
   customize: !include customize.yaml
   packages: !include_dir_named packages
 
@@ -15,62 +21,50 @@ zone:
   longitude: !secret longitude_work
   radius: 90
 
+# Enables a map showing the location of tracked devices
+map:
+
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+# Uncomment this if you are using SSL/TLS, running in Docker container, etc.
+# http:
+#   base_url: example.duckdns.org:8123
+
+recorder:
+  purge_interval: 1
+  purge_keep_days: 30
+
+# Discover some devices automatically
+discovery:
+
 logger:
   default: info
   logs:
     homeassistant.components.device_tracker.nmap_tracker: error
-  
-# Show links to resources in log and frontend
-#introduction:
 
-# Enables the frontend
-frontend:
-  javascript_version: latest
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+sensor: !include sensors.yaml
 
-# Enables a map showing the location of tracked devices
-map:
+binary_sensor:
+- platform: workday
+  country: NL
+- platform: mystrom
 
-http:
-  # Uncomment this to add a password (recommended!)
-  api_password: !secret api_password
-  # Uncomment this if you are using SSL or running in Docker etc
-  # base_url: example.duckdns.org:8123
+input_boolean:
+  slapen:
+    icon: 'mdi:sleep'
 
-# Checks for available updates
-updater:
-  include_used_components: true
+toon:
+  client_id: !secret eneco_dev_key
+  client_secret: !secret eneco_dev_secret
 
-# Discover some devices automatically
-#discovery:
-
-# Allows you to issue voice commands from the frontend in enabled browsers
-#conversation:
-
-# Enables support for tracking state changes over time.
-history:
-
-# View all events in a logbook
-logbook:
-
-recorder:
-  purge_interval: 1
-  purge_keep_days: 14
-
-# Track the sun
-sun:
-
-mqtt:
-  broker: 127.0.0.1
-  port: 1883
-  client_id: !secret mqtt_client_id
-  username: !secret mqtt_username
-  password: !secret mqtt_password
-
-media_player:
-  - platform: plex
-    scan_interval: 2
-  - platform: denon
-    host: 192.168.178.27
+hue:
+  bridges:
+    - host: 192.168.178.23
+      allow_unreachable: true
 
 remote:
   - platform: harmony
@@ -78,66 +72,18 @@ remote:
     host: 192.168.178.20
     scan_interval: 2
 
-input_boolean:
-  slapen:
-    icon: 'mdi:sleep'
-  donker_override:
-    initial: off
-
-input_number:
-  donker_buiten_threshold:
-    name: "Donker buiten"
-    min: 0
-    max: 100
-    step: 1
-    unit_of_measurement: "%"
-
-panel_iframe: !include panels.yaml
-sensor: !include sensors.yaml
-switch: !include switches.yaml
-group: !include groups.yaml
-binary_sensor: !include binary_sensors.yaml
-scene: !include scenes.yaml
-automation: !include automations.yaml
-
-hue:
-  bridges:
-    - host: 192.168.178.23
-      allow_unreachable: true
-
-telegram_bot:
-  - platform: polling
-    api_key: !secret telegram_api
-    allowed_chat_ids:
-      - !secret telegram_chatid
-
-notify:
-  - name: telegram
-    platform: telegram
-    chat_id: !secret telegram_chatid
-
-history_graph:
-  temperature:
-    name: "Temperatuur"
-    hours_to_show: 3
-    entities:
-      - sensor.temperatuur_keuken
-      - sensor.temperatuur_gang
-      - sensor.temperatuur_werkkamer
-      - sensor.temperatuur_woonkamer
-      - sensor.temperatuur_overloop
-      - sensor.current_temperature_toon
-#  lux:
-#    name: "Lichtniveau buiten"
-#    entities:
-#      - sensor.above_cloud_lux
-#      - sensor.exterior_lux
-  lightlevels:
-    name: "Lichtniveau binnen"
-    hours_to_show: 3
-    entities:
-      - sensor.lichtniveau_keuken
-      - sensor.lichtniveau_gang
-      - sensor.lichtniveau_werkkamer
-      - sensor.lichtniveau_woonkamer
-      - sensor.lichtniveau_overloop
+switch:
+  - platform: mystrom
+    name: 'Wasmachine'
+    host: 192.168.178.57
+  - platform: flux
+    lights:
+      - light.lamp_gang
+      - light.lamp_overloop
+      - light.lamp_werkkamer
+    name: 'Flux'
+    start_time: '07:00'
+    start_colortemp: 5000
+    sunset_colortemp: 3400
+    stop_colortemp: 1600
+    mode: mired
