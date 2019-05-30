@@ -2,6 +2,24 @@ input_boolean:
   verwarming_override:
     initial: off
 
+input_datetime:
+  verwarming_aan_tijd:
+    has_date: false
+    has_time: true
+  verwarming_uit_tijd:
+    has_date: false
+    has_time: true
+
+binary_sensor:
+  - platform: template
+    sensors:
+      verwarming_timeframe:
+        value_template: >-
+          {% set timeframe_start = states.input_datetime.verwarming_aan_tijd.attributes.timestamp | timestamp_custom('%H:%M', false) %}
+          {% set timeframe_end = states.input_datetime.verwarming_uit_tijd.attributes.timestamp | timestamp_custom('%H:%M', false) %}
+          {% set current_time = states.sensor.time.state %}
+          {{ current_time >= timeframe_start and current_time <= timeframe_end }}
+
 automation:
   - alias: "Verwarming override uit na thuiskomst"
     initial_state: on
@@ -28,14 +46,15 @@ automation:
       - platform: state
         entity_id: input_boolean.verwarming_override
         to: 'on'
-      - platform: time
-        at: "09:00:00"
+      - platform: state
+        entity_id: binary_sensor.verwarming_timeframe
+        to: 'on'
     condition:
       condition: and
       conditions:
-      - condition: time
-        after: "09:00:00"
-        before: "22:30:00"
+      - condition: state
+        entity_id: binary_sensor.verwarming_timeframe
+        state: 'on'
       - condition: state
         entity_id: input_boolean.slapen
         state: 'off'
@@ -59,19 +78,18 @@ automation:
       - platform: state
         entity_id: binary_sensor.iemand_thuis
         to: 'off'
-      - platform: time
-        at: "22:30:00"
+      - platform: state
+        entity_id: binary_sensor.verwarming_timeframe
+        to: 'off'
     condition:
       condition: or
       conditions:
         - condition: state
           entity_id: climate.toon_thermostat
           state: 'Comfort'
-          #is this state valid?
         - condition: state
           entity_id: climate.toon_thermostat
           state: 'Home'
-          #is this state valid?
     action:
       service: climate.set_operation_mode
       data:
