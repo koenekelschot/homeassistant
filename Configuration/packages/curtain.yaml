@@ -1,0 +1,65 @@
+cover:
+  - platform: soma
+    scan_interval: 30
+    covers:
+      gordijn_voor:
+        friendly_name: "Gordijn voor"
+        command_open: "curl http://192.168.178.55:8080/moveup/CC:94:B6:F1:1D:DD"
+        command_close: "curl http://192.168.178.55:8080/movedown/CC:94:B6:F1:1D:DD"
+        command_stop: "curl http://192.168.178.55:8080/stop/CC:94:B6:F1:1D:DD"
+        command_position: "curl http://192.168.178.55:8080/setposition/CC:94:B6:F1:1D:DD/{position}"
+        command_state: "curl http://192.168.178.55:8080/getposition/CC:94:B6:F1:1D:DD"
+
+sensor:
+  - platform: template
+    sensors:
+      positie_gordijn_actueel:
+        friendly_name: "Actuele positie gordijn"
+        value_template: '{{ states.cover.gordijn_voor.attributes.current_position|int }}'
+      positie_gordijn_gewenst:
+        friendly_name: "Gewenste positie gordijn"
+        value_template: >-
+          {% set azimuth = states.sun.sun.attributes.azimuth|float %}
+          {% set indoor_temp = states.climate.toon_thermostat.attributes.current_temperature|float %}
+          {% if (is_state("input_boolean.slapen", "on")) %}
+            {{ 0 }}
+          {% elif azimuth >= 295 %}
+            {{ 25 }}
+          {% elif azimuth >= 180 and indoor_temp >= 22 %}
+            {{ 35 }}
+          {% else %}
+            {{ 90 }}
+          {% endif %}
+
+binary_sensor:
+  - platform: template
+    sensors:
+      update_positie_gordijn:
+        value_template: '{{ (states.sensor.positie_gordijn_gewenst.state|int - states.sensor.positie_gordijn_actueel|int)|abs > 3 }}'
+
+timer:
+  positie_gordijn:
+    duration: '00:01:00'
+    
+automation:
+  - alias: "Stand gordijn"
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.update_positie_gordijn
+        to: 'on'
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.positie_gordijn
+    condition:
+      condition: state
+      entity_id: binary_sensor.update_positie_gordijn
+      state: 'on'
+    action:
+      - service: cover.set_cover_position
+        data_template:
+          entity_id: cover.gordijn_voor
+          position: "{{ states.sensor.positie_gordijn_gewenst.state }}"
+      - service: timer.start
+        entity_id: timer.positie_gordijn
