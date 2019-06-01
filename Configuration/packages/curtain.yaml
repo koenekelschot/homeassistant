@@ -35,7 +35,7 @@ binary_sensor:
   - platform: template
     sensors:
       update_positie_gordijn:
-        value_template: '{{ (states.sensor.positie_gordijn_gewenst.state|int - states.sensor.positie_gordijn_actueel|int)|abs > 3 }}'
+        value_template: '{{ (states.sensor.positie_gordijn_gewenst.state|int - states.sensor.positie_gordijn_actueel.state|int)|abs > 3 }}'
 
 timer:
   positie_gordijn:
