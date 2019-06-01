@@ -70,7 +70,7 @@ automation:
       - service: climate.set_operation_mode
         data:
           entity_id: climate.toon_thermostat
-          operation_mode: "heat"
+          operation_mode: 'heat'
 
   - alias: "Verwarming laag"
     initial_state: 'on'
@@ -86,15 +86,15 @@ automation:
       conditions:
         - condition: state
           entity_id: climate.toon_thermostat
-          state: 'Comfort'
+          state: 'auto'
         - condition: state
           entity_id: climate.toon_thermostat
-          state: 'Home'
+          state: 'heat'
     action:
       service: climate.set_operation_mode
       data:
         entity_id: climate.toon_thermostat
-        operation_mode: "cool"
+        operation_mode: 'cool'
 
   - alias: "Verwarming uit"
     initial_state: 'on'
@@ -112,4 +112,4 @@ automation:
       service: climate.set_operation_mode
       data: 
         entity_id: climate.toon_thermostat
-        operation_mode: "eco"
+        operation_mode: 'eco'
