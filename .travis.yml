@@ -7,4 +7,4 @@ script:
   - hass --version
   - hass -c Configuration --script check_config
 before_install:
-- mv Configuration\travis_secrets.yaml Configuration\secrets.yaml
+- mv Configuration/travis_secrets.yaml Configuration/secrets.yaml
