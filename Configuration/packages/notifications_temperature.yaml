@@ -1,0 +1,85 @@
+sensor:
+  - platform: template
+    sensors:
+      temperatuur_buiten:
+        unit_of_measurement: '°C'
+        value_template: '{{ states.sensor.veranda_temperature.state }}'
+      hoogste_temperatuur_boven:
+        unit_of_measurement: '°C'
+        value_template: '{{ [states.sensor.overloop_temperature.state|float, states.sensor.werkkamer_temperature.state|float]|max }}'
+      hoogste_temperatuur_beneden:
+        unit_of_measurement: '°C'
+        value_template: '{{ [states.sensor.gang_temperature.state|float, states.sensor.woonkamer_temperature.state|float, states.sensor.keuken_temperature.state|float]|max }}'
+
+binary_sensor:
+  - platform: template
+    sensors:
+      temperatuur_boven_hoger_dan_buiten:
+        value_template: '{{ states.sensor.hoogste_temperatuur_boven.state|float > states.sensor.temperatuur_buiten.state|float + 2 }}'
+      temperatuur_beneden_hoger_dan_buiten:
+        value_template: '{{ states.sensor.hoogste_temperatuur_beneden.state|float > states.sensor.temperatuur_buiten.state|float + 2 }}'
+
+automation:
+  - alias: "Notificatie boven ramen open"
+    initial_state: on
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.iemand_thuis
+        to: 'on'
+      - platform: state
+        entity_id: binary_sensor.temperatuur_boven_hoger_dan_buiten
+        to: 'on'
+    condition:
+      condition: and
+      conditions:
+        - condition: numeric_state
+          entity_id: sensor.hoogste_temperatuur_boven
+          above: 22
+        - condition: state
+          entity_id: binary_sensor.iemand_thuis
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.temperatuur_boven_hoger_dan_buiten
+          state: 'on'
+        - condition: template
+          value_template: '{{ (as_timestamp(now()) - as_timestamp(states.automation.notificatie_boven_ramen_open.last_updated)) > 21600 }}'
+        - condition: state
+          entity_id: input_boolean.slapen
+          state: 'off'
+    action:
+      - service: notify.telegram
+        data:
+          title: "Zet de ramen boven open"
+          message: "Het is {{ states.sensor.hoogste_temperatuur_boven.state }}°C boven en {{ states.sensor.temperatuur_buiten.state }}°C buiten!"
+
+  - alias: "Notificatie beneden ramen open"
+    initial_state: on
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.iemand_thuis
+        to: 'on'
+      - platform: state
+        entity_id: binary_sensor.temperatuur_beneden_hoger_dan_buiten
+        to: 'on'
+    condition:
+      condition: and
+      conditions:
+        - condition: numeric_state
+          entity_id: sensor.hoogste_temperatuur_beneden
+          above: 22
+        - condition: state
+          entity_id: binary_sensor.iemand_thuis
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.temperatuur_beneden_hoger_dan_buiten
+          state: 'on'
+        - condition: template
+          value_template: '{{ (as_timestamp(now()) - as_timestamp(states.automation.notificatie_beneden_ramen_open.last_updated)) > 21600 }}'
+        - condition: state
+          entity_id: input_boolean.slapen
+          state: 'off'
+    action:
+      - service: notify.telegram
+        data:
+          title: "Zet de ramen beneden open"
+          message: "Het is {{ states.sensor.hoogste_temperatuur_beneden.state }}°C beneden en {{ states.sensor.temperatuur_buiten.state }}°C buiten!"
