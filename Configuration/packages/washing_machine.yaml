@@ -1,0 +1,38 @@
+switch:
+  - platform: mystrom
+    name: 'Wasmachine'
+    host: 192.168.178.57
+
+sensor:
+  - platform: template
+    sensors:
+      power_wasmachine:
+        friendly_name: 'Stroomgebruik wasmachine'
+        value_template: '{{states.switch.wasmachine.attributes.current_power_w}}'
+        unit_of_measurement: 'W'
+
+binary_sensor:
+  - platform: template
+    sensors:
+      washing_machine_running:
+        friendly_name: "Wasmachine bezig"
+        delay_on:
+          minutes: 5
+        delay_off:
+          minutes: 5
+        value_template: >-
+          {{ states('sensor.power_wasmachine')|float > 10 }}
+
+automation:
+  - id: wasmachine_klaar_notification
+    alias: Wasmachine klaar notification
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.washing_machine_running
+        from: 'on'
+        to: 'off'
+    action:
+      - service: notify.telegram
+        data:
+          message: "De wasmachine is klaar!"

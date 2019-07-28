@@ -1,0 +1,116 @@
+vacuum:
+  - platform: roomba
+    host: 192.168.178.46
+    username: !secret roomba_blid
+    password: !secret roomba_pass
+
+sensor:
+  - platform: template
+    sensors:
+      status_roomba:
+        friendly_name: 'Status Roomba'
+        value_template: '{{ states.vacuum.roomba.attributes.status }}'
+
+automation:
+  - id: roomba_cleaner_schedule
+    alias: "Schema stofzuigen"
+    initial_state: 'on'
+#    trigger:
+#      platform: state
+#      entity_id: binary_sensor.iemand_thuis
+#      to: 'off'
+#    condition:
+#      - condition: time
+#        after: "07:00:00"
+#        before: "12:00:00"
+#        weekday:
+#          - mon
+#          - wed
+#          - fri
+    trigger:
+      platform: time
+      at: "10:00:00"
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.iemand_thuis
+          state: 'off'
+        - condition: time
+          weekday:
+            - mon
+            - wed
+            - fri
+    action:
+      - service: vacuum.start_pause
+        entity_id: vacuum.roomba
+
+  - id: roomba_start_notification
+    alias: Stofzuigen gestart notificatie
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: vacuum.roomba
+#        to: 'Running'
+#    condition:
+#      condition: state
+#      entity_id: binary_sensor.iemand_thuis
+#      state: 'off'
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.iemand_thuis
+          state: 'off'
+        - condition: template
+          value_template: '{{ states.vacuum.roomba.attributes.status == "Running" }}'
+    action:
+      - service: notify.telegram
+        data:
+          message: "Roomba is gestart met stofzuigen!"
+
+  - id: roomba_done_notification
+    alias: Stofzuigen klaar notificatie
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: vacuum.roomba
+#        from: 'Running'
+#        to: 'End Mission'
+#    condition:
+#      condition: template
+#      value_template: '{{ states.vacuum.roomba.attributes.cleaning_time | int > 5 }}'
+    condition:
+      condition: template
+      value_template: '{{ states.vacuum.roomba.attributes.status == "End Mission" }}'
+    action:
+      - service: notify.telegram
+        data:
+          message: "Roomba is klaar met stofzuigen!"
+
+  - id: roomba_bin_full_notification 
+    alias: "Roomba vol notificatie"
+    initial_state: 'on'
+    trigger:
+#      - platform: template
+#        value_template: '{{ states.vacuum.roomba.attributes.bin_full }}'
+      - platform: state
+        entity_id: binary_sensor.iemand_thuis
+        to: 'on'
+    condition:
+      condition: and
+      conditions:
+#        - condition: state
+#          entity_id: binary_sensor.iemand_thuis
+#          state: 'on'
+        - condition: template
+          value_template: '{{ states.vacuum.roomba.attributes.bin_full }}'
+        - condition: template
+          value_template: '{{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_bin_full_notification.last_updated)) > 21600 }}'
+        - condition: state
+          entity_id: input_boolean.slapen
+          state: 'off'
+    action:
+      - service: notify.telegram
+        data:
+          message: "Leeg de afvalbak van de Roomba"
