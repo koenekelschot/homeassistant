@@ -4,28 +4,32 @@ cover:
     covers:
       gordijn_voor:
         friendly_name: "Gordijn voor"
-        command_open: "curl http://192.168.178.55:8080/moveup/CC:94:B6:F1:1D:DD"
-        command_close: "curl http://192.168.178.55:8080/movedown/CC:94:B6:F1:1D:DD"
-        command_stop: "curl http://192.168.178.55:8080/stop/CC:94:B6:F1:1D:DD"
-        command_position: "curl http://192.168.178.55:8080/setposition/CC:94:B6:F1:1D:DD/{position}"
-        command_state: "curl http://192.168.178.55:8080/getposition/CC:94:B6:F1:1D:DD"
+        command_open: "curl http://192.168.178.38:8080/moveup/CC:94:B6:F1:1D:DD"
+        command_close: "curl http://192.168.178.38:8080/movedown/CC:94:B6:F1:1D:DD"
+        command_stop: "curl http://192.168.178.38:8080/stop/CC:94:B6:F1:1D:DD"
+        command_position: "curl http://192.168.178.38:8080/setposition/CC:94:B6:F1:1D:DD/{position}"
+        command_state: "curl http://192.168.178.38:8080/getposition/CC:94:B6:F1:1D:DD"
 
 sensor:
   - platform: template
     sensors:
+      azimuth:
+        value_template: '{{ states.sun.sun.attributes.azimuth }}'
       positie_gordijn_actueel:
         friendly_name: "Actuele positie gordijn"
+        unit_of_measurement: '%'
         value_template: '{{ states.cover.gordijn_voor.attributes.current_position|int }}'
       positie_gordijn_gewenst:
         friendly_name: "Gewenste positie gordijn"
+        unit_of_measurement: '%'
         value_template: >-
           {% set azimuth = states.sun.sun.attributes.azimuth|float %}
           {% set indoor_temp = states.climate.toon_thermostat.attributes.current_temperature|float %}
           {% if (is_state("input_boolean.slapen", "on")) %}
             {{ 0 }}
-          {% elif azimuth >= 295 %}
+          {% elif azimuth >= 297.5 %}
             {{ 25 }}
-          {% elif azimuth >= 180 and indoor_temp >= 22 %}
+          {% elif azimuth >= 210 and indoor_temp >= 22 %}
             {{ 35 }}
           {% else %}
             {{ 90 }}

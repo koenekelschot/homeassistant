@@ -42,11 +42,13 @@ logger:
   default: info
   logs:
     homeassistant.components.device_tracker.nmap_tracker: error
+    roomba.roomba.Roomba: error
 
 group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
 sensor: !include sensors.yaml
+panel_iframe: !include panels.yaml
 
 binary_sensor:
 - platform: workday
@@ -73,9 +75,6 @@ remote:
     scan_interval: 2
 
 switch:
-  - platform: mystrom
-    name: 'Wasmachine'
-    host: 192.168.178.57
   - platform: flux
     lights:
       - light.lamp_gang
@@ -87,3 +86,14 @@ switch:
     sunset_colortemp: 3400
     stop_colortemp: 1600
     mode: mired
+
+telegram_bot:
+  - platform: polling
+    api_key: !secret telegram_api
+    allowed_chat_ids:
+      - !secret telegram_chatid
+
+notify:
+  - name: telegram
+    platform: telegram
+    chat_id: !secret telegram_chatid
