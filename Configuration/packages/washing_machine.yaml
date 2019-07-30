@@ -8,7 +8,7 @@ sensor:
     sensors:
       power_wasmachine:
         friendly_name: 'Stroomgebruik wasmachine'
-        value_template: '{{states.switch.wasmachine.attributes.current_power_w}}'
+        value_template: '{{state_attr("switch.wasmachine", "current_power_w")}}'
         unit_of_measurement: 'W'
 
 binary_sensor:

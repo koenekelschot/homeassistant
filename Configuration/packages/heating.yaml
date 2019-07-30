@@ -15,9 +15,9 @@ binary_sensor:
     sensors:
       verwarming_timeframe:
         value_template: >-
-          {% set timeframe_start = states.input_datetime.verwarming_aan_tijd.attributes.timestamp | timestamp_custom('%H:%M', false) %}
-          {% set timeframe_end = states.input_datetime.verwarming_uit_tijd.attributes.timestamp | timestamp_custom('%H:%M', false) %}
-          {% set current_time = states.sensor.time.state %}
+          {% set timeframe_start = state_attr("input_datetime.verwarming_aan_tijd", "timestamp") | timestamp_custom('%H:%M', false) %}
+          {% set timeframe_end = state_attr("input_datetime.verwarming_uit_tijd", "timestamp") | timestamp_custom('%H:%M', false) %}
+          {% set current_time = states("sensor.time") %}
           {{ current_time >= timeframe_start and current_time <= timeframe_end }}
 
 automation:
@@ -83,7 +83,7 @@ automation:
         to: 'off'
     condition:
       condition: template
-      value_template: '{{ states.climate.toon_thermostat.attributes.preset_mode == "home" or states.climate.toon_thermostat.attributes.preset_mode == "comfort" }}'
+      value_template: '{{ is_state_attr("climate.toon_thermostat", "preset_mode", "home") or is_state_attr("climate.toon_thermostat", "preset_mode", "comfort") }}'
     action:
       - service: climate.set_preset_mode
         data:

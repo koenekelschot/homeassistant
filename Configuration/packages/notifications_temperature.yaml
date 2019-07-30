@@ -3,21 +3,21 @@ sensor:
     sensors:
       temperatuur_buiten:
         unit_of_measurement: '°C'
-        value_template: '{{ states.sensor.veranda_temperature.state }}'
+        value_template: '{{ states("sensor.veranda_temperature") }}'
       hoogste_temperatuur_boven:
         unit_of_measurement: '°C'
-        value_template: '{{ [states.sensor.overloop_temperature.state|float, states.sensor.werkkamer_temperature.state|float]|max }}'
+        value_template: '{{ [states("sensor.overloop_temperature")|float, states("sensor.werkkamer_temperature")|float]|max }}'
       hoogste_temperatuur_beneden:
         unit_of_measurement: '°C'
-        value_template: '{{ [states.sensor.gang_temperature.state|float, states.sensor.woonkamer_temperature.state|float, states.sensor.keuken_temperature.state|float]|max }}'
+        value_template: '{{ [states("sensor.gang_temperature")|float, states("sensor.woonkamer_temperature")|float, states("sensor.keuken_temperature")|float]|max }}'
 
 binary_sensor:
   - platform: template
     sensors:
       temperatuur_boven_hoger_dan_buiten:
-        value_template: '{{ states.sensor.hoogste_temperatuur_boven.state|float > states.sensor.temperatuur_buiten.state|float + 2 }}'
+        value_template: '{{ states("sensor.hoogste_temperatuur_boven")|float > states("sensor.temperatuur_buiten")|float + 2 }}'
       temperatuur_beneden_hoger_dan_buiten:
-        value_template: '{{ states.sensor.hoogste_temperatuur_beneden.state|float > states.sensor.temperatuur_buiten.state|float + 2 }}'
+        value_template: '{{ states("sensor.hoogste_temperatuur_beneden")|float > states("sensor.temperatuur_buiten")|float + 2 }}'
 
 automation:
   - alias: "Notificatie boven ramen open"
@@ -50,7 +50,7 @@ automation:
       - service: notify.telegram
         data:
           title: "Zet de ramen boven open"
-          message: "Het is {{ states.sensor.hoogste_temperatuur_boven.state }}°C boven en {{ states.sensor.temperatuur_buiten.state }}°C buiten!"
+          message: "Het is {{ states('sensor.hoogste_temperatuur_boven') }}°C boven en {{ states('sensor.temperatuur_buiten') }}°C buiten!"
 
   - alias: "Notificatie beneden ramen open"
     initial_state: on
@@ -82,4 +82,4 @@ automation:
       - service: notify.telegram
         data:
           title: "Zet de ramen beneden open"
-          message: "Het is {{ states.sensor.hoogste_temperatuur_beneden.state }}°C beneden en {{ states.sensor.temperatuur_buiten.state }}°C buiten!"
+          message: "Het is {{ states('sensor.hoogste_temperatuur_beneden') }}°C beneden en {{ states('sensor.temperatuur_buiten') }}°C buiten!"

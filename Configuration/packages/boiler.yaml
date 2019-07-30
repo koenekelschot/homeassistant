@@ -8,7 +8,7 @@ sensor:
     sensors:
       power_boiler_keuken:
         friendly_name: 'Stroomgebruik boiler keuken'
-        value_template: '{{ states.switch.boiler_keuken.attributes["current_power_w"] | float }}'
+        value_template: '{{ state_attr("switch.boiler_keuken", "current_power_w")|float }}'
         unit_of_measurement: 'W'
 
 binary_sensor:
