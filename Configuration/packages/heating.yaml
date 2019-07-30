@@ -67,10 +67,10 @@ automation:
           entity_id: input_boolean.verwarming_override
           state: 'on'
     action:
-      - service: climate.set_operation_mode
+      - service: climate.set_preset_mode
         data:
           entity_id: climate.toon_thermostat
-          operation_mode: 'heat'
+          preset_mode: 'home'
 
   - alias: "Verwarming laag"
     initial_state: 'on'
@@ -82,19 +82,13 @@ automation:
         entity_id: binary_sensor.verwarming_timeframe
         to: 'off'
     condition:
-      condition: or
-      conditions:
-        - condition: state
-          entity_id: climate.toon_thermostat
-          state: 'auto'
-        - condition: state
-          entity_id: climate.toon_thermostat
-          state: 'heat'
+      condition: template
+      value_template: '{{ states.climate.toon_thermostat.attributes.preset_mode == "home" or states.climate.toon_thermostat.attributes.preset_mode == "comfort" }}'
     action:
-      service: climate.set_operation_mode
-      data:
-        entity_id: climate.toon_thermostat
-        operation_mode: 'cool'
+      - service: climate.set_preset_mode
+        data:
+          entity_id: climate.toon_thermostat
+          preset_mode: 'sleep'
 
   - alias: "Verwarming uit"
     initial_state: 'on'
@@ -109,7 +103,7 @@ automation:
       entity_id: input_boolean.verwarming_override
       state: 'off'
     action:
-      service: climate.set_operation_mode
-      data: 
-        entity_id: climate.toon_thermostat
-        operation_mode: 'eco'
+      - service: climate.set_preset_mode
+        data:
+          entity_id: climate.toon_thermostat
+          preset_mode: 'away'
