@@ -4,29 +4,17 @@ vacuum:
     username: !secret roomba_blid
     password: !secret roomba_pass
 
-sensor:
+binary_sensor:
   - platform: template
     sensors:
-      status_roomba:
-        friendly_name: 'Status Roomba'
-        value_template: '{{ states.vacuum.roomba.attributes.status }}'
+      roomba_actief:
+        friendly_name: 'Roomba bezig'
+        value_template: '{{ is_state_attr("vacuum.roomba", "status", "Running") }}'
 
 automation:
   - id: roomba_cleaner_schedule
     alias: "Schema stofzuigen"
     initial_state: 'on'
-#    trigger:
-#      platform: state
-#      entity_id: binary_sensor.iemand_thuis
-#      to: 'off'
-#    condition:
-#      - condition: time
-#        after: "07:00:00"
-#        before: "12:00:00"
-#        weekday:
-#          - mon
-#          - wed
-#          - fri
     trigger:
       platform: time
       at: "10:00:00"
@@ -45,25 +33,44 @@ automation:
       - service: vacuum.start_pause
         entity_id: vacuum.roomba
 
+  - id: roomba_start_forceer_afwezig
+    alias: "Forceer afwezigheid Roomba"
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.roomba_actief
+        from: 'off'
+        to: 'on'
+    action:
+      - service: input_boolean.turn_on
+        data:
+          entity_id: input_boolean.forceer_afwezig
+
+  - id: roomba_stop_forceer_afwezig
+    alias: "Herstel afwezigheid Roomba"
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.roomba_actief
+        from: 'on'
+        to: 'off'
+    action:
+      - service: input_boolean.turn_off
+        data:
+          entity_id: input_boolean.forceer_afwezig
+
   - id: roomba_start_notification
     alias: Stofzuigen gestart notificatie
     initial_state: 'on'
     trigger:
       - platform: state
-        entity_id: vacuum.roomba
-#        to: 'Running'
-#    condition:
-#      condition: state
-#      entity_id: binary_sensor.iemand_thuis
-#      state: 'off'
+        entity_id: binary_sensor.roomba_actief
+        from: 'off'
+        to: 'on'
     condition:
-      condition: and
-      conditions:
-        - condition: state
-          entity_id: binary_sensor.iemand_thuis
-          state: 'off'
-        - condition: template
-          value_template: '{{ states.vacuum.roomba.attributes.status == "Running" }}'
+      condition: state
+      entity_id: binary_sensor.iemand_thuis
+      state: 'off'
     action:
       - service: notify.telegram
         data:
@@ -74,15 +81,9 @@ automation:
     initial_state: 'on'
     trigger:
       - platform: state
-        entity_id: vacuum.roomba
-#        from: 'Running'
-#        to: 'End Mission'
-#    condition:
-#      condition: template
-#      value_template: '{{ states.vacuum.roomba.attributes.cleaning_time | int > 5 }}'
-    condition:
-      condition: template
-      value_template: '{{ states.vacuum.roomba.attributes.status == "End Mission" }}'
+        entity_id: binary_sensor.roomba_actief
+        from: 'on'
+        to: 'off'
     action:
       - service: notify.telegram
         data:
@@ -92,21 +93,16 @@ automation:
     alias: "Roomba vol notificatie"
     initial_state: 'on'
     trigger:
-#      - platform: template
-#        value_template: '{{ states.vacuum.roomba.attributes.bin_full }}'
       - platform: state
         entity_id: binary_sensor.iemand_thuis
         to: 'on'
     condition:
       condition: and
       conditions:
-#        - condition: state
-#          entity_id: binary_sensor.iemand_thuis
-#          state: 'on'
         - condition: template
-          value_template: '{{ states.vacuum.roomba.attributes.bin_full }}'
+          value_template: '{{ is_state_attr("vacuum.roomba", "bin_full", true) }}'
         - condition: template
-          value_template: '{{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_bin_full_notification.last_updated)) > 21600 }}'
+          value_template: '{{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_vol_notificatie.last_updated)) > 21600 }}'
         - condition: state
           entity_id: input_boolean.slapen
           state: 'off'
