@@ -3,13 +3,13 @@ sensor:
   sensors:
     temperature_target:
       unit_of_measurement: '°C'
-      value_template: '{{ states.climate.toon_thermostat.attributes.temperature }}'
+      value_template: '{{ state_attr("climate.toon_thermostat", "temperature") }}'
     temperature_current:
       unit_of_measurement: '°C'
-      value_template: '{{ states.climate.toon_thermostat.attributes.current_temperature }}'
+      value_template: '{{ state_attr("climate.toon_thermostat", "current_temperature") }}'
     heating_target:
       unit_of_measurement: '°C'
-      value_template: '{{ [0, states.sensor.temperature_target.state|float - states.sensor.temperature_current.state|float]|max|float }}'
+      value_template: '{{ [0, states("sensor.temperature_target")|float - states("sensor.temperature_current")|float]|max|float }}'
 #    heating_rate:
 #      unit_of_measurement: 's'
 #      value_template: >-
@@ -25,26 +25,26 @@ sensor:
     heating_rate:
       unit_of_measurement: 's/°C'
       value_template: >-
-        {% set starttime = as_timestamp(states.input_datetime.heating_started.state)|int %}
-        {% set endtime = as_timestamp(states.input_datetime.heating_stopped.state)|int %}
-        {% set starttemp = states.input_number.heating_start_temperature.state|float %}
-        {% set endtemp = states.input_number.heating_end_temperature.state|float %}
+        {% set starttime = as_timestamp(states("input_datetime.heating_started"))|int %}
+        {% set endtime = as_timestamp(states("input_datetime.heating_stopped"))|int %}
+        {% set starttemp = states("input_number.heating_start_temperature")|float %}
+        {% set endtemp = states("input_number.heating_end_temperature")|float %}
         {% if (starttime < endtime and starttemp < endtemp ) %}
           {{ (endtime - starttime) / (endtemp - starttemp) }}
         {% else %}
-          {{ value }}
+          {{ 0 }}
         {% endif %}
 
 - platform: statistics
   name: "Heating rate stats"
   entity_id: sensor.heating_rate
-  sampling_size: 60
+  sampling_size: 20
 
 binary_sensor:
 - platform: template
   sensors:
     heating_active:
-      value_template: '{{ as_timestamp(states.input_datetime.heating_started.state)|int > as_timestamp(states.input_datetime.heating_stopped.state)|int }}'
+      value_template: '{{ as_timestamp(states("input_datetime.heating_started"))|int > as_timestamp(states("input_datetime.heating_stopped"))|int }}'
 
 input_datetime:
   heating_started:
@@ -90,7 +90,7 @@ automation:
       - service: input_number.set_value
         entity_id: input_number.heating_start_temperature
         data_template:
-          value: '{{ states.sensor.temperature_current.state }}'
+          value: '{{ states("sensor.temperature_current") }}'
 
   - alias: "Log stop verwarmen"
     initial_state: 'on'
@@ -111,7 +111,7 @@ automation:
       - service: input_number.set_value
         entity_id: input_number.heating_end_temperature
         data_template:
-          value: '{{ states.sensor.temperature_current.state }}'
+          value: '{{ states("sensor.temperature_current") }}'
 
   - alias: "Start voorverwarmen"
     initial_state: on
@@ -170,15 +170,15 @@ automation:
 #            {% endif %}
         - condition: template
           value_template: >-
-            {% set expected_temp = 30.0 %}
-            {% set current_temp = states.sensor.temperature_current.state|float %}
+            {% set expected_temp = 20.0 %}
+            {% set current_temp = states("sensor.temperature_current")|float %}
             {% set diff_temp = expected_temp - current_temp %}
             {% if (diff_temp <= 0) %}
               false
             {% else %}
-              {% set mean_heating_rate = states.sensor.heating_rate_stats_mean.state|float %}
+              {% set mean_heating_rate = states("sensor.heating_rate_stats_mean")|float %}
               {% set seconds_offset = (diff_temp|float * mean_heating_rate)|int %}
-              {% set target_timestamp = states.input_datetime.verwarming_aan_tijd.attributes.timestamp|int %}
+              {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd", "timestamp")|int %}
               {% set current_timestamp = (now().hour * 3600) + (now().minute * 60) %}
               current_timestamp >= target_timestamp - seconds_offset and current_timestamp < target_timestamp
             {% endif %}
