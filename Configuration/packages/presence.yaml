@@ -92,56 +92,28 @@ automation:
       entity_id: input_boolean.forceer_afwezig
       to: 'on'
     action:
-      service: input_boolean.turn_off
-      entity_id: input_boolean.forceer_thuis
-
-  - alias: "Beweging keuken"
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.forceer_thuis
+      - service: timer.cancel
+        data:
+          entity_id: timer.beweging_keuken, timer.beweging_woonkamer, timer.beweging_gang, timer.beweging_overloop, timer.beweging_werkkamer
+      
+  - alias: "Beweging gedetecteerd"
     initial_state: 'on'
     trigger:
       platform: state
-      entity_id: binary_sensor.keuken_motion
+      entity_id: 
+        - binary_sensor.keuken_motion
+        - binary_sensor.woonkamer_motion
+        - binary_sensor.gang_motion
+        - binary_sensor.overloop_motion
+        - binary_sensor.werkkamer_motion
       to: 'on'
+    condition:
+      condition: state
+      entity_id: input_boolean.forceer_afwezig
+      state: 'off'
     action:
-      service: timer.start
-      entity_id: timer.beweging_keuken
-
-  - alias: "Beweging woonkamer"
-    initial_state: 'on'
-    trigger:
-      platform: state
-      entity_id: binary_sensor.woonkamer_motion
-      to: 'on'
-    action:
-      service: timer.start
-      entity_id: timer.beweging_woonkamer
-
-  - alias: "Beweging gang"
-    initial_state: 'on'
-    trigger:
-      platform: state
-      entity_id: binary_sensor.gang_motion
-      to: 'on'
-    action:
-      service: timer.start
-      entity_id: timer.beweging_gang
-        
-
-  - alias: "Beweging overloop"
-    initial_state: 'on'
-    trigger:
-      platform: state
-      entity_id: binary_sensor.overloop_motion
-      to: 'on'
-    action:
-      service: timer.start
-      entity_id: timer.beweging_overloop
-
-  - alias: "Beweging werkkamer"
-    initial_state: 'on'
-    trigger:
-      platform: state
-      entity_id: binary_sensor.werkkamer_motion
-      to: 'on'
-    action:
-      service: timer.start
-      entity_id: timer.beweging_werkkamer
+      - service: timer.start
+        data_template:
+          entity_id: '{{ "timer.beweging_" + trigger.entity_id|regex_findall_index("\.([a-zA-Z0-9]*)_", 0) }}'

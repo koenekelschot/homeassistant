@@ -41,6 +41,10 @@ automation:
         entity_id: binary_sensor.roomba_actief
         from: 'off'
         to: 'on'
+    condition:
+      condition: state
+      entity_id: binary_sensor.iemand_thuis
+      state: 'off'
     action:
       - service: input_boolean.turn_on
         data:
