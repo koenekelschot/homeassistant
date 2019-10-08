@@ -10,41 +10,48 @@ sensor:
     heating_target:
       unit_of_measurement: '°C'
       value_template: '{{ [0, states("sensor.temperature_target")|float - states("sensor.temperature_current")|float]|max|float }}'
-#    heating_rate:
-#      unit_of_measurement: 's'
-#      value_template: >-
-#        {% set starttime = as_timestamp(states.input_datetime.heating_started.state)|int %}
-#        {% set endtime = as_timestamp(states.input_datetime.heating_stopped.state)|int %}
-#        {% set starttemp = states.input_number.heating_start_temperature.state|float %}
-#        {% set endtemp = states.input_number.heating_end_temperature.state|float %}
-#        {% if (starttime < endtime and starttemp < endtemp ) %}
-#          {{ (endtime - starttime) / ((endtemp - starttemp) / 0.5) }}
-#        {% else %}
-#          {{ value }}
-#        {% endif %}
     heating_rate:
       unit_of_measurement: 's/°C'
       value_template: >-
+        {% set current = states("sensor.heating_rate")|float %}
         {% set starttime = as_timestamp(states("input_datetime.heating_started"))|int %}
         {% set endtime = as_timestamp(states("input_datetime.heating_stopped"))|int %}
         {% set starttemp = states("input_number.heating_start_temperature")|float %}
         {% set endtemp = states("input_number.heating_end_temperature")|float %}
-        {% if (starttime < endtime and starttemp < endtemp ) %}
+        {% if (starttime < endtime and starttemp < endtemp) %}
           {{ (endtime - starttime) / (endtemp - starttemp) }}
         {% else %}
-          {{ 0 }}
+          {{ current }}
         {% endif %}
 
 - platform: statistics
   name: "Heating rate stats"
   entity_id: sensor.heating_rate
-  sampling_size: 20
+  sampling_size: 14
 
 binary_sensor:
 - platform: template
   sensors:
     heating_active:
       value_template: '{{ as_timestamp(states("input_datetime.heating_started"))|int > as_timestamp(states("input_datetime.heating_stopped"))|int }}'
+    should_preheat:
+      value_template: >-
+        {% set expected_temp = 20.0 %}
+        {% set current_temp = states("sensor.temperature_current")|float %}
+        {% set diff_temp = expected_temp - current_temp %}
+        {% if (diff_temp <= 0) %}
+          {{ false }}
+        {% else %}
+          {% set mean_heating_rate = state_attr("sensor.heating_rate_stats", "mean")|float %}
+          {% set seconds_offset = (diff_temp|float * mean_heating_rate)|int %}
+          {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd_werkdag", "timestamp")|int %}
+          {% if is_state("binary_sensor.workday_sensor", "off") %}
+            {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd_weekend", "timestamp")|int %}
+          {% endif %}
+          {% set current_timestamp = (now().hour * 3600) + (now().minute * 60) %}
+          {{ current_timestamp >= target_timestamp - seconds_offset and current_timestamp < target_timestamp }}
+        {% endif %}
+      entity_id: sensor.time
 
 input_datetime:
   heating_started:
@@ -56,12 +63,10 @@ input_datetime:
 
 input_number:
   heating_start_temperature:
-    initial: 0
     min: 0
     max: 50
     step: .5
   heating_end_temperature:
-    initial: 0
     min: 0
     max: 50
     step: .5
@@ -115,9 +120,14 @@ automation:
 
   - alias: "Start voorverwarmen"
     initial_state: on
+#    trigger:
+#      platform: time_pattern
+#      minutes: '/5'
     trigger:
-      platform: time_pattern
-      minutes: '/5'
+      platform: state
+      entity_id: binary_sensor.should_preheat
+      from: 'off'
+      to: 'on'
     condition:
       condition: and
       conditions:
@@ -157,33 +167,21 @@ automation:
 #        - condition: template
 #          value_template: >-
 #            {% set expected_temp = 20.0 %}
-#            {% set current_temp = states.sensor.temperature_current.state|float %}
+#            {% set current_temp = states("sensor.temperature_current")|float %}
 #            {% set diff_temp = expected_temp - current_temp %}
 #            {% if (diff_temp <= 0) %}
-#              false
+#              {{ false }}
 #            {% else %}
-#              {% set mean_heating_rate = states.sensor.heating_rate_stats_mean.state|float %}
-#              {% set seconds_offset = (diff_temp / 0.5) * mean_heating_rate %}
-#              {% set target_timestamp = states.input_datetime.verwarming_aan_tijd.attributes.timestamp|int %}
+#              {% set mean_heating_rate = state_attr("sensor.heating_rate_stats", "mean")|float %}
+#              {% set seconds_offset = (diff_temp|float * mean_heating_rate)|int %}
+#              {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd_werkdag", "timestamp")|int %}
+#              {% if is_state("binary_sensor.workday_sensor", "off") %}
+#                {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd_weekend", "timestamp")|int %}
+#              {% endif %}
 #              {% set current_timestamp = (now().hour * 3600) + (now().minute * 60) %}
-#              current_timestamp >= target_timestamp - seconds_offset and current_timestamp < target_timestamp
+#              {{ current_timestamp >= target_timestamp - seconds_offset and current_timestamp < target_timestamp }}
 #            {% endif %}
-        - condition: template
-          value_template: >-
-            {% set expected_temp = 20.0 %}
-            {% set current_temp = states("sensor.temperature_current")|float %}
-            {% set diff_temp = expected_temp - current_temp %}
-            {% if (diff_temp <= 0) %}
-              false
-            {% else %}
-              {% set mean_heating_rate = states("sensor.heating_rate_stats_mean")|float %}
-              {% set seconds_offset = (diff_temp|float * mean_heating_rate)|int %}
-              {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd", "timestamp")|int %}
-              {% set current_timestamp = (now().hour * 3600) + (now().minute * 60) %}
-              current_timestamp >= target_timestamp - seconds_offset and current_timestamp < target_timestamp
-            {% endif %}
     action:
-      service: system_log.write
-      data_template:
-        message: 'Voorverwarmen zou actief moeten zijn'
-        level: warning
+      service: notify.telegram
+      data:
+        message: 'Voorverwarmen zou nu moeten starten'

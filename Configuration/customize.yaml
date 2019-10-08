@@ -72,3 +72,39 @@ device_tracker.mystrom_switch_2a4688_fritz_box:
   hidden: true
 device_tracker.roomba_3173081840705650_fritz_box:
   hidden: true
+device_tracker.7c_c3_a1_73_6f_33:
+  hidden: true
+sensor.temperature_target:
+  hidden: true
+sensor.temperature_current:
+  hidden: true
+sensor.heating_target:
+  hidden: true
+binary_sensor.heating_active:
+  hidden: true
+binary_sensor.verwarming_timeframe:
+  hidden: true
+input_datetime.heating_started:
+  hidden: true
+input_datetime.heating_stopped:
+  hidden: true
+input_number.heating_start_temperature:
+  hidden: true
+input_number.heating_end_temperature:
+  hidden: true
+binary_sensor.iemand_beneden:
+  hidden: true
+binary_sensor.iemand_boven:
+  hidden: true
+binary_sensor.roomba_actief:
+  hidden: true
+binary_sensor.washing_machine_running:
+  hidden: true
+sensor.hoogste_temperatuur_beneden:
+  hidden: true
+sensor.hoogste_temperatuur_boven:
+  hidden: true
+binary_sensor.temperatuur_beneden_hoger_dan_buiten:
+  hidden: true
+binary_sensor.temperatuur_boven_hoger_dan_buiten:
+  hidden: true

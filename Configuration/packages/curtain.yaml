@@ -24,10 +24,12 @@ sensor:
         unit_of_measurement: '%'
         value_template: >-
           {% set azimuth = state_attr("sun.sun", "azimuth")|float %}
+          {% set current_time = states("sensor.time") %}
+          {% set light_level = states("sensor.veranda_light_level")|float %}
           {% set indoor_temp = state_attr("climate.toon_thermostat", "current_temperature")|float %}
           {% if (is_state("input_boolean.slapen", "on")) %}
             {{ 0 }}
-          {% elif azimuth >= 297.5 %}
+          {% elif azimuth >= 297.5 or (current_time >= "16:00" and light_level <= 1.0) %}
             {{ 25 }}
           {% elif azimuth >= 210 and indoor_temp >= 22 %}
             {{ 35 }}

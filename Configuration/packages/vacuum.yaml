@@ -93,7 +93,7 @@ automation:
         data:
           message: "Roomba is klaar met stofzuigen!"
 
-  - id: roomba_bin_full_notification 
+  - id: roomba_bin_full_notification
     alias: "Roomba vol notificatie"
     initial_state: 'on'
     trigger:
@@ -114,3 +114,27 @@ automation:
       - service: notify.telegram
         data:
           message: "Leeg de afvalbak van de Roomba"
+
+  - id: roomba_battery_empty_notification
+    alias: "Roomba accu leeg notificatie"
+    initial_state: 'on'
+    trigger:
+      - platform: numeric_state
+        entity_id: vacuum.roomba
+        value_template: "{{ state.attributes.battery_level }}"
+        below: 10
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: '{{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_vol_notificatie.last_updated)) > 21600 }}'
+        - condition: state
+          entity_id: binary_sensor.iemand_thuis
+          state: 'on'
+        - condition: state
+          entity_id: input_boolean.slapen
+          state: 'off'
+    action:
+      - service: notify.telegram
+        data:
+          message: "De accu van de Roomba is (bijna) leeg"
