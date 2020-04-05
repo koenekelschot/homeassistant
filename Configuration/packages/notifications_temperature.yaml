@@ -6,7 +6,7 @@ sensor:
         value_template: '{{ states("sensor.veranda_temperature") }}'
       hoogste_temperatuur_boven:
         unit_of_measurement: '°C'
-        value_template: '{{ [states("sensor.overloop_temperature")|float, states("sensor.werkkamer_temperature")|float]|max }}'
+        value_template: '{{ [states("sensor.overloop_temperature")|float, states("sensor.werkkamer_temperature")|float, states("sensor.slaapkamer_temperature")|float, states("sensor.logeerkamer_temperature")|float]|max }}'
       hoogste_temperatuur_beneden:
         unit_of_measurement: '°C'
         value_template: '{{ [states("sensor.gang_temperature")|float, states("sensor.woonkamer_temperature")|float, states("sensor.keuken_temperature")|float]|max }}'
@@ -35,6 +35,9 @@ automation:
         - condition: numeric_state
           entity_id: sensor.hoogste_temperatuur_boven
           above: 22
+        - condition: numeric_state
+          entity_id: sensor.temperatuur_buiten
+          above: 12
         - condition: state
           entity_id: binary_sensor.iemand_thuis
           state: 'on'
@@ -67,6 +70,9 @@ automation:
         - condition: numeric_state
           entity_id: sensor.hoogste_temperatuur_beneden
           above: 22
+        - condition: numeric_state
+          entity_id: sensor.temperatuur_buiten
+          above: 12
         - condition: state
           entity_id: binary_sensor.iemand_thuis
           state: 'on'
