@@ -53,7 +53,6 @@ scene:
     light.lamp_keuken_raam_rechts:
       state: on
       brightness: 220
-#    switch.ambilight: off
 
 - name: "Licht beneden uit"
   entities:
@@ -66,66 +65,7 @@ scene:
     light.lamp_keuken_koelkast: off
     light.lamp_keuken_raam_links: off
     light.lamp_keuken_raam_rechts: off
-#    switch.ambilight: off
     light.lamp_gang: off
-
-- name: "Licht beneden film kijken"
-  entities:
-    light.lamp_tv:
-      state: on
-      brightness: 30
-    light.lamp_bank:
-      state: on
-      brightness: 30
-    light.lamp_dressoir:
-      state: on
-      brightness: 30
-    light.lamp_tafel_midden:
-      state: on
-      brightness: 15
-    light.lamp_tafel_muur:
-      state: on
-      brightness: 15
-    light.lamp_keuken_deur:
-      state: off
-    light.lamp_keuken_koelkast:
-      state: off
-    light.lamp_keuken_raam_links:
-      state: off
-    light.lamp_keuken_raam_rechts:
-      state: off
-#    switch.ambilight: on
-
-- name: "Licht beneden film pauze"
-  entities:
-    light.lamp_tv:
-      state: on
-      brightness: 100
-    light.lamp_bank:
-      state: on
-      brightness: 100
-    light.lamp_dressoir:
-      state: on
-      brightness: 100
-    light.lamp_tafel_midden:
-      state: on
-      brightness: 90
-    light.lamp_tafel_muur:
-      state: on
-      brightness: 90
-    light.lamp_keuken_deur:
-      state: on
-      brightness: 160
-    light.lamp_keuken_koelkast:
-      state: on
-      brightness: 160
-    light.lamp_keuken_raam_links:
-      state: on
-      brightness: 160
-    light.lamp_keuken_raam_rechts:
-      state: on
-      brightness: 160
-#    switch.ambilight: on
 
 automation:
   - alias: "Licht beneden aan"
@@ -137,6 +77,9 @@ automation:
       - platform: state
         entity_id: binary_sensor.iemand_beneden
         to: 'on'
+      - platform: state
+        entity_id: sensor.home_cinema
+        to: 'off'
     condition:
       condition: and
       conditions:
@@ -146,9 +89,9 @@ automation:
         - condition: state
           entity_id: binary_sensor.donker_buiten
           state: 'on'
-  #      - condition: state
-  #        entity_id: binary_sensor.film_kijken
-  #        state: 'off'
+        - condition: state
+          entity_id: sensor.home_cinema
+          state: 'off'
         - condition: state
           entity_id: input_boolean.slapen
           state: 'off'
