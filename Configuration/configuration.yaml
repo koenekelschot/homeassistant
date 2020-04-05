@@ -79,19 +79,6 @@ remote:
     host: 192.168.178.20
     scan_interval: 2
 
-switch:
-  - platform: flux
-    lights:
-      - light.lamp_gang
-      - light.lamp_overloop
-      - light.lamp_werkkamer
-    name: 'Flux'
-    start_time: '07:00'
-    start_colortemp: 5000
-    sunset_colortemp: 3400
-    stop_colortemp: 1600
-    mode: mired
-
 telegram_bot:
   - platform: polling
     api_key: !secret telegram_api

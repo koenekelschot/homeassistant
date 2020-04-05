@@ -29,6 +29,10 @@ timer:
     duration: '00:03:00'
   beweging_werkkamer:
     duration: '00:10:00'
+  beweging_slaapkamer:
+    duration: '00:10:00'
+  beweging_logeerkamer:
+    duration: '00:10:00'
     
 binary_sensor:
   - platform: template
@@ -68,7 +72,9 @@ binary_sensor:
           {% if (
             is_state('input_boolean.forceer_afwezig', 'off') and (
               is_state('timer.beweging_overloop', 'active') or
-              is_state('timer.beweging_werkkamer', 'active'))) %}
+              is_state('timer.beweging_werkkamer', 'active') or
+              is_state('timer.beweging_slaapkamer', 'active') or
+              is_state('timer.beweging_logeerkamer', 'active'))) %}
             true
           {% else %}
             false
@@ -96,7 +102,14 @@ automation:
         entity_id: input_boolean.forceer_thuis
       - service: timer.cancel
         data:
-          entity_id: timer.beweging_keuken, timer.beweging_woonkamer, timer.beweging_gang, timer.beweging_overloop, timer.beweging_werkkamer
+          entity_id:
+            - timer.beweging_keuken
+            - timer.beweging_woonkamer
+            - timer.beweging_gang
+            - timer.beweging_overloop
+            - timer.beweging_werkkamer
+            - timer.beweging_slaapkamer
+            - timer.beweging_logeerkamer
       
   - alias: "Beweging gedetecteerd"
     initial_state: 'on'
@@ -108,6 +121,8 @@ automation:
         - binary_sensor.gang_motion
         - binary_sensor.overloop_motion
         - binary_sensor.werkkamer_motion
+        - binary_sensor.slaapkamer_motion
+        - binary_sensor.logeerkamer_motion
       to: 'on'
     condition:
       condition: state

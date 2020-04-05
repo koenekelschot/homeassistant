@@ -23,6 +23,29 @@ binary_sensor:
           false
         {% endif %}
 
+switch:
+  - platform: flux
+    lights:
+      - light.lamp_gang
+      - light.lamp_overloop
+      - light.lamp_werkkamer
+      - light.lamp_slaapkamer_links_voor
+      - light.lamp_slaapkamer_links_midden
+      - light.lamp_slaapkamer_links_achter
+      - light.lamp_slaapkamer_rechts_voor
+      - light.lamp_slaapkamer_rechts_midden
+      - light.lamp_slaapkamer_rechts_achter
+      - light.lamp_logeerkamer_links_voor
+      - light.lamp_logeerkamer_links_achter
+      - light.lamp_logeerkamer_rechts_voor
+      - light.lamp_logeerkamer_rechts_achter
+    name: 'Flux'
+    start_time: '07:00'
+    start_colortemp: 5000
+    sunset_colortemp: 3400
+    stop_colortemp: 1600
+    mode: mired
+
 scene:
 - name: "Licht beneden normaal"
   entities:
@@ -209,3 +232,80 @@ automation:
     action:
       service: light.turn_off
       entity_id: light.lamp_werkkamer
+
+  - alias: "Licht slaapkamer aan"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.started
+      event_data:
+        entity_id: timer.beweging_slaapkamer
+    condition:
+      condition: state
+      entity_id: input_boolean.slapen
+      state: 'off'
+    action:
+      service: light.turn_on
+      entity_id: 
+        - light.lamp_slaapkamer_links_voor
+        - light.lamp_slaapkamer_links_midden
+        - light.lamp_slaapkamer_links_achter
+        - light.lamp_slaapkamer_rechts_voor
+        - light.lamp_slaapkamer_rechts_midden
+        - light.lamp_slaapkamer_rechts_achter
+
+  - alias: "Licht slaapkamer uit"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.beweging_slaapkamer
+    action:
+      service: light.turn_off
+      entity_id:
+        - light.lamp_slaapkamer_links_voor
+        - light.lamp_slaapkamer_links_midden
+        - light.lamp_slaapkamer_links_achter
+        - light.lamp_slaapkamer_rechts_voor
+        - light.lamp_slaapkamer_rechts_midden
+        - light.lamp_slaapkamer_rechts_achter
+
+  - alias: "Licht logeerkamer aan"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.started
+      event_data:
+        entity_id: timer.beweging_logeerkamer
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.donker_buiten
+          state: 'on'
+        - condition: state
+          entity_id: input_boolean.slapen
+          state: 'off'
+    action:
+      service: light.turn_on
+      entity_id: 
+        - light.lamp_logeerkamer_links_voor
+        - light.lamp_logeerkamer_links_achter
+        - light.lamp_logeerkamer_rechts_voor
+        - light.lamp_logeerkamer_rechts_achter
+
+  - alias: "Licht logeerkamer uit"
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.beweging_logeerkamer
+    action:
+      service: light.turn_off
+      entity_id:
+        - light.lamp_logeerkamer_links_voor
+        - light.lamp_logeerkamer_links_achter
+        - light.lamp_logeerkamer_rechts_voor
+        - light.lamp_logeerkamer_rechts_achter
