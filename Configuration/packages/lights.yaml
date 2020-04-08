@@ -22,6 +22,14 @@ binary_sensor:
         {% else %}
           false
         {% endif %}
+    opgestaan:
+      value_template: >
+        {% if (is_state("input_boolean.slapen", "off") and 
+          as_timestamp(states.timer.beweging_overloop.last_updated) > as_timestamp(states.input_boolean.slapen.last_updated)) %}
+          true
+        {% else %}
+          false
+        {% endif %}
 
 switch:
   - platform: flux
@@ -242,8 +250,8 @@ automation:
         entity_id: timer.beweging_slaapkamer
     condition:
       condition: state
-      entity_id: input_boolean.slapen
-      state: 'off'
+      entity_id: binary_sensor.opgestaan
+      state: 'on'
     action:
       service: light.turn_on
       entity_id: 
