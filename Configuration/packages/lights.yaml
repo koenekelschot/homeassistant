@@ -15,9 +15,12 @@ binary_sensor:
   sensors:
     donker_buiten:
       value_template: >
-        {% if (states("sensor.veranda_light_level") | int < states("input_number.donker_buiten_threshold") | int) %}
-          true
-        {% elif (is_state("input_boolean.donker_override", "on")) %}
+        {% set current = states("binary_sensor.donker_buiten") %}
+        {% set light_level = states("sensor.veranda_light_level") %}
+        {% set threshold = states("input_number.donker_buiten_threshold")|int %}
+        {% if light_level == "unavailable" %}
+          {{ current }}
+        {% elif is_state("input_boolean.donker_override", "on") or light_level|int < threshold %}
           true
         {% else %}
           false

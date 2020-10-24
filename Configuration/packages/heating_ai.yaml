@@ -3,11 +3,11 @@ sensor:
   sensors:
     temperature_target:
       unit_of_measurement: '°C'
-      value_template: '{{ state_attr("climate.toon_thermostat", "temperature") }}'
+      value_template: '{{ state_attr("climate.thermostat", "temperature") }}'
     temperature_current:
       unit_of_measurement: '°C'
-      value_template: '{{ state_attr("climate.toon_thermostat", "current_temperature") }}'
-    heating_target:
+      value_template: '{{ state_attr("climate.thermostat", "current_temperature") }}'
+    temperature_difference:
       unit_of_measurement: '°C'
       value_template: '{{ [0, states("sensor.temperature_target")|float - states("sensor.temperature_current")|float]|max|float }}'
     heating_rate:
@@ -44,10 +44,9 @@ binary_sensor:
         {% else %}
           {% set mean_heating_rate = state_attr("sensor.heating_rate_stats", "mean")|float %}
           {% set seconds_offset = (diff_temp|float * mean_heating_rate)|int %}
-          {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd_werkdag", "timestamp")|int %}
-          {% if is_state("binary_sensor.workday_sensor", "off") %}
-            {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd_weekend", "timestamp")|int %}
-          {% endif %}
+          {% set target_hour = (states("sensor.verwarming_aan_tijd")|int / 100)|int %}
+          {% set target_minutes = (states("sensor.verwarming_aan_tijd")|int % 100)|int %}
+          {% set target_timestamp = (target_hour * 3600) + (target_minutes * 60) %}
           {% set current_timestamp = (now().hour * 3600) + (now().minute * 60) %}
           {{ current_timestamp >= target_timestamp - seconds_offset and current_timestamp < target_timestamp }}
         {% endif %}
@@ -81,7 +80,7 @@ automation:
       condition: and
       conditions:
         - condition: numeric_state
-          entity_id: sensor.heating_target
+          entity_id: sensor.temperature_difference
           above: 0
         - condition: state
           entity_id: binary_sensor.heating_active
@@ -101,7 +100,7 @@ automation:
     initial_state: 'on'
     trigger:
       platform: numeric_state
-      entity_id: sensor.heating_target
+      entity_id: sensor.temperature_difference
       below: 0.5
     condition:
       condition: state
@@ -117,71 +116,4 @@ automation:
         entity_id: input_number.heating_end_temperature
         data_template:
           value: '{{ states("sensor.temperature_current") }}'
-
-  - alias: "Start voorverwarmen"
-    initial_state: on
-#    trigger:
-#      platform: time_pattern
-#      minutes: '/5'
-    trigger:
-      platform: state
-      entity_id: binary_sensor.should_preheat
-      from: 'off'
-      to: 'on'
-    condition:
-      condition: and
-      conditions:
-#        - condition: state
-#          entity_id: binary_sensor.iemand_thuis
-#          state: 'off'
-        - condition: or
-          conditions:
-#            - condition: state
-#              entity_id: binary_sensor.iemand_thuis
-#              state: 'off'
-#            - condition: and
-#              conditions:
-#                - condition: state
-#                  entity_id: input_boolean.slapen
-#                  state: 'on'
-#                - condition: state
-#                  entity_id: binary_sensor.workday
-#                  state: 'off'
-            - condition: and
-              conditions:
-                - condition: state
-                  entity_id: binary_sensor.workday
-                  state: 'on'
-                - condition: state
-                  entity_id: binary_sensor.iemand_thuis
-                  state: 'off'
-            - condition: state
-              entity_id: binary_sensor.workday
-              state: 'off'
-        - condition: state
-          entity_id: input_boolean.verwarming_override
-          state: 'off'
-        - condition: state
-          entity_id: binary_sensor.heating_active
-          state: 'off'
-#        - condition: template
-#          value_template: >-
-#            {% set expected_temp = 20.0 %}
-#            {% set current_temp = states("sensor.temperature_current")|float %}
-#            {% set diff_temp = expected_temp - current_temp %}
-#            {% if (diff_temp <= 0) %}
-#              {{ false }}
-#            {% else %}
-#              {% set mean_heating_rate = state_attr("sensor.heating_rate_stats", "mean")|float %}
-#              {% set seconds_offset = (diff_temp|float * mean_heating_rate)|int %}
-#              {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd_werkdag", "timestamp")|int %}
-#              {% if is_state("binary_sensor.workday_sensor", "off") %}
-#                {% set target_timestamp = state_attr("input_datetime.verwarming_aan_tijd_weekend", "timestamp")|int %}
-#              {% endif %}
-#              {% set current_timestamp = (now().hour * 3600) + (now().minute * 60) %}
-#              {{ current_timestamp >= target_timestamp - seconds_offset and current_timestamp < target_timestamp }}
-#            {% endif %}
-    action:
-      service: notify.telegram
-      data:
-        message: 'Voorverwarmen zou nu moeten starten'
+      
