@@ -1,14 +1,3 @@
-- platform: buienradar
-  monitored_conditions:
-    - stationname
-    - symbol
-    - temperature
-    - groundtemperature
-    - windspeed
-    - winddirection
-    - precipitation
-    - irradiance
-
 - platform: time_date
   display_options:
     - 'time'

@@ -73,6 +73,8 @@ hue:
       allow_unreachable: true
       allow_hue_groups: false
 
+tplink:
+
 remote:
   - platform: harmony
     name: "TV Woonkamer"

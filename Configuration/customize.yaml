@@ -4,6 +4,8 @@ device_tracker.50_7e_5d_bf_6b_be:
   hidden: true
 device_tracker.50_7e_5d_bf_7f_ef:
   hidden: true
+device_tracker.8c_0d_76_0a_40_7f:
+  hidden: true
 device_tracker.eneco_001_361960_fritz_box:
   hidden: true
 device_tracker.glados_fritz_box:
@@ -59,8 +61,6 @@ timer.beweging_keuken:
 timer.beweging_overloop:
   hidden: true
 timer.beweging_werkkamer:
-  hidden: true
-timer.beweging_woonkamer:
   hidden: true
 device_tracker.desktop_52pevfi_fritz_box:
   hidden: true

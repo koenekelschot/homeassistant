@@ -1,7 +1,6 @@
-vacuum:
-  - platform: roomba
-    host: 192.168.178.46
-    username: !secret roomba_blid
+roomba:
+  - host: 192.168.178.46
+    blid: !secret roomba_blid
     password: !secret roomba_pass
 
 binary_sensor:
@@ -30,7 +29,7 @@ automation:
             - wed
             - fri
     action:
-      - service: vacuum.start_pause
+      - service: vacuum.start
         entity_id: vacuum.roomba
 
   - id: roomba_start_forceer_afwezig
