@@ -1,139 +1,144 @@
 roomba:
-  - host: 192.168.178.46
-    blid: !secret roomba_blid
-    password: !secret roomba_pass
+- host: 192.168.178.46
+  blid: !secret roomba_blid
+  password: !secret roomba_pass
 
 binary_sensor:
-  - platform: template
-    sensors:
-      roomba_actief:
-        friendly_name: 'Roomba bezig'
-        value_template: '{{ is_state_attr("vacuum.roomba", "status", "Running") }}'
+- platform: template
+  sensors:
+    roomba_actief:
+      friendly_name: Roomba bezig
+      value_template: >
+        {{ is_state_attr('vacuum.roomba', 'status', 'Running') }}
 
 automation:
-  - id: roomba_cleaner_schedule
-    alias: "Schema stofzuigen"
-    initial_state: 'on'
-    trigger:
-      platform: time
-      at: "10:00:00"
-    condition:
-      condition: and
-      conditions:
-        - condition: state
-          entity_id: binary_sensor.iemand_thuis
-          state: 'off'
-        - condition: time
-          weekday:
-            - mon
-            - wed
-            - fri
-    action:
-      - service: vacuum.start
-        entity_id: vacuum.roomba
-
-  - id: roomba_start_forceer_afwezig
-    alias: "Forceer afwezigheid Roomba"
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.roomba_actief
-        from: 'off'
-        to: 'on'
-    condition:
-      condition: state
-      entity_id: binary_sensor.iemand_thuis
+- id: roomba_cleaner_schedule
+  alias: Schema stofzuigen
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '10:00:00'
+  condition:
+    condition: and
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.presence_iemand_thuis
       state: 'off'
-    action:
-      - service: input_boolean.turn_on
-        data:
-          entity_id: input_boolean.forceer_afwezig
+    - condition: time
+      weekday:
+      - mon
+      - wed
+      - fri
+  action:
+  - service: vacuum.start
+    entity_id: vacuum.roomba
 
-  - id: roomba_stop_forceer_afwezig
-    alias: "Herstel afwezigheid Roomba"
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.roomba_actief
-        from: 'on'
-        to: 'off'
-    action:
-      - service: input_boolean.turn_off
-        data:
-          entity_id: input_boolean.forceer_afwezig
+- id: roomba_start_forceer_afwezig
+  alias: Forceer afwezigheid Roomba
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.roomba_actief
+    from: 'off'
+    to: 'on'
+  condition:
+    condition: state
+    entity_id: binary_sensor.presence_iemand_thuis
+    state: 'off'
+  action:
+  - service: input_boolean.turn_on
+    data:
+      entity_id: input_boolean.presence_forceer_afwezig
 
-  - id: roomba_start_notification
-    alias: Stofzuigen gestart notificatie
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.roomba_actief
-        from: 'off'
-        to: 'on'
-    condition:
-      condition: state
-      entity_id: binary_sensor.iemand_thuis
-      state: 'off'
-    action:
-      - service: notify.telegram
-        data:
-          message: "Roomba is gestart met stofzuigen!"
+- id: roomba_stop_forceer_afwezig
+  alias: Herstel afwezigheid Roomba
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.roomba_actief
+    from: 'on'
+    to: 'off'
+  action:
+  - service: input_boolean.turn_off
+    data:
+      entity_id: input_boolean.presence_forceer_afwezig
 
-  - id: roomba_done_notification
-    alias: Stofzuigen klaar notificatie
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.roomba_actief
-        from: 'on'
-        to: 'off'
-    action:
-      - service: notify.telegram
-        data:
-          message: "Roomba is klaar met stofzuigen!"
+- id: roomba_start_notification
+  alias: Stofzuigen gestart notificatie
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.roomba_actief
+    from: 'off'
+    to: 'on'
+  condition:
+    condition: state
+    entity_id: binary_sensor.presence_iemand_thuis
+    state: 'off'
+  action:
+  - service: notify.telegram
+    data:
+      message: 'Roomba is gestart met stofzuigen!'
 
-  - id: roomba_bin_full_notification
-    alias: "Roomba vol notificatie"
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.iemand_thuis
-        to: 'on'
-    condition:
-      condition: and
-      conditions:
-        - condition: template
-          value_template: '{{ is_state_attr("vacuum.roomba", "bin_full", true) }}'
-        - condition: template
-          value_template: '{{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_vol_notificatie.last_updated)) > 21600 }}'
-        - condition: state
-          entity_id: input_boolean.slapen
-          state: 'off'
-    action:
-      - service: notify.telegram
-        data:
-          message: "Leeg de afvalbak van de Roomba"
+- id: roomba_done_notification
+  alias: Stofzuigen klaar notificatie
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.roomba_actief
+    from: 'on'
+    to: 'off'
+  action:
+  - service: notify.telegram
+    data:
+      message: 'Roomba is klaar met stofzuigen!'
 
-  - id: roomba_battery_empty_notification
-    alias: "Roomba accu leeg notificatie"
-    initial_state: 'on'
-    trigger:
-      - platform: numeric_state
-        entity_id: vacuum.roomba
-        value_template: "{{ state.attributes.battery_level }}"
-        below: 10
-    condition:
-      condition: and
-      conditions:
-        - condition: template
-          value_template: '{{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_vol_notificatie.last_updated)) > 21600 }}'
-        - condition: state
-          entity_id: binary_sensor.iemand_thuis
-          state: 'on'
-        - condition: state
-          entity_id: input_boolean.slapen
-          state: 'off'
-    action:
-      - service: notify.telegram
-        data:
-          message: "De accu van de Roomba is (bijna) leeg"
+- id: roomba_bin_full_notification
+  alias: Roomba vol notificatie
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.presence_iemand_thuis
+    to: 'on'
+  condition:
+    condition: and
+    conditions:
+    - condition: template
+      value_template: >
+        {{ is_state_attr('vacuum.roomba', 'bin_full', true) }}
+    - condition: template
+      value_template: >
+        {{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_vol_notificatie.last_updated)) > 21600 }}
+    - condition: state
+      entity_id: input_boolean.presence_iemand_opgestaan
+      state: 'on'
+  action:
+  - service: notify.telegram
+    data:
+      message: 'Leeg de afvalbak van de Roomba'
+
+- id: roomba_battery_empty_notification
+  alias: Roomba accu leeg notificatie
+  initial_state: 'on'
+  trigger:
+  - platform: numeric_state
+    entity_id: vacuum.roomba
+    value_template: >
+      {{ state.attributes.battery_level }}
+    below: 10
+  condition:
+    condition: and
+    conditions:
+    - condition: template
+      value_template: >
+        {{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_vol_notificatie.last_updated)) > 21600 }}
+    - condition: state
+      entity_id: binary_sensor.presence_iemand_thuis
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.presence_iemand_opgestaan
+      state: 'on'
+  action:
+  - service: notify.telegram
+    data:
+      message: 'De accu van de Roomba is (bijna) leeg'

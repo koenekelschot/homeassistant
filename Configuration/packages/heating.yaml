@@ -1,137 +1,287 @@
 input_boolean:
-  verwarming_override:
+  heating_verwarming_override:
     initial: off
 
+input_number:
+  heating_temperatuur_start:
+    min: 0
+    max: 50
+    step: .5
+  heating_temperatuur_eind:
+    min: 0
+    max: 50
+    step: .5
+
 input_datetime:
-  verwarming_aan_tijd_werkdag:
+  heating_verwarming_aan_tijd_werkdag:
     has_date: false
     has_time: true
-  verwarming_aan_tijd_weekend:
+  heating_verwarming_aan_tijd_weekend:
     has_date: false
     has_time: true
-  verwarming_uit_tijd:
+  heating_verwarming_uit_tijd:
     has_date: false
     has_time: true
-    
+  heating_verwarming_gestart:
+    has_date: true
+    has_time: true
+  heating_verwarming_gestopt:
+    has_date: true
+    has_time: true
+
+homeassistant:
+  customize:
+    input_boolean.heating_verwarming_override:
+      friendly_name: Verwarming override
+    input_number.heating_start_temperatuur:
+      friendly_name: Temperatuur voor verwarmen
+    input_number.heating_eind_temperatuur:
+      friendly_name: Temperatuur na verwarmen
+    input_datetime.heating_verwarming_aan_tijd_werkdag:
+      friendly_name: Verwarming aan (werkdag)
+    input_datetime.heating_verwarming_aan_tijd_weekend:
+      friendly_name: Verwarming aan (weekend)
+    input_datetime.heating_verwarming_uit_tijd:
+      friendly_name: Verwarming uit
+    input_datetime.heating_verwarming_laatst_gestart:
+      friendly_name: Verwarming gestart
+    input_datetime.heating_verwarming_laatst_gestopt:
+      friendly_name: Verwarming gestopt
+
 sensor:
-  - platform: template
-    sensors:
-      verwarming_aan_tijd:
-        value_template: >-
-          {% set current_time = (now().hour * 100) + now().minute %}
-          {% set werkdag_start = state_attr("input_datetime.verwarming_aan_tijd_werkdag", "timestamp") | timestamp_custom('%H%M', false) | int %}
-          {% set weekend_start = state_attr("input_datetime.verwarming_aan_tijd_weekend", "timestamp") | timestamp_custom('%H%M', false) | int %}
-          {% set thuiswerken = is_state("binary_sensor.workday_sensor", "on") and is_state("binary_sensor.iemand_thuis", "on") and current_time >= weekend_start %}
-          {% if is_state("binary_sensor.workday_sensor", "off") or thuiswerken -%}
-            {{ weekend_start }}
-          {% else %}
-            {{ werkdag_start }}
-          {% endif %}
+- platform: statistics
+  name: heating_rate_stats
+  entity_id: sensor.heating_rate
+  sampling_size: 14
+
+- platform: template
+  sensors:
+    heating_temperatuur_doel:
+      friendly_name: Doeltemperatuur
+      unit_of_measurement: '°C'
+      value_template: >
+        {{ state_attr('climate.thermostat', 'temperature') }}
+
+    heating_temperatuur_huidig:
+      friendly_name: Huidige temperatuur
+      unit_of_measurement: '°C'
+      value_template: >
+        {{ state_attr('climate.thermostat', 'current_temperature') }}
+
+    heating_temperatuur_verschil:
+      friendly_name: Temperatuurverschil
+      unit_of_measurement: '°C'
+      value_template: >
+        {{ [0, states('sensor.heating_temperatuur_doel')|float - states('sensor.heating_temperatuur_huidig')|float]|max|float }}
+
+    heating_verwarming_aan_tijd:
+      friendly_name: Verwarming aan om
+      value_template: >
+        {% set current_time = (now().hour * 100) + now().minute %}
+        {% set werkdag_start = state_attr('input_datetime.heating_verwarming_aan_tijd_werkdag', 'timestamp')|timestamp_custom('%H%M', false)|int %}
+        {% set weekend_start = state_attr("input_datetime.heating_verwarming_aan_tijd_weekend", 'timestamp')|timestamp_custom('%H%M', false)|int %}
+        {% set thuiswerken = is_state('binary_sensor.workday_sensor', 'on') and is_state('binary_sensor.presence_iemand_thuis', 'on') and current_time >= weekend_start %}
+        {% if is_state("binary_sensor.workday_sensor", "off") or thuiswerken -%}
+          {{ weekend_start }}
+        {% else %}
+          {{ werkdag_start }}
+        {% endif %}
+
+    heating_rate:
+      friendly_name: Snelheid opwarming
+      unit_of_measurement: 's/°C'
+      value_template: >-
+        {% set current = states('sensor.heating_rate')|float %}
+        {% set starttime = as_timestamp(states('input_datetime.heating_verwarming_gestart'))|int %}
+        {% set endtime = as_timestamp(states('input_datetime.heating_verwarming_gestopt'))|int %}
+        {% set starttemp = states('input_number.heating_temperatuur_start')|float %}
+        {% set endtemp = states("input_number.heating_temperatuur_eind")|float %}
+        {% if (starttime < endtime and starttemp < endtemp) %}
+          {{ (endtime - starttime) / (endtemp - starttemp) }}
+        {% else %}
+          {{ current }}
+        {% endif %}
 
 binary_sensor:
-  - platform: template
-    sensors:
-      verwarming_timeframe:
-        value_template: >-
-          {% set current_time = (now().hour * 100) + now().minute %}
-          {% set timeframe_start = states("sensor.verwarming_aan_tijd") | int %}
-          {% set timeframe_end = state_attr("input_datetime.verwarming_uit_tijd", "timestamp") | timestamp_custom('%H%M', false) | int %}
-          {{ current_time >= timeframe_start and current_time <= timeframe_end }}
-        entity_id: sensor.time
+- platform: template
+  sensors:
+    heating_verwarming_actief:
+      friendly_name: Verwarming actief
+      value_template: >
+        {{ as_timestamp(states('input_datetime.heating_verwarming_laatst_gestart'))|int > as_timestamp(states('input_datetime.heating_verwarming_laatst_gestopt'))|int }}
+    
+    heating_verwarming_timeframe:
+      friendly_name: Verwarming gewenst
+      value_template: >
+        {% set current_time = (now().hour * 100) + now().minute %}
+        {% set timeframe_start = states('sensor.heating_verwarming_aan_tijd')|int %}
+        {% set timeframe_end = state_attr('input_datetime.heating_verwarming_uit_tijd', 'timestamp')|timestamp_custom('%H%M', false)|int %}
+        {{ current_time >= timeframe_start and current_time <= timeframe_end }}
+
+    heating_verwarming_moet_starten:
+      friendly_name: Verwarming moet aan zijn
+      value_template: >
+        {% set expected_temp = 20.0 %}
+        {% set current_temp = states('sensor.heating_temperatuur_huidig')|float %}
+        {% set diff_temp = expected_temp - current_temp %}
+        {% if (diff_temp <= 0) %}
+          {{ false }}
+        {% else %}
+          {% set mean_heating_rate = state_attr('sensor.heating_rate_stats', 'mean')|float %}
+          {% set seconds_offset = (diff_temp|float * mean_heating_rate)|int %}
+          {% set target_hour = (states('sensor.heating_verwarming_aan_tijd')|int / 100)|int %}
+          {% set target_minutes = (states('sensor.heating_verwarming_aan_tijd')|int % 100)|int %}
+          {% set target_timestamp = (target_hour * 3600) + (target_minutes * 60) %}
+          {% set current_timestamp = (now().hour * 3600) + (now().minute * 60) %}
+          {{ current_timestamp >= target_timestamp - seconds_offset and current_timestamp < target_timestamp }}
+        {% endif %}
 
 automation:
-  - alias: "Verwarming override uit na thuiskomst"
-    initial_state: on
-    trigger:
-      platform: state
-      entity_id: binary_sensor.iemand_thuis
-      to: 'on'
-      for:
-        minutes: 1
-    condition:
-      condition: state
-      entity_id: input_boolean.verwarming_override
-      state: 'on'
-    action:
-      service: input_boolean.turn_off
-      entity_id: input_boolean.verwarming_override
+- id: heating_override_off
+  alias: Verwarming override uitschakelen
+  initial_state: on
+  trigger:
+    platform: state
+    entity_id: binary_sensor.presence_iemand_thuis
+    to: 'on'
+    for:
+      minutes: 1
+  condition:
+    condition: state
+    entity_id: input_boolean.heating_verwarming_override
+    state: 'on'
+  action:
+    service: input_boolean.turn_off
+    entity_id: input_boolean.heating_verwarming_override
 
-  - alias: "Verwarming aan"
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.iemand_thuis
-        to: 'on'
-      - platform: state
-        entity_id: input_boolean.verwarming_override
-        to: 'on'
-      - platform: state
-        entity_id: binary_sensor.verwarming_timeframe
-        to: 'on'
-      - platform: state
-        entity_id: binary_sensor.should_preheat
-        from: 'off'
-        to: 'on'
-    condition:
-      condition: and
+- id: heating_turn_heating_on
+  alias: Verwarming aan
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.presence_iemand_thuis
+    to: 'on'
+  - platform: state
+    entity_id: input_boolean.heating_verwarming_override
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.heating_verwarming_timeframe
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.heating_verwarming_moet_starten
+    from: 'off'
+    to: 'on'
+  condition:
+    condition: and
+    conditions:
+    - condition: or
       conditions:
-      - condition: or
-        conditions:
-        - condition: state
-          entity_id: binary_sensor.verwarming_timeframe
-          state: 'on'
-        - condition: state
-          entity_id: binary_sensor.should_preheat
-          state: 'on'
       - condition: state
-        entity_id: input_boolean.slapen
-        state: 'off'
-      - condition: or
-        conditions:
-        - condition: state
-          entity_id: binary_sensor.iemand_thuis
-          state: 'on'
-        - condition: state
-          entity_id: input_boolean.verwarming_override
-          state: 'on'
-    action:
-      - service: climate.set_preset_mode
-        data:
-          entity_id: climate.thermostat
-          preset_mode: 'home'
-
-  - alias: "Verwarming laag"
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.iemand_thuis
-        to: 'off'
-      - platform: state
-        entity_id: binary_sensor.verwarming_timeframe
-        to: 'off'
-    condition:
-      condition: template
-      value_template: '{{ is_state_attr("climate.thermostat", "preset_mode", "home") or is_state_attr("climate.thermostat", "preset_mode", "comfort") }}'
-    action:
-      - service: climate.set_preset_mode
-        data:
-          entity_id: climate.thermostat
-          preset_mode: 'sleep'
-
-  - alias: "Verwarming uit"
-    initial_state: 'on'
-    trigger:
-      platform: state
-      entity_id: binary_sensor.iemand_thuis
-      to: 'off'
-      for:
-        hours: 10
-    condition:
-      condition: state
-      entity_id: input_boolean.verwarming_override
+        entity_id: binary_sensor.heating_verwarming_timeframe
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.heating_verwarming_moet_starten
+        state: 'on'
+    - condition: state
+      entity_id: input_boolean.activity_sleeping
       state: 'off'
-    action:
-      - service: climate.set_preset_mode
-        data:
-          entity_id: climate.thermostat
-          preset_mode: 'away'
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: binary_sensor.presence_iemand_thuis
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.heating_verwarming_override
+        state: 'on'
+  action:
+  - service: climate.set_preset_mode
+    data:
+      entity_id: climate.thermostat
+      preset_mode: home
+
+- id: heating_turn_heating_low
+  alias: Verwarming laag
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.presence_iemand_thuis
+    to: 'off'
+  - platform: state
+    entity_id: binary_sensor.heating_verwarming_timeframe
+    to: 'off'
+  condition:
+    condition: template
+    value_template: >
+      {{ is_state_attr('climate.thermostat', 'preset_mode', 'home') or is_state_attr('climate.thermostat', 'preset_mode', 'comfort') }}
+  action:
+  - service: climate.set_preset_mode
+    data:
+      entity_id: climate.thermostat
+      preset_mode: sleep
+
+- id: heating_turn_heating_off
+  alias: Verwarming uit
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.presence_iemand_thuis
+    to: 'off'
+    for:
+      hours: 10
+  condition:
+    condition: state
+    entity_id: input_boolean.heating_verwarming_override
+    state: 'off'
+  action:
+  - service: climate.set_preset_mode
+    data:
+      entity_id: climate.thermostat
+      preset_mode: away
+
+- id: heating_log_start
+  alias: Log start verwarmen
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.heating_temperatuur_doel
+  condition:
+    condition: and
+    conditions:
+    - condition: numeric_state
+      entity_id: sensor.heating_temperatuur_verschil
+      above: 0
+    - condition: state
+      entity_id: binary_sensor.heating_verwarming_actief
+      state: 'off'
+  action:
+  - service: input_datetime.set_datetime
+    entity_id: input_datetime.heating_verwarming_laatst_gestart
+    data_template:
+      date: '{{ now().strftime("%Y-%m-%d") }}'
+      time: '{{ now().strftime("%H:%M:%S") }}'
+  - service: input_number.set_value
+    entity_id: input_number.heating_temperatuur_start
+    data_template:
+      value: '{{ states("sensor.heating_temperatuur_huidig") }}'
+
+- id: heating_log_stop
+  alias: Log stop verwarmen
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.heating_temperatuur_verschil
+    below: 0.5
+  condition:
+    condition: state
+    entity_id: binary_sensor.heating_verwarming_actief
+    state: 'on'
+  action:
+  - service: input_datetime.set_datetime
+    entity_id: input_datetime.heating_verwarming_laatst_gestopt
+    data_template:
+      date: '{{ now().strftime("%Y-%m-%d") }}'
+      time: '{{ now().strftime("%H:%M:%S") }}'
+  - service: input_number.set_value
+    entity_id: input_number.heating_temperatuur_eind
+    data_template:
+      value: '{{ states("sensor.temperature_current") }}'

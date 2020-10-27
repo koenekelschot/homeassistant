@@ -1,0 +1,20 @@
+input_boolean:
+  activity_sleeping:
+    icon: mdi:sleep
+
+homeassistant:
+  customize:
+    input_boolean.activity_sleeping:
+      friendly_name: Slapen
+
+automation:
+- id: activity_wakingup
+  alias: Opstaan
+  trigger:
+  - at: 07:30
+    platform: time
+  action:
+  - data:
+      entity_id: input_boolean.activity_sleeping
+    service: input_boolean.turn_off
+  initial_state: 'on'

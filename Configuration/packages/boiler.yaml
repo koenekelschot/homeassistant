@@ -1,53 +1,55 @@
 sensor:
-  - platform: template
-    sensors:
-      power_boiler_keuken:
-        friendly_name: 'Stroomgebruik boiler keuken'
-        value_template: '{{ state_attr("switch.boiler_keuken", "current_power_w")|float }}'
-        unit_of_measurement: 'W'
+- platform: template
+  sensors:
+    boiler_power_usage:
+      friendly_name: Stroomgebruik boiler keuken
+      unit_of_measurement: W
+      value_template: >
+        {{ state_attr('switch.boiler_keuken', 'current_power_w')|float }}
 
 binary_sensor:
-  - platform: template
-    sensors:
-      boiler_keuken_running:
-        friendly_name: 'Boiler keuken actief'
-        value_template: '{{ states("sensor.power_boiler_keuken")|float > 10 }}'
+- platform: template
+  sensors:
+    boiler_keuken_actief:
+      friendly_name: Boiler keuken actief
+      value_template: >
+        {{ states('sensor.boiler_power_usage')|float > 10 }}
 
 automation:
-  - id: boiler_keuken_aan_doordeweeks
-    alias: Boiler keuken aan doordeweeks
-    initial_state: 'on'
-    trigger:
-      platform: time
-      at: "17:00:00"
-    condition:
-      condition: state
-      entity_id: binary_sensor.workday_sensor
-      state: 'on'
-    action:
-      service: switch.turn_on
-      entity_id: switch.boiler_keuken
+- id: boiler_keuken_aan_doordeweeks
+  alias: Boiler keuken aan doordeweeks
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: "17:00:00"
+  condition:
+    condition: state
+    entity_id: binary_sensor.workday_sensor
+    state: 'on'
+  action:
+    service: switch.turn_on
+    entity_id: switch.boiler_keuken
 
-  - id: boiler_keuken_aan_weekend
-    alias: Boiler keuken aan weekend
-    initial_state: 'on'
-    trigger:
-      platform: time
-      at: "09:00:00"
-    condition:
-      condition: state
-      entity_id: binary_sensor.workday_sensor
-      state: 'off'
-    action:
-      service: switch.turn_on
-      entity_id: switch.boiler_keuken
+- id: boiler_keuken_aan_weekend
+  alias: Boiler keuken aan weekend
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: "09:00:00"
+  condition:
+    condition: state
+    entity_id: binary_sensor.workday_sensor
+    state: 'off'
+  action:
+    service: switch.turn_on
+    entity_id: switch.boiler_keuken
 
-  - id: boiler_keuken_uit
-    alias: Boiler keuken uit
-    initial_state: 'on'
-    trigger:
-      platform: time
-      at: "00:00:00"
-    action:
-      service: switch.turn_off
-      entity_id: switch.boiler_keuken
+- id: boiler_keuken_uit
+  alias: Boiler keuken uit
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: "00:00:00"
+  action:
+    service: switch.turn_off
+    entity_id: switch.boiler_keuken

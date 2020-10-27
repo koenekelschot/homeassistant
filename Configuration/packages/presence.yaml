@@ -1,139 +1,154 @@
-device_tracker:
-  - platform: nmap_tracker
-    hosts: 192.168.178.1-64
-    interval_seconds: 20
-    home_interval: 8
-    exclude:
-      - 192.168.178.20
-      - 192.168.178.23
-      - 192.168.178.26
-      - 192.168.178.30
-      - 192.168.178.38
-      - 192.168.178.46
-      - 192.168.178.47
-      - 192.168.178.49
-      - 192.168.178.54
-      - 192.168.178.59
-      - 192.168.178.60
-
 input_boolean:
-  forceer_thuis:
+  presence_forceer_thuis:
     initial: off
-  forceer_afwezig:
+  presence_forceer_afwezig:
     initial: off
 
 timer:
-  beweging_keuken:
+  presence_beweging_keuken:
     duration: '00:05:00'
-  beweging_woonkamer:
+  presence_beweging_woonkamer:
     duration: '00:10:00'
-  beweging_gang:
+  presence_beweging_gang:
     duration: '00:03:00'
-  beweging_overloop:
+  presence_beweging_overloop:
     duration: '00:03:00'
-  beweging_werkkamer:
+  presence_beweging_werkkamer:
     duration: '00:10:00'
-  beweging_slaapkamer:
+  presence_beweging_slaapkamer:
     duration: '00:10:00'
-  beweging_logeerkamer:
+  presence_beweging_logeerkamer:
     duration: '00:10:00'
-    
+
+homeassistant:
+  customize:
+    input_boolean.presence_forceer_thuis:
+      friendly_name: Forceer thuis
+    input_boolean.presence_forceer_afwezig:
+      friendly_name: Forceer afwezig
+    timer.presence_beweging_keuken:
+      friendly_name: Beweging keuken
+    timer.presence_beweging_woonkamer:
+      friendly_name: Beweging woonkamer
+    timer.presence_beweging_gang:
+      friendly_name: Beweging gang
+    timer.presence_beweging_overloop:
+      friendly_name: Beweging overloop
+    timer.presence_beweging_werkkamer:
+      friendly_name: Beweging werkkamer
+    timer.presence_beweging_slaapkamer:
+      friendly_name: Beweging slaapkamer
+    timer.presence_beweging_logeerkamer:
+      friendly_name: Beweging logeerkamer
+
 binary_sensor:
-  - platform: template
-    sensors:
-      iemand_thuis:
-        value_template: >
-          {% if (
-            is_state('input_boolean.forceer_afwezig', 'off') and (
-              is_state('input_boolean.forceer_thuis', 'on') or
-              is_state('person.koen', 'home') or
-              is_state('binary_sensor.iemand_beneden', 'on') or
-              is_state('binary_sensor.iemand_boven', 'on'))) %}
-            true
-          {% else %} 
-            false
-          {% endif %}
+- platform: template
+  sensors:
+    presence_iemand_beneden:
+      friendly_name: Iemand beneden
+      value_template: >
+        {% if (
+          is_state('input_boolean.presence_forceer_afwezig', 'off') and (
+            is_state('media_player.denon_avr_x2100w', 'playing') or
+            is_state('media_player.denon_avr_x2100w', 'on') or
+            is_state('timer.presence_beweging_keuken', 'active') or
+            is_state('timer.presence_beweging_woonkamer', 'active') or
+            is_state('timer.presence_beweging_gang', 'active'))) %}
+          true
+        {% else %}
+          false
+        {% endif %}
 
-  - platform: template
-    sensors:
-      iemand_beneden:
-        value_template: >
-          {% if (
-            is_state('input_boolean.forceer_afwezig', 'off') and (
-              is_state('media_player.denon_avr_x2100w', 'playing') or
-              is_state('media_player.denon_avr_x2100w', 'on') or
-              is_state('timer.beweging_keuken', 'active') or
-              is_state('timer.beweging_woonkamer', 'active') or
-              is_state('timer.beweging_gang', 'active'))) %}
-            true
-          {% else %}
-            false
-          {% endif %}
+    presence_iemand_boven:
+      friendly_name: Iemand boven
+      value_template: >
+        {% if (
+          is_state('input_boolean.presence_forceer_afwezig', 'off') and (
+            is_state('timer.presence_beweging_overloop', 'active') or
+            is_state('timer.presence_beweging_werkkamer', 'active') or
+            is_state('timer.presence_beweging_slaapkamer', 'active') or
+            is_state('timer.presence_beweging_logeerkamer', 'active'))) %}
+          true
+        {% else %}
+          false
+        {% endif %}
 
-  - platform: template
-    sensors:
-      iemand_boven:
-        value_template: >
-          {% if (
-            is_state('input_boolean.forceer_afwezig', 'off') and (
-              is_state('timer.beweging_overloop', 'active') or
-              is_state('timer.beweging_werkkamer', 'active') or
-              is_state('timer.beweging_slaapkamer', 'active') or
-              is_state('timer.beweging_logeerkamer', 'active'))) %}
-            true
-          {% else %}
-            false
-          {% endif %}
+    presence_iemand_thuis:
+      friendly_name: Iemand thuis
+      value_template: >
+        {% if (
+          is_state('input_boolean.presence_forceer_afwezig', 'off') and (
+            is_state('input_boolean.presence_forceer_thuis', 'on') or
+            is_state('person.koen', 'home') or
+            is_state('binary_sensor.presence_iemand_beneden', 'on') or
+            is_state('binary_sensor.presence_iemand_boven', 'on'))) %}
+          true
+        {% else %} 
+          false
+        {% endif %}
+
+    presence_iemand_opgestaan:
+      friendly_name: Iemand opgestaan
+      value_template: >
+        {% if (is_state("input_boolean.activity_sleeping", "off") and 
+          as_timestamp(states.timer.presence_beweging_overloop.last_updated) > as_timestamp(states.input_boolean.activity_sleeping.last_updated)) %}
+          true
+        {% else %}
+          false
+        {% endif %}
 
 automation:
-  - alias: "Forceer thuis"
-    initial_state: 'on'
-    trigger:
-      platform: state
-      entity_id: input_boolean.forceer_thuis
-      to: 'on'
-    action:
-      service: input_boolean.turn_off
-      entity_id: input_boolean.forceer_afwezig
+- id: presence_forceer_thuis
+  alias: Forceer thuis
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: input_boolean.presence_forceer_thuis
+    to: 'on'
+  action:
+    service: input_boolean.turn_off
+    entity_id: input_boolean.presence_forceer_afwezig
 
-  - alias: "Forceer afwezig"
-    initial_state: 'on'
-    trigger:
-      platform: state
-      entity_id: input_boolean.forceer_afwezig
-      to: 'on'
-    action:
-      - service: input_boolean.turn_off
-        entity_id: input_boolean.forceer_thuis
-      - service: timer.cancel
-        data:
-          entity_id:
-            - timer.beweging_keuken
-            - timer.beweging_woonkamer
-            - timer.beweging_gang
-            - timer.beweging_overloop
-            - timer.beweging_werkkamer
-            - timer.beweging_slaapkamer
-            - timer.beweging_logeerkamer
+- id: presence_forceer_afwezig
+  alias: Forceer afwezig
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: input_boolean.presence_forceer_afwezig
+    to: 'on'
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.presence_forceer_thuis
+  - service: timer.cancel
+    data:
+      entity_id:
+      - timer.presence_beweging_keuken
+      - timer.presence_beweging_woonkamer
+      - timer.presence_beweging_gang
+      - timer.presence_beweging_overloop
+      - timer.presence_beweging_werkkamer
+      - timer.presence_beweging_slaapkamer
+      - timer.presence_beweging_logeerkamer
       
-  - alias: "Beweging gedetecteerd"
-    initial_state: 'on'
-    trigger:
-      platform: state
-      entity_id: 
-        - binary_sensor.keuken_motion
-        - binary_sensor.woonkamer_motion
-        - binary_sensor.gang_motion
-        - binary_sensor.overloop_motion
-        - binary_sensor.werkkamer_motion
-        - binary_sensor.slaapkamer_motion
-        - binary_sensor.logeerkamer_motion
-      to: 'on'
-    condition:
-      condition: state
-      entity_id: input_boolean.forceer_afwezig
-      state: 'off'
-    action:
-      - service: timer.start
-        data_template:
-          entity_id: '{{ "timer.beweging_" + trigger.entity_id|regex_findall_index("\.([a-zA-Z0-9]*)_", 0) }}'
+- id: presence_beweging_gedetecteerd
+  alias: Beweging gedetecteerd
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: 
+    - binary_sensor.keuken_motion
+    - binary_sensor.woonkamer_motion
+    - binary_sensor.gang_motion
+    - binary_sensor.overloop_motion
+    - binary_sensor.werkkamer_motion
+    - binary_sensor.slaapkamer_motion
+    - binary_sensor.logeerkamer_motion
+    to: 'on'
+  condition:
+    condition: state
+    entity_id: input_boolean.presence_forceer_afwezig
+    state: 'off'
+  action:
+  - service: timer.start
+    data_template:
+      entity_id: '{{ "timer.presence_beweging_" + trigger.entity_id|regex_findall_index("binary_sensor\.(.*)_motion", 0) }}'

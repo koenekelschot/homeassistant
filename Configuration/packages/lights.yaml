@@ -1,64 +1,64 @@
 input_boolean:
-  donker_override:
+  lights_donker_override:
     initial: off
 
 input_number:
-  donker_buiten_threshold:
-    name: "Donker buiten"
+  lights_donker_buiten_threshold:
+    name: Donker buiten
     min: 0
     max: 100
     step: 1
-    unit_of_measurement: "Lux"
+    unit_of_measurement: Lux
 
 binary_sensor:
 - platform: template
   sensors:
-    donker_buiten:
+    lights_donker_buiten:
+      friendly_name: Donker buiten
       value_template: >
-        {% set current = states("binary_sensor.donker_buiten") %}
+        {% set current = states("binary_sensor.lights_donker_buiten") %}
         {% set light_level = states("sensor.veranda_light_level") %}
-        {% set threshold = states("input_number.donker_buiten_threshold")|int %}
+        {% set threshold = states("input_number.lights_donker_buiten_threshold")|int %}
         {% if light_level == "unavailable" %}
           {{ current }}
-        {% elif is_state("input_boolean.donker_override", "on") or light_level|int < threshold %}
-          true
-        {% else %}
-          false
-        {% endif %}
-    opgestaan:
-      value_template: >
-        {% if (is_state("input_boolean.slapen", "off") and 
-          as_timestamp(states.timer.beweging_overloop.last_updated) > as_timestamp(states.input_boolean.slapen.last_updated)) %}
+        {% elif is_state("input_boolean.lights_donker_override", "on") or light_level|int < threshold %}
           true
         {% else %}
           false
         {% endif %}
 
 switch:
-  - platform: flux
-    lights:
-      - light.lamp_gang
-      - light.lamp_overloop
-      - light.lamp_werkkamer
-      - light.lamp_slaapkamer_links_voor
-      - light.lamp_slaapkamer_links_midden
-      - light.lamp_slaapkamer_links_achter
-      - light.lamp_slaapkamer_rechts_voor
-      - light.lamp_slaapkamer_rechts_midden
-      - light.lamp_slaapkamer_rechts_achter
-      - light.lamp_logeerkamer_links_voor
-      - light.lamp_logeerkamer_links_achter
-      - light.lamp_logeerkamer_rechts_voor
-      - light.lamp_logeerkamer_rechts_achter
-    name: 'Flux'
-    start_time: '07:00'
-    start_colortemp: 5000
-    sunset_colortemp: 3400
-    stop_colortemp: 1600
-    mode: mired
+- platform: flux
+  name: lights_flux
+  lights:
+  - light.lamp_gang
+  - light.lamp_overloop
+  - light.lamp_werkkamer
+  - light.lamp_slaapkamer_links_voor
+  - light.lamp_slaapkamer_links_midden
+  - light.lamp_slaapkamer_links_achter
+  - light.lamp_slaapkamer_rechts_voor
+  - light.lamp_slaapkamer_rechts_midden
+  - light.lamp_slaapkamer_rechts_achter
+  - light.lamp_logeerkamer_links_voor
+  - light.lamp_logeerkamer_links_achter
+  - light.lamp_logeerkamer_rechts_voor
+  - light.lamp_logeerkamer_rechts_achter
+  start_time: '07:00'
+  start_colortemp: 5000
+  sunset_colortemp: 3400
+  stop_colortemp: 1600
+  mode: mired
+
+homeassistant:
+  customize:
+    input_boolean.lights_donker_override:
+      friendly_name: Donker override
+    switch.lights_flux:
+      friendly_name: Flux
 
 scene:
-- name: "Licht beneden normaal"
+- name: lights_beneden_normaal
   entities:
     light.lamp_tv:
       state: on
@@ -88,7 +88,7 @@ scene:
       state: on
       brightness: 220
 
-- name: "Licht beneden uit"
+- name: lights_beneden_uit
   entities:
     light.lamp_tv: off
     light.lamp_bank: off
@@ -102,221 +102,234 @@ scene:
     light.lamp_gang: off
 
 automation:
-  - alias: "Licht beneden aan"
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.donker_buiten
-        to: 'on'
-      - platform: state
-        entity_id: binary_sensor.iemand_beneden
-        to: 'on'
-      - platform: state
-        entity_id: sensor.home_cinema
-        to: 'off'
-    condition:
-      condition: and
-      conditions:
-        - condition: state
-          entity_id: binary_sensor.iemand_beneden
-          state: 'on'
-        - condition: state
-          entity_id: binary_sensor.donker_buiten
-          state: 'on'
-        - condition: state
-          entity_id: sensor.home_cinema
-          state: 'off'
-        - condition: state
-          entity_id: input_boolean.slapen
-          state: 'off'
-    action:
-      service: scene.turn_on
-      entity_id: scene.licht_beneden_normaal
-
-  - alias: "Licht uit"
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.iemand_thuis
-        to: 'off'
-      - platform: state
-        entity_id: binary_sensor.donker_buiten
-        to: 'off'
-      - platform: state
-        entity_id: input_boolean.slapen
-        to: 'on'
-    action:
-      service: light.turn_off
-      entity_id: all
-
-  - alias: "Licht beneden uit"
-    initial_state: 'on'
-    trigger: 
-      platform: state
-      entity_id: binary_sensor.iemand_beneden
-      to: 'off'
-      for:
-        minutes: 5 
-        #get off the damn couch and trigger the motion sensors
-    condition: 
-      condition: state
-      entity_id: binary_sensor.iemand_thuis
+- id: lights_beneden_normaal
+  alias: Licht beneden aan
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.lights_donker_buiten
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.presence_iemand_beneden
+    to: 'on'
+  - platform: state
+    entity_id: sensor.home_cinema_state
+    to: 'off'
+  condition:
+    condition: and
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.presence_iemand_beneden
       state: 'on'
-    action:
-      service: scene.turn_on
-      entity_id: scene.licht_beneden_uit
-
-  - alias: "Licht gang aan"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.started
-      event_data:
-        entity_id: timer.beweging_gang
-    condition:
-      condition: state
-      entity_id: binary_sensor.donker_buiten
+    - condition: state
+      entity_id: binary_sensor.lights_donker_buiten
       state: 'on'
-    action:
-      service: light.turn_on
-      entity_id: light.lamp_gang
+    - condition: state
+      entity_id: sensor.home_cinema_state
+      state: 'off'
+    - condition: state
+      entity_id: input_boolean.activity_sleeping
+      state: 'off'
+  action:
+    service: scene.turn_on
+    entity_id: scene.lights_beneden_normaal
 
-  - alias: "Licht gang uit"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.beweging_gang
-    action:
-      service: light.turn_off
-      entity_id: light.lamp_gang
+- id: lights_alles_uit
+  alias: Licht uit
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.presence_iemand_thuis
+    to: 'off'
+  - platform: state
+    entity_id: binary_sensor.lights_donker_buiten
+    to: 'off'
+  - platform: state
+    entity_id: input_boolean.activity_sleeping
+    to: 'on'
+  action:
+    service: light.turn_off
+    entity_id: all
 
-  - alias: "Licht overloop aan"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.started
-      event_data:
-        entity_id: timer.beweging_overloop
-    condition:
-      condition: state
-      entity_id: binary_sensor.donker_buiten
-      state: 'on'
-    action:
-      service: light.turn_on
-      entity_id: light.lamp_overloop
-        
-  - alias: "Licht overloop uit"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.beweging_overloop
-    action:
-      service: light.turn_off
-      entity_id: light.lamp_overloop
+- id: lights_beneden_uit
+  alias: Licht beneden uit
+  initial_state: 'on'
+  trigger: 
+    platform: state
+    entity_id: binary_sensor.presence_iemand_beneden
+    to: 'off'
+    for:
+      minutes: 5 
+      #get off the damn couch and trigger the motion sensors
+  condition: 
+    condition: state
+    entity_id: binary_sensor.presence_iemand_thuis
+    state: 'on'
+  action:
+    service: scene.turn_on
+    entity_id: scene.lights_beneden_uit
 
-  - alias: "Licht werkkamer aan"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.started
-      event_data:
-        entity_id: timer.beweging_werkkamer
-    condition:
-      condition: state
-      entity_id: binary_sensor.donker_buiten
-      state: 'on'
-    action:
-      service: light.turn_on
-      entity_id: light.lamp_werkkamer
+- id: lights_gang_aan
+  alias: Lamp gang aan
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.started
+    event_data:
+      entity_id: timer.presence_beweging_gang
+  condition:
+    condition: state
+    entity_id: binary_sensor.lights_donker_buiten
+    state: 'on'
+  action:
+    service: light.turn_on
+    entity_id: light.lamp_gang
 
-  - alias: "Licht werkkamer uit"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.beweging_werkkamer
-    action:
-      service: light.turn_off
-      entity_id: light.lamp_werkkamer
+- id: lights_gang_uit
+  alias: Licht gang uit
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.presence_beweging_gang
+  action:
+    service: light.turn_off
+    entity_id: light.lamp_gang
 
-  - alias: "Licht slaapkamer aan"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.started
-      event_data:
-        entity_id: timer.beweging_slaapkamer
-    condition:
-      condition: state
-      entity_id: binary_sensor.opgestaan
-      state: 'on'
-    action:
-      service: light.turn_on
-      entity_id: 
-        - light.lamp_slaapkamer_links_voor
-        - light.lamp_slaapkamer_links_midden
-        - light.lamp_slaapkamer_links_achter
-        - light.lamp_slaapkamer_rechts_voor
-        - light.lamp_slaapkamer_rechts_midden
-        - light.lamp_slaapkamer_rechts_achter
+- id: lights_overloop_aan
+  alias: Licht overloop aan
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.started
+    event_data:
+      entity_id: timer.presence_beweging_overloop
+  condition:
+    condition: state
+    entity_id: binary_sensor.lights_donker_buiten
+    state: 'on'
+  action:
+    service: light.turn_on
+    entity_id: light.lamp_overloop
+      
+- id: lights_overloop_uit
+  alias: Licht overloop uit
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.presence_beweging_overloop
+  action:
+    service: light.turn_off
+    entity_id: light.lamp_overloop
 
-  - alias: "Licht slaapkamer uit"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.beweging_slaapkamer
-    action:
-      service: light.turn_off
-      entity_id:
-        - light.lamp_slaapkamer_links_voor
-        - light.lamp_slaapkamer_links_midden
-        - light.lamp_slaapkamer_links_achter
-        - light.lamp_slaapkamer_rechts_voor
-        - light.lamp_slaapkamer_rechts_midden
-        - light.lamp_slaapkamer_rechts_achter
+- id: lights_werkkamer_aan
+  alias: Licht werkkamer aan
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.started
+    event_data:
+      entity_id: timer.presence_beweging_werkkamer
+  condition:
+    condition: state
+    entity_id: binary_sensor.lights_donker_buiten
+    state: 'on'
+  action:
+    service: light.turn_on
+    entity_id: light.lamp_werkkamer
 
-  - alias: "Licht logeerkamer aan"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.started
-      event_data:
-        entity_id: timer.beweging_logeerkamer
-    condition:
-      condition: and
-      conditions:
-        - condition: state
-          entity_id: binary_sensor.donker_buiten
-          state: 'on'
-        - condition: state
-          entity_id: input_boolean.slapen
-          state: 'off'
-    action:
-      service: light.turn_on
-      entity_id: 
-        - light.lamp_logeerkamer_links_voor
-        - light.lamp_logeerkamer_links_achter
-        - light.lamp_logeerkamer_rechts_voor
-        - light.lamp_logeerkamer_rechts_achter
+- id: lights_werkkamer_uit
+  alias: Licht werkkamer uit
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.presence_beweging_werkkamer
+  action:
+    service: light.turn_off
+    entity_id: light.lamp_werkkamer
 
-  - alias: "Licht logeerkamer uit"
-    initial_state: 'on'
-    trigger:
-      platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.beweging_logeerkamer
-    action:
-      service: light.turn_off
-      entity_id:
-        - light.lamp_logeerkamer_links_voor
-        - light.lamp_logeerkamer_links_achter
-        - light.lamp_logeerkamer_rechts_voor
-        - light.lamp_logeerkamer_rechts_achter
+- id: lights_slaapkamer_aan
+  alias: Licht slaapkamer aan
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.started
+    event_data:
+      entity_id: timer.presence_beweging_slaapkamer
+  condition:
+    condition: state
+    entity_id: binary_sensor.presence_iemand_opgestaan
+    state: 'on'
+  action:
+    service: light.turn_on
+    entity_id: 
+    - light.lamp_slaapkamer_links_voor
+    - light.lamp_slaapkamer_links_midden
+    - light.lamp_slaapkamer_links_achter
+    - light.lamp_slaapkamer_rechts_voor
+    - light.lamp_slaapkamer_rechts_midden
+    - light.lamp_slaapkamer_rechts_achter
+
+- id: lights_slaapkamer_uit
+  alias: Licht slaapkamer uit
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.presence_beweging_slaapkamer
+  action:
+    service: light.turn_off
+    entity_id:
+    - light.lamp_slaapkamer_links_voor
+    - light.lamp_slaapkamer_links_midden
+    - light.lamp_slaapkamer_links_achter
+    - light.lamp_slaapkamer_rechts_voor
+    - light.lamp_slaapkamer_rechts_midden
+    - light.lamp_slaapkamer_rechts_achter
+
+- id: lights_logeerkamer_aan
+  alias: Licht logeerkamer aan
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.started
+    event_data:
+      entity_id: timer.presence_beweging_logeerkamer
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.lights_donker_buiten
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.activity_slapen
+        state: 'off'
+  action:
+    service: light.turn_on
+    entity_id: 
+    - light.lamp_logeerkamer_links_voor
+    - light.lamp_logeerkamer_links_achter
+    - light.lamp_logeerkamer_rechts_voor
+    - light.lamp_logeerkamer_rechts_achter
+
+- id: lights_logeerkamer_uit
+  alias: Licht logeerkamer uit
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.presence_beweging_logeerkamer
+  action:
+    service: light.turn_off
+    entity_id:
+    - light.lamp_logeerkamer_links_voor
+    - light.lamp_logeerkamer_links_achter
+    - light.lamp_logeerkamer_rechts_voor
+    - light.lamp_logeerkamer_rechts_achter

@@ -2,15 +2,16 @@ rest_command:
   travis_request:
     url: https://api.travis-ci.org/repo/peckham%2Fhomeassistant/requests
     method: POST
-    content_type: 'application/json'
+    content_type: application/json
     headers:
       authorization: !secret travis_auth
-      accept: 'application/json'
-      Travis-API-Version: '3'
+      accept: application/json
+      Travis-API-Version: 3
     payload: '{{ request }}'
 
 automation:
-  - alias: "Travis check config update"
+  - id: travis_check_config
+    alias: Travis check config update"
     initial_state: 'on'
     trigger:
       - platform: state

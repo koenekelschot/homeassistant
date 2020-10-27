@@ -3,57 +3,57 @@ soma:
   port: 3000
 
 sensor:
-  - platform: template
-    sensors:
-      positie_gordijn_actueel:
-        friendly_name: "Actuele positie gordijn"
-        unit_of_measurement: '%'
-        value_template: '{{ state_attr("cover.woonkamer_2", "current_position")|int }}'
-      positie_gordijn_gewenst:
-        friendly_name: "Gewenste positie gordijn"
-        unit_of_measurement: '%'
-        value_template: >-
-          {% set current = states("sensor.positie_gordijn_gewenst")|int %}
-          {% set azimuth = state_attr("sun.sun", "azimuth")|float %}
-          {% set current_time = states("sensor.time") %}
-          {% set light_level = states("sensor.veranda_light_level")|float %}
-          {% set light_unavailable = states("sensor.veranda_light_level") == "unavailable" %}
-          {% set indoor_temp = state_attr("climate.thermostat", "current_temperature")|float %}
-          {% if light_unavailable %}
-            {{ current }}
-          {% elif is_state("input_boolean.slapen", "on") or current_time <= "06:00" %}
-            {{ 0 }}
-          {% elif azimuth >= 297.5 or (current_time >= "16:00" and light_level <= 10.0) %}
-            {{ 25 }}
-          {% elif azimuth >= 210 and indoor_temp >= 22 %}
-            {{ 35 }}
-          {% else %}
-            {{ 90 }}
-          {% endif %}
+- platform: template
+  sensors:
+    curtain_positie_actueel:
+      friendly_name: Actuele positie gordijn
+      unit_of_measurement: '%'
+      value_template: >
+        {{ state_attr('cover.woonkamer', 'current_position')|int }}
+    curtain_positie_gewenst:
+      friendly_name: Gewenste positie gordijn
+      unit_of_measurement: '%'
+      value_template: >
+        {% set current = states('sensor.curtain_positie_gewenst')|int %}
+        {% set azimuth = state_attr('sun.sun', 'azimuth')|float %}
+        {% set current_time = states('sensor.time') %}
+        {% set light_level = states('sensor.veranda_light_level')|float %}
+        {% set light_unavailable = states('sensor.veranda_light_level') == 'unavailable' %}
+        {% set indoor_temp = state_attr('climate.thermostat', 'current_temperature')|float %}
+        {% if light_unavailable %}
+          {{ current }}
+        {% elif is_state('input_boolean.activity_sleeping', 'on') or current_time <= '06:00' %}
+          {{ 0 }}
+        {% elif azimuth >= 297.5 or (current_time >= '16:00' and light_level <= 10.0) %}
+          {{ 25 }}
+        {% elif azimuth >= 210 and indoor_temp >= 22 %}
+          {{ 35 }}
+        {% else %}
+          {{ 90 }}
+        {% endif %}
 
 binary_sensor:
-  - platform: template
-    sensors:
-      update_positie_gordijn:
-        value_template: '{{ (states("sensor.positie_gordijn_gewenst")|int - states("sensor.positie_gordijn_actueel")|int)|abs > 3 }}'
+- platform: template
+  sensors:
+    curtain_update_positie:
+      friendly_name: Update positie gordijn
+      value_template: >
+        {{ (states('sensor.curtain_positie_gewenst')|int - states('sensor.curtain_positie_actueel')|int)|abs > 3 }}
 
-timer:
-  positie_gordijn:
-    duration: '00:01:00'
-    
 automation:
-  - alias: "Stand gordijn"
-    initial_state: 'on'
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.update_positie_gordijn
-        to: 'on'
-    condition:
-      condition: state
-      entity_id: binary_sensor.update_positie_gordijn
-      state: 'on'
-    action:
-      - service: cover.set_cover_position
-        data_template:
-          entity_id: cover.woonkamer_2
-          position: '{{ states("sensor.positie_gordijn_gewenst") }}'
+- alias: Stand gordijn
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.curtain_update_positie
+    to: 'on'
+  condition:
+    condition: state
+    entity_id: binary_sensor.curtain_update_positie
+    state: 'on'
+  action:
+  - service: cover.set_cover_position
+    data_template:
+      entity_id: cover.woonkamer
+      position: >
+        {{ states('sensor.curtain_positie_gewenst') }}
