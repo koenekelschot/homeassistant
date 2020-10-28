@@ -23,6 +23,12 @@ logger:
   logs:
     roomba.roomba.Roomba: error
 
+sensor:
+- platform: time_date
+  display_options:
+  - date
+  - time
+
 binary_sensor:
 - platform: workday
   country: NL

@@ -27,7 +27,9 @@ automation:
     - condition: time
       weekday:
       - mon
+      - tue
       - wed
+      - thu
       - fri
   action:
   - service: vacuum.start

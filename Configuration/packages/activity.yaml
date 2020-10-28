@@ -7,14 +7,34 @@ homeassistant:
     input_boolean.activity_sleeping:
       friendly_name: Slapen
 
+binary_sensor:
+- platform: template
+  sensors:
+    activity_thuiswerken:
+      friendly_name: Thuiswerken
+      entity_id: sensor.time
+      value_template: >
+        {% set current_time = (now().hour * 100) + now().minute %}
+        {% set werkdag_start = state_attr('input_datetime.heating_verwarming_aan_tijd_werkdag', 'timestamp')|timestamp_custom('%H%M', false)|int %}
+        {% set weekend_start = state_attr("input_datetime.heating_verwarming_aan_tijd_weekend", 'timestamp')|timestamp_custom('%H%M', false)|int %}
+        {% if (
+          is_state('binary_sensor.workday_sensor', 'on') and
+          is_state('binary_sensor.presence_iemand_thuis', 'on') and 
+          current_time > weekend_start - 15 and
+          current_time < werkdag_start
+        ) %}
+          true
+        {% else %} 
+          false
+        {% endif %}
+
 automation:
 - id: activity_wakingup
   alias: Opstaan
   trigger:
-  - at: 07:30
-    platform: time
+  - platform: time
+    at: 07:30
   action:
-  - data:
-      entity_id: input_boolean.activity_sleeping
     service: input_boolean.turn_off
+    entity_id: input_boolean.activity_sleeping
   initial_state: 'on'
