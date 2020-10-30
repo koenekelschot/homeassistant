@@ -2,14 +2,26 @@ soma:
   host: 192.168.178.54
   port: 3000
 
+input_boolean:
+  curtain_positie_override:
+    initial: off
+
+input_number:
+  curtain_positie_override:
+    min: 0
+    max: 90
+    step: 1
+
+homeassistant:
+  customize:
+    input_boolean.curtain_positie_override:
+      friendly_name: "Gordijn override"
+    input_number.curtain_positie_override:
+      friendly_name: "Gordijn override positie"
+
 sensor:
 - platform: template
   sensors:
-    curtain_positie_actueel:
-      friendly_name: Actuele positie gordijn
-      unit_of_measurement: '%'
-      value_template: >
-        {{ state_attr('cover.woonkamer', 'current_position')|int }}
     curtain_positie_gewenst:
       friendly_name: Gewenste positie gordijn
       unit_of_measurement: '%'
@@ -19,10 +31,12 @@ sensor:
         {% set current_time = states('sensor.time') %}
         {% set light_level = states('sensor.veranda_light_level')|float %}
         {% set light_unavailable = states('sensor.veranda_light_level') == 'unavailable' %}
-        {% set indoor_temp = state_attr('climate.thermostat', 'current_temperature')|float %}
-        {% if light_unavailable %}
+        {% set indoor_temp = states('sensor.temperature_beneden')|float %}
+        {% if is_state('input_boolean.curtain_positie_override', 'on') %}
+          {{ states('input_number.curtain_positie_override')|int }}
+        {% elif light_unavailable %}
           {{ current }}
-        {% elif is_state('input_boolean.activity_sleeping', 'on') or current_time <= '06:00' %}
+        {% elif is_state('input_boolean.activity_sleeping', 'on') or is_state('binary_sensor.activity_bedtijd', 'on') %}
           {{ 0 }}
         {% elif azimuth >= 297.5 or (current_time >= '16:00' and light_level <= 10.0) %}
           {{ 25 }}
@@ -32,28 +46,44 @@ sensor:
           {{ 90 }}
         {% endif %}
 
-binary_sensor:
-- platform: template
-  sensors:
-    curtain_update_positie:
-      friendly_name: Update positie gordijn
-      value_template: >
-        {{ (states('sensor.curtain_positie_gewenst')|int - states('sensor.curtain_positie_actueel')|int)|abs > 3 }}
-
 automation:
-- alias: Stand gordijn
+- id: curtain_stand_gordijn
+  alias: Stand gordijn
   initial_state: 'on'
   trigger:
   - platform: state
-    entity_id: binary_sensor.curtain_update_positie
-    to: 'on'
+    entity_id: sensor.curtain_positie_gewenst
   condition:
-    condition: state
-    entity_id: binary_sensor.curtain_update_positie
-    state: 'on'
+    condition: template
+    value_template: >
+        {{ (states('sensor.curtain_positie_gewenst')|int - state_attr('cover.woonkamer', 'current_position')|int)|abs > 3 }}
   action:
   - service: cover.set_cover_position
     data_template:
       entity_id: cover.woonkamer
       position: >
         {{ states('sensor.curtain_positie_gewenst') }}
+
+- id: curtain_set_override_gordijn
+  alias: Stand gordijn override
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: input_number.curtain_positie_override
+  action:
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.curtain_positie_override
+
+- id: curtain_clear_override_gordijn
+  alias: Stand gordijn clear override
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: input_boolean.activity_sleeping
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.activity_bedtijd
+    to: 'on'
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.curtain_positie_override

@@ -2,35 +2,48 @@ input_boolean:
   activity_sleeping:
     icon: mdi:sleep
 
-homeassistant:
-  customize:
-    input_boolean.activity_sleeping:
-      friendly_name: Slapen
-
 binary_sensor:
+- platform: tod
+  name: activity_bedtijd
+  after: '00:00'
+  before: '07:30'
+
+- platform: tod
+  name: activity_werktijd
+  after: '09:00'
+  before: '17:30'
+
 - platform: template
   sensors:
     activity_thuiswerken:
       friendly_name: Thuiswerken
       value_template: >
-        {% set werkdag_start = states('input_datetime.heating_verwarming_aan_tijd_werkdag')[0:5] %}
-        {% set weekend_start = states('input_datetime.heating_verwarming_aan_tijd_weekend')[0:5] %}
-        {% if (
+        {% if 
           is_state('binary_sensor.workday_sensor', 'on') and
-          is_state('binary_sensor.presence_iemand_thuis', 'on') and 
-          weekend_start <= states('sensor.time') <= werkdag_start
-        ) %}
+          is_state('binary_sensor.activity_werktijd', 'on') and 
+          is_state('binary_sensor.presence_iemand_thuis', 'on')
+        %}
           true
         {% else %} 
           false
         {% endif %}
 
+homeassistant:
+  customize:
+    input_boolean.activity_sleeping:
+      friendly_name: Slapen
+    binary_sensor.activity_bedtijd:
+      friendly_name: Bedtijd
+    binary_sensor.activity_werktijd:
+      friendly_name: Werktijd
+
 automation:
 - id: activity_wakingup
   alias: Opstaan
   trigger:
-  - platform: time
-    at: 07:30
+  - platform: state
+    entity_id: binary_sensor.activity_bedtijd
+    to: 'off'
   action:
     service: input_boolean.turn_off
     entity_id: input_boolean.activity_sleeping
