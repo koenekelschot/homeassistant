@@ -6,6 +6,7 @@ sensor:
       unit_of_measurement: '°C'
       value_template: >
         {{ states('sensor.veranda_temperature') }}
+
     temperature_boven:
       friendly_name: Temperatuur boven
       unit_of_measurement: '°C'
@@ -15,13 +16,15 @@ sensor:
           states('sensor.slaapkamer_temperature')|float, 
           states('sensor.logeerkamer_temperature')|float
         ]|max }}
+
     temperature_beneden:
       friendly_name: Temperatuur beneden
       unit_of_measurement: '°C'
       value_template: >
         {{ [states('sensor.gang_temperature')|float, 
           states('sensor.woonkamer_temperature')|float, 
-          states('sensor.keuken_temperature')|float
+          states('sensor.keuken_temperature')|float,
+          state_attr('climate.thermostat', 'current_temperature')|float
         ]|max }}
 
 binary_sensor:
@@ -31,6 +34,7 @@ binary_sensor:
       friendly_name: Boven warmer dan buiten
       value_template: >
         {{ states('sensor.temperature_boven')|float > states('sensor.temperature_buiten')|float + 2 }}
+
     temperature_beneden_warmer_dan_buiten:
       friendly_name: Beneden warmer dan buiten
       value_template: >
