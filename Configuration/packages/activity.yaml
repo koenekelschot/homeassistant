@@ -12,16 +12,13 @@ binary_sensor:
   sensors:
     activity_thuiswerken:
       friendly_name: Thuiswerken
-      entity_id: sensor.time
       value_template: >
-        {% set current_time = (now().hour * 100) + now().minute %}
-        {% set werkdag_start = state_attr('input_datetime.heating_verwarming_aan_tijd_werkdag', 'timestamp')|timestamp_custom('%H%M', false)|int %}
-        {% set weekend_start = state_attr("input_datetime.heating_verwarming_aan_tijd_weekend", 'timestamp')|timestamp_custom('%H%M', false)|int %}
+        {% set werkdag_start = states('input_datetime.heating_verwarming_aan_tijd_werkdag')[0:5] %}
+        {% set weekend_start = states('input_datetime.heating_verwarming_aan_tijd_weekend')[0:5] %}
         {% if (
           is_state('binary_sensor.workday_sensor', 'on') and
           is_state('binary_sensor.presence_iemand_thuis', 'on') and 
-          current_time > weekend_start - 15 and
-          current_time < werkdag_start
+          weekend_start <= states('sensor.time') <= werkdag_start
         ) %}
           true
         {% else %} 

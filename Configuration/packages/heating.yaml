@@ -43,9 +43,9 @@ homeassistant:
       friendly_name: Verwarming aan (weekend)
     input_datetime.heating_verwarming_uit_tijd:
       friendly_name: Verwarming uit
-    input_datetime.heating_verwarming_laatst_gestart:
+    input_datetime.heating_verwarming_gestart:
       friendly_name: Verwarming gestart
-    input_datetime.heating_verwarming_laatst_gestopt:
+    input_datetime.heating_verwarming_gestopt:
       friendly_name: Verwarming gestopt
 
 sensor:
@@ -77,25 +77,21 @@ sensor:
     heating_verwarming_aan_tijd:
       friendly_name: Verwarming aan om
       value_template: >
-        {% set current_time = (now().hour * 100) + now().minute %}
-        {% set werkdag_start = state_attr('input_datetime.heating_verwarming_aan_tijd_werkdag', 'timestamp')|timestamp_custom('%H%M', false)|int %}
-        {% set weekend_start = state_attr("input_datetime.heating_verwarming_aan_tijd_weekend", 'timestamp')|timestamp_custom('%H%M', false)|int %}
-        {% set thuiswerken = is_state('binary_sensor.workday_sensor', 'on') and is_state('binary_sensor.presence_iemand_thuis', 'on') and current_time >= weekend_start %}
-        {% if is_state("binary_sensor.workday_sensor", "off") or thuiswerken -%}
-          {{ weekend_start }}
+        {% if is_state('binary_sensor.workday_sensor', 'off') or is_state('binary_sensor.activity_thuiswerken', 'on') %}
+          {{ states('input_datetime.heating_verwarming_aan_tijd_weekend')[0:5] }}
         {% else %}
-          {{ werkdag_start }}
+          {{ states('input_datetime.heating_verwarming_aan_tijd_werkdag')[0:5] }}
         {% endif %}
 
     heating_rate:
       friendly_name: Snelheid opwarming
       unit_of_measurement: 's/°C'
-      value_template: >-
+      value_template: >
         {% set current = states('sensor.heating_rate')|float %}
         {% set starttime = as_timestamp(states('input_datetime.heating_verwarming_gestart'))|int %}
         {% set endtime = as_timestamp(states('input_datetime.heating_verwarming_gestopt'))|int %}
         {% set starttemp = states('input_number.heating_temperatuur_start')|float %}
-        {% set endtemp = states("input_number.heating_temperatuur_eind")|float %}
+        {% set endtemp = states('input_number.heating_temperatuur_eind')|float %}
         {% if (starttime < endtime and starttemp < endtemp) %}
           {{ (endtime - starttime) / (endtemp - starttemp) }}
         {% else %}
@@ -108,15 +104,14 @@ binary_sensor:
     heating_verwarming_actief:
       friendly_name: Verwarming actief
       value_template: >
-        {{ as_timestamp(states('input_datetime.heating_verwarming_laatst_gestart'))|int > as_timestamp(states('input_datetime.heating_verwarming_laatst_gestopt'))|int }}
+        {{ is_state_attr('climate.thermostat', 'preset_mode', 'home') or is_state_attr('climate.thermostat', 'preset_mode', 'comfort') }}
     
     heating_verwarming_timeframe:
       friendly_name: Verwarming gewenst
       value_template: >
-        {% set current_time = (now().hour * 100) + now().minute %}
-        {% set timeframe_start = states('sensor.heating_verwarming_aan_tijd')|int %}
-        {% set timeframe_end = state_attr('input_datetime.heating_verwarming_uit_tijd', 'timestamp')|timestamp_custom('%H%M', false)|int %}
-        {{ current_time >= timeframe_start and current_time <= timeframe_end }}
+        {% set timeframe_start = states('sensor.heating_verwarming_aan_tijd') %}
+        {% set timeframe_end = states('input_datetime.heating_verwarming_uit_tijd')[0:5] %}
+        {{ timeframe_start <= states('sensor.time') <= timeframe_end }}
 
     heating_verwarming_moet_starten:
       friendly_name: Verwarming moet aan zijn
@@ -210,9 +205,9 @@ automation:
     entity_id: binary_sensor.heating_verwarming_timeframe
     to: 'off'
   condition:
-    condition: template
-    value_template: >
-      {{ is_state_attr('climate.thermostat', 'preset_mode', 'home') or is_state_attr('climate.thermostat', 'preset_mode', 'comfort') }}
+    condition: state
+    entity_id: binary_sensor.heating_verwarming_actief
+    state: 'on'
   action:
   - service: climate.set_preset_mode
     data:
@@ -245,17 +240,12 @@ automation:
     platform: state
     entity_id: sensor.heating_temperatuur_doel
   condition:
-    condition: and
-    conditions:
-    - condition: numeric_state
-      entity_id: sensor.heating_temperatuur_verschil
-      above: 0
-    - condition: state
-      entity_id: binary_sensor.heating_verwarming_actief
-      state: 'off'
+    condition: numeric_state
+    entity_id: sensor.heating_temperatuur_verschil
+    above: 0
   action:
   - service: input_datetime.set_datetime
-    entity_id: input_datetime.heating_verwarming_laatst_gestart
+    entity_id: input_datetime.heating_verwarming_gestart
     data_template:
       date: '{{ now().strftime("%Y-%m-%d") }}'
       time: '{{ now().strftime("%H:%M:%S") }}'
@@ -277,11 +267,11 @@ automation:
     state: 'on'
   action:
   - service: input_datetime.set_datetime
-    entity_id: input_datetime.heating_verwarming_laatst_gestopt
+    entity_id: input_datetime.heating_verwarming_gestopt
     data_template:
       date: '{{ now().strftime("%Y-%m-%d") }}'
       time: '{{ now().strftime("%H:%M:%S") }}'
   - service: input_number.set_value
     entity_id: input_number.heating_temperatuur_eind
     data_template:
-      value: '{{ states("sensor.temperature_current") }}'
+      value: '{{ states("sensor.heating_temperatuur_huidig") }}'
