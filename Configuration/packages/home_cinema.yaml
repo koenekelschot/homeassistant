@@ -22,19 +22,10 @@ scene:
     light.lamp_dressoir:
       state: on
       brightness: 30
-    light.lamp_tafel_midden:
+    light.lights_group_eettafel:
       state: on
       brightness: 15
-    light.lamp_tafel_muur:
-      state: on
-      brightness: 15
-    light.lamp_keuken_deur:
-      state: off
-    light.lamp_keuken_koelkast:
-      state: off
-    light.lamp_keuken_raam_links:
-      state: off
-    light.lamp_keuken_raam_rechts:
+    light.lights_group_keuken:
       state: off
 
 - name: home_cinema_paused
@@ -48,22 +39,10 @@ scene:
     light.lamp_dressoir:
       state: on
       brightness: 100
-    light.lamp_tafel_midden:
+    light.lights_group_eettafel:
       state: on
       brightness: 90
-    light.lamp_tafel_muur:
-      state: on
-      brightness: 90
-    light.lamp_keuken_deur:
-      state: on
-      brightness: 160
-    light.lamp_keuken_koelkast:
-      state: on
-      brightness: 160
-    light.lamp_keuken_raam_links:
-      state: on
-      brightness: 160
-    light.lamp_keuken_raam_rechts:
+    light.lights_group_keuken:
       state: on
       brightness: 160
 

@@ -27,6 +27,39 @@ binary_sensor:
           false
         {% endif %}
 
+light:
+- platform: group
+  name: lights_group_eettafel
+  entities:
+  - light.lamp_tafel_muur
+  - light.lamp_tafel_midden
+
+- platform: group
+  name: lights_group_keuken
+  entities:
+  - light.lamp_keuken_deur
+  - light.lamp_keuken_koelkast
+  - light.lamp_keuken_raam_links
+  - light.lamp_keuken_raam_rechts
+
+- platform: group
+  name: lights_group_logeerkamer
+  entities:
+  - light.lamp_logeerkamer_links_voor
+  - light.lamp_logeerkamer_links_achter
+  - light.lamp_logeerkamer_rechts_voor
+  - light.lamp_logeerkamer_rechts_achter
+
+- platform: group
+  name: lights_group_slaapkamer
+  entities:
+  - light.lamp_slaapkamer_links_voor
+  - light.lamp_slaapkamer_links_midden
+  - light.lamp_slaapkamer_links_achter
+  - light.lamp_slaapkamer_rechts_voor
+  - light.lamp_slaapkamer_rechts_midden
+  - light.lamp_slaapkamer_rechts_achter
+
 switch:
 - platform: flux
   name: lights_flux
@@ -34,16 +67,8 @@ switch:
   - light.lamp_gang
   - light.lamp_overloop
   - light.lamp_werkkamer
-  - light.lamp_slaapkamer_links_voor
-  - light.lamp_slaapkamer_links_midden
-  - light.lamp_slaapkamer_links_achter
-  - light.lamp_slaapkamer_rechts_voor
-  - light.lamp_slaapkamer_rechts_midden
-  - light.lamp_slaapkamer_rechts_achter
-  - light.lamp_logeerkamer_links_voor
-  - light.lamp_logeerkamer_links_achter
-  - light.lamp_logeerkamer_rechts_voor
-  - light.lamp_logeerkamer_rechts_achter
+  - light.lights_group_slaapkamer
+  - light.lights_group_logeerkamer
   start_time: '07:00'
   start_colortemp: 5000
   sunset_colortemp: 3400
@@ -69,36 +94,29 @@ scene:
     light.lamp_dressoir:
       state: on
       brightness: 220
-    light.lamp_tafel_midden:
+    light.lights_group_eettafel:
       state: on
       brightness: 200
-    light.lamp_tafel_muur:
-      state: on
-      brightness: 200
-    light.lamp_keuken_deur:
+    light.lights_group_keuken:
       state: on
       brightness: 220
-    light.lamp_keuken_koelkast:
+
+- name: lights_beneden_videocall
+  entities:
+    light.lamp_bank:
       state: on
-      brightness: 220
-    light.lamp_keuken_raam_links:
+      brightness: 60
+    light.lights_group_eettafel:
       state: on
-      brightness: 220
-    light.lamp_keuken_raam_rechts:
-      state: on
-      brightness: 220
+      brightness: 95
 
 - name: lights_beneden_uit
   entities:
     light.lamp_tv: off
     light.lamp_bank: off
     light.lamp_dressoir: off
-    light.lamp_tafel_midden: off
-    light.lamp_tafel_muur: off
-    light.lamp_keuken_deur: off
-    light.lamp_keuken_koelkast: off
-    light.lamp_keuken_raam_links: off
-    light.lamp_keuken_raam_rechts: off
+    light.lights_group_eettafel: off
+    light.lights_group_keuken: off
     light.lamp_gang: off
 
 automation:
@@ -276,12 +294,7 @@ automation:
   action:
     service: light.turn_on
     entity_id: 
-    - light.lamp_slaapkamer_links_voor
-    - light.lamp_slaapkamer_links_midden
-    - light.lamp_slaapkamer_links_achter
-    - light.lamp_slaapkamer_rechts_voor
-    - light.lamp_slaapkamer_rechts_midden
-    - light.lamp_slaapkamer_rechts_achter
+    - light.lights_group_slaapkamer
 
 - id: lights_slaapkamer_uit
   alias: Licht slaapkamer uit
@@ -294,12 +307,7 @@ automation:
   action:
     service: light.turn_off
     entity_id:
-    - light.lamp_slaapkamer_links_voor
-    - light.lamp_slaapkamer_links_midden
-    - light.lamp_slaapkamer_links_achter
-    - light.lamp_slaapkamer_rechts_voor
-    - light.lamp_slaapkamer_rechts_midden
-    - light.lamp_slaapkamer_rechts_achter
+    - light.lights_group_slaapkamer
 
 - id: lights_logeerkamer_aan
   alias: Licht logeerkamer aan
@@ -321,10 +329,7 @@ automation:
   action:
     service: light.turn_on
     entity_id: 
-    - light.lamp_logeerkamer_links_voor
-    - light.lamp_logeerkamer_links_achter
-    - light.lamp_logeerkamer_rechts_voor
-    - light.lamp_logeerkamer_rechts_achter
+    - light.lights_group_logeerkamer
 
 - id: lights_logeerkamer_uit
   alias: Licht logeerkamer uit
@@ -337,7 +342,4 @@ automation:
   action:
     service: light.turn_off
     entity_id:
-    - light.lamp_logeerkamer_links_voor
-    - light.lamp_logeerkamer_links_achter
-    - light.lamp_logeerkamer_rechts_voor
-    - light.lamp_logeerkamer_rechts_achter
+    - light.lights_group_logeerkamer
