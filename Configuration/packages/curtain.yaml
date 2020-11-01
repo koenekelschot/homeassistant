@@ -56,7 +56,7 @@ automation:
   condition:
     condition: template
     value_template: >
-        {{ (states('sensor.curtain_positie_gewenst')|int - state_attr('cover.woonkamer', 'current_position')|int)|abs > 3 }}
+      {{ (states('sensor.curtain_positie_gewenst')|int - state_attr('cover.woonkamer', 'current_position')|int)|abs > 3 }}
   action:
   - service: cover.set_cover_position
     data_template:

@@ -177,9 +177,6 @@ automation:
       - condition: state
         entity_id: binary_sensor.heating_verwarming_moet_starten
         state: 'on'
-    - condition: state
-      entity_id: input_boolean.activity_sleeping
-      state: 'off'
     - condition: or
       conditions:
       - condition: state
