@@ -110,7 +110,7 @@ automation:
         {{ is_state_attr('vacuum.roomba', 'bin_full', true) }}
     - condition: template
       value_template: >
-        {{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_vol_notificatie.last_updated)) > 21600 }}
+        {{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_bin_full_notification.last_updated)) > 21600 }}
     - condition: state
       entity_id: input_boolean.presence_iemand_opgestaan
       state: 'on'
@@ -133,7 +133,7 @@ automation:
     conditions:
     - condition: template
       value_template: >
-        {{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_vol_notificatie.last_updated)) > 21600 }}
+        {{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_battery_empty_notification.last_updated)) > 21600 }}
     - condition: state
       entity_id: binary_sensor.presence_iemand_thuis
       state: 'on'
