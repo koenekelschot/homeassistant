@@ -1,0 +1,44 @@
+stages:
+  - build
+  - test
+  - deploy-config
+  - deploy-docker
+
+build:
+  # necessary in order to use variable for image in test stage
+  stage: build
+  script:
+    - echo -n "HA_VERSION=" | cat - .HA_VERSION >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
+test:
+  stage: test
+  dependencies:
+    - build
+  image:
+    name: homeassistant/home-assistant:$HA_VERSION
+    entrypoint: [""]
+  script:
+    - sh ./build/test.sh
+
+deploy-config:
+  stage: deploy-config
+  only:
+    refs:
+      - master
+    changes:
+      - "**/*.yaml"
+  script: 
+    - sh ./build/deploy-config.sh
+
+deploy-docker:
+  stage: deploy-docker
+  only:
+    refs:
+      - master
+    changes:
+      - .HA_VERSION
+  script:
+    - sh ./build/deploy-docker.sh
