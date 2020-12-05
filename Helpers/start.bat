@@ -1,1 +1,0 @@
-PowerShell -windowstyle hidden "& py -m homeassistant --config ""%APPDATA%/.homeassistant"""

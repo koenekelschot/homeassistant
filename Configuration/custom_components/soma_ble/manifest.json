@@ -1,8 +1,0 @@
-{
-  "domain": "soma_ble",
-  "name": "Soma BLE",
-  "documentation": "https://www.example.com",
-  "dependencies": [],
-  "codeowners": [],
-  "requirements": []
-}

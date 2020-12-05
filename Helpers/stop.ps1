@@ -1,1 +1,0 @@
-Get-WmiObject Win32_Process -Filter "Name LIKE '%python%' AND CommandLine LIKE '%homeassistant%'" | Invoke-WmiMethod -Name Terminate
