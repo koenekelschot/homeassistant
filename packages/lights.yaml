@@ -133,6 +133,9 @@ automation:
   - platform: state
     entity_id: sensor.home_cinema_state
     to: 'off'
+  - platform: state
+    entity_id: input_boolean.activity_videocall
+    to: 'off'
   condition:
     condition: and
     conditions:
@@ -148,9 +151,35 @@ automation:
     - condition: state
       entity_id: input_boolean.activity_sleeping
       state: 'off'
+    - condition: state
+      entity_id: input_boolean.activity_videocall
+      state: 'off'
   action:
     service: scene.turn_on
     entity_id: scene.lights_beneden_normaal
+
+- id: lights_beneden_videocall
+  alias: Licht beneden videocall
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.lights_donker_buiten
+    to: 'on'
+  - platform: state
+    entity_id: input_boolean.activity_videocall
+    to: 'on'
+  condition:
+    condition: and
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.lights_donker_buiten
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.activity_videocall
+      state: 'on'
+  action:
+    service: scene.turn_on
+    entity_id: scene.lights_beneden_videocall
 
 - id: lights_alles_uit
   alias: Licht uit
@@ -177,8 +206,7 @@ automation:
     entity_id: binary_sensor.presence_iemand_beneden
     to: 'off'
     for:
-      minutes: 5 
-      #get off the damn couch and trigger the motion sensors
+      minutes: 5
   condition: 
     condition: state
     entity_id: binary_sensor.presence_iemand_thuis

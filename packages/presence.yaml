@@ -52,6 +52,7 @@ binary_sensor:
             is_state('media_player.denon_avr_x2100w', 'playing') or
             is_state('media_player.denon_avr_x2100w', 'on') or
             is_state('media_player.living_room_tv', 'idle') or
+            is_state('input_boolean.activity_videocall', 'on') or
             is_state('timer.presence_beweging_keuken', 'active') or
             is_state('timer.presence_beweging_woonkamer', 'active') or
             is_state('timer.presence_beweging_gang', 'active'))) %}

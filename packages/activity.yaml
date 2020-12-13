@@ -1,6 +1,8 @@
 input_boolean:
   activity_sleeping:
     icon: mdi:sleep
+  activity_videocall:
+    icon: mdi:camera-front-variant
 
 binary_sensor:
 - platform: tod
@@ -32,6 +34,8 @@ homeassistant:
   customize:
     input_boolean.activity_sleeping:
       friendly_name: Slapen
+    input_boolean.activity_videocall:
+      friendly_name: Videocall
     binary_sensor.activity_bedtijd:
       friendly_name: Bedtijd
     binary_sensor.activity_werktijd:
