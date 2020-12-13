@@ -1,0 +1,76 @@
+# Philips Hue sometimes doesn't turn on/off all lights, so retry the last activated scene a few times
+input_text:
+  scene_retry_last_activated:
+    name: Last activated scene
+
+input_number:
+  scene_retry_retries:
+    initial: 0
+    min: 0
+    max: 5
+    step: 1
+
+input_boolean:
+  scene_retry_triggered_by_retry:
+    name: Scene triggered by retry
+    initial: 'off'
+
+timer:
+  scene_retry_interval:
+    duration: '00:00:30'
+
+automation:
+- id: scene_retry_save_last_scene
+  alias: save last scene
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: call_service
+    event_data:
+      domain: scene
+      service: turn_on
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.scene_retry_triggered_by_retry
+        state: 'off'
+      sequence:
+      - service: input_number.set_value
+        entity_id: input_number.scene_retry_retries
+        data:
+          value: '1'
+      - service: input_text.set_value
+        entity_id: input_text.scene_retry_last_activated
+        data_template:
+          value: '{{ trigger.event.data.service_data.entity_id }}'
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.scene_retry_triggered_by_retry
+
+- id: scene_retry_start_timer
+  alias: start timer scene retrigger
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: input_number.scene_retry_retries
+  action:
+  - service: timer.start
+    data:
+      entity_id: timer.scene_retry_interval
+
+- id: scene_retry_timer_finished
+  alias: timer finished scene retrigger
+  initial_state: 'on'
+  trigger:
+  - platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.scene_retry_interval
+  action:
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.scene_retry_triggered_by_retry
+  - service: scene.turn_on
+    data:
+      entity_id: "{{ states('input_text.scene_retry_last_activated') }}"
+  - service: input_number.increment
+    entity_id: input_number.scene_retry_retries
