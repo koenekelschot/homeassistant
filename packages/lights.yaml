@@ -60,15 +60,29 @@ light:
   - light.lamp_slaapkamer_rechts_midden
   - light.lamp_slaapkamer_rechts_achter
 
+- platform: group
+  name: lights_group_beneden
+  entities:
+  - light.lamp_tv
+  - light.lamp_bank
+  - light.lamp_dressoir
+  - light.lights_group_eettafel
+  - light.lights_group_keuken
+  - light.lamp_gang
+
+- platform: group
+  name: lights_group_boven_behalve_slaapkamer
+  entities:
+  - light.lamp_overloop
+  - light.lamp_werkkamer
+  - light.lights_group_logeerkamer
+
 switch:
 - platform: flux
   name: lights_flux
   lights:
   - light.lamp_gang
-  - light.lamp_overloop
-  - light.lamp_werkkamer
-  - light.lights_group_slaapkamer
-  - light.lights_group_logeerkamer
+  - light.lights_group_boven
   start_time: '07:00'
   start_colortemp: 5000
   sunset_colortemp: 3400
@@ -112,12 +126,18 @@ scene:
 
 - name: lights_beneden_uit
   entities:
-    light.lamp_tv: off
-    light.lamp_bank: off
-    light.lamp_dressoir: off
-    light.lights_group_eettafel: off
-    light.lights_group_keuken: off
-    light.lamp_gang: off
+    light.lights_group_beneden: off
+
+- name: lights_alles_uit
+  entities:
+    light.lights_group_beneden: off
+    light.lights_group_boven_behalve_slaapkamer: off
+    light.lights_group_slaapkamer: off
+
+- name: lights_alles_uit_behalve_slaapkamer
+  entities:
+    light.lights_group_beneden: off
+    light.lights_group_boven_behalve_slaapkamer: off
 
 automation:
 - id: lights_beneden_normaal
@@ -182,21 +202,29 @@ automation:
     entity_id: scene.lights_beneden_videocall
 
 - id: lights_alles_uit
-  alias: Licht uit
+  alias: Licht uit slapen of weg
   initial_state: 'on'
   trigger:
   - platform: state
     entity_id: binary_sensor.presence_iemand_thuis
     to: 'off'
   - platform: state
-    entity_id: binary_sensor.lights_donker_buiten
-    to: 'off'
-  - platform: state
     entity_id: input_boolean.activity_sleeping
     to: 'on'
   action:
-    service: light.turn_off
-    entity_id: all
+    service: scene.turn_on
+    entity_id: scene.lights_alles_uit
+
+- id: lights_alles_uit_behalve_slaapkamer
+  alias: Licht uit niet donken buiten
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.lights_donker_buiten
+    to: 'off'
+  action:
+    service: scene.turn_on
+    entity_id: scene.lights_alles_uit_behalve_slaapkamer
 
 - id: lights_beneden_uit
   alias: Licht beneden uit
