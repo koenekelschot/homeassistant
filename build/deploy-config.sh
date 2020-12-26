@@ -1,14 +1,14 @@
 #!/bin/bash
 
 copy_folder() {
-    sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER "test -d $SSH_FOLDER/$1 && rm -r -v $SSH_FOLDER/$1"
+    sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER "test -d $SSH_FOLDER_HASS/$1 && rm -r -v $SSH_FOLDER_HASS/$1"
     echo "Copying folder $1"
-    sshpass -e scp -o StrictHostKeyChecking=no -r $1 $SSH_USER:$SSH_FOLDER/$1
+    sshpass -e scp -o StrictHostKeyChecking=no -r $1 $SSH_USER:$SSH_FOLDER_HASS/$1
 }
 
 copy_file() {
     echo "Copying file $1"
-    sshpass -e scp -o StrictHostKeyChecking=no $1 $SSH_USER:$SSH_FOLDER/$1
+    sshpass -e scp -o StrictHostKeyChecking=no $1 $SSH_USER:$SSH_FOLDER_HASS/$1
 }
 
 # https://unix.stackexchange.com/a/417661
@@ -24,4 +24,4 @@ copy_file "scenes.yaml"
 copy_file "scripts.yaml"
 
 #restart HA
-curl -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" http://$CI_SERVER_HOST:8123/api/services/homeassistant/restart
+curl -X POST -H "Authorization: Bearer $HASS_TOKEN" -H "Content-Type: application/json" http://$CI_SERVER_HOST:8123/api/services/homeassistant/restart
