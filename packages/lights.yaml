@@ -99,6 +99,10 @@ homeassistant:
 scene:
 - name: lights_beneden_normaal
   entities:
+    light.hue_play_1:
+      state: off
+    light.hue_play_2:
+      state: off
     light.lamp_tv:
       state: on
       brightness: 220
@@ -117,6 +121,13 @@ scene:
 
 - name: lights_beneden_videocall
   entities:
+    light.hue_play_1:
+      state: off
+    light.hue_play_2:
+      state: off
+    light.lamp_tv:
+      state: on
+      brightness: 60
     light.lamp_bank:
       state: on
       brightness: 60

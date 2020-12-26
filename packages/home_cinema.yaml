@@ -46,6 +46,11 @@ scene:
       state: on
       brightness: 160
 
+- name: home_cinema_off
+  entities:
+    light.hue_play_1: off
+    light.hue_play_2: off
+
 script:
   home_cinema_start_on_cast:
     alias: Start on cast
@@ -83,10 +88,8 @@ automation:
     entity_id: media_player.denon_avr_x2100w
     to: 'off'
   action:
-    service: light.turn_off
-    entity_id:
-    - light.hue_play_1
-    - light.hue_play_2
+    service: scene.turn_on
+    entity_id: scene.home_cinema_off
 
 - id: home_cinema_playback_change
   alias: Film status
