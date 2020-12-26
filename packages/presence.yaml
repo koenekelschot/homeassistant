@@ -41,6 +41,13 @@ homeassistant:
     timer.presence_beweging_logeerkamer:
       friendly_name: Beweging logeerkamer
 
+sensor:
+- platform: template
+  sensors:
+    presence_home_wifi:
+      friendly_name: Thuisnetwerk
+      value_template: !secret home_wifi_ssid
+
 binary_sensor:
 - platform: template
   sensors:
@@ -81,7 +88,7 @@ binary_sensor:
         {% if (
           is_state('input_boolean.presence_forceer_afwezig', 'off') and (
             is_state('input_boolean.presence_forceer_thuis', 'on') or
-            is_state('person.koen', 'home') or
+            states('sensor.fp3_wifi_connection')|lower == states('sensor.presence_home_wifi')|lower or
             is_state('binary_sensor.presence_iemand_beneden', 'on') or
             is_state('binary_sensor.presence_iemand_boven', 'on'))) %}
           true
