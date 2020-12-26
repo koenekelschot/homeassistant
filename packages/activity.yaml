@@ -44,6 +44,7 @@ homeassistant:
 automation:
 - id: activity_wakingup
   alias: Opstaan
+  initial_state: 'on'
   trigger:
   - platform: state
     entity_id: binary_sensor.activity_bedtijd
@@ -51,4 +52,16 @@ automation:
   action:
     service: input_boolean.turn_off
     entity_id: input_boolean.activity_sleeping
+
+- id: activity_sleeping
+  alias: Slapen
   initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: deconz_event
+    event_data:
+      id: tradfri_remote_control
+      event: 1002
+  action:
+    service: input_boolean.turn_on
+    entity_id: input_boolean.activity_sleeping
