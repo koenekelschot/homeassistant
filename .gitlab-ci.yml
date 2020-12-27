@@ -28,8 +28,6 @@ deploy-config:
   only:
     refs:
       - master
-    changes:
-      - "**/*.yaml"
   script: 
     - sh ./build/deploy-config.sh
 
