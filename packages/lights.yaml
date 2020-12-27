@@ -227,7 +227,7 @@ automation:
     entity_id: scene.lights_alles_uit
 
 - id: lights_alles_uit_behalve_slaapkamer
-  alias: Licht uit niet donken buiten
+  alias: Licht uit niet donker buiten
   initial_state: 'on'
   trigger:
   - platform: state
