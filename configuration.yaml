@@ -5,7 +5,21 @@ homeassistant:
   packages: !include_dir_named packages
   legacy_templates: false
 
-map:
+frontend:
+  themes: !include_dir_merge_named themes
+
+lovelace:
+  mode: yaml
+  resources:
+  - url: /hacsfiles/lovelace-card-mod/card-mod.js
+    type: module
+  dashboards:
+    lovelace-yaml:
+      mode: yaml
+      title: yaml
+      icon: mdi:script
+      show_in_sidebar: true
+      filename: lovelace.yaml
 
 group: !include groups.yaml
 automation: !include automations.yaml
