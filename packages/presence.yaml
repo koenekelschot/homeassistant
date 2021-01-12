@@ -142,6 +142,7 @@ automation:
 - id: presence_beweging_gedetecteerd
   alias: Beweging gedetecteerd
   initial_state: 'on'
+  mode: parallel
   trigger:
     platform: state
     entity_id: 
