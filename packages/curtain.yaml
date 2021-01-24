@@ -12,6 +12,10 @@ input_number:
     max: 90
     step: 1
 
+timer:
+  curtain_check_positie:
+    duration: '00:01:00'
+
 homeassistant:
   customize:
     input_boolean.curtain_positie_override:
@@ -53,6 +57,10 @@ automation:
   trigger:
   - platform: state
     entity_id: sensor.curtain_positie_gewenst
+  - platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.curtain_check_positie
   condition:
     condition: template
     value_template: >
@@ -63,6 +71,8 @@ automation:
       entity_id: cover.woonkamer
       position: >
         {{ states('sensor.curtain_positie_gewenst') }}
+  - service: timer.start
+    entity_id: timer.curtain_check_positie
 
 - id: curtain_set_override_gordijn
   alias: Stand gordijn override

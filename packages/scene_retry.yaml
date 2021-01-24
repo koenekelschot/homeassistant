@@ -17,7 +17,7 @@ input_boolean:
 
 timer:
   scene_retry_interval:
-    duration: '00:00:15'
+    duration: '00:00:30'
 
 automation:
 - id: scene_retry_save_last_scene
