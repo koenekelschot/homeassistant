@@ -11,18 +11,10 @@ copy_file() {
     sshpass -e scp -o StrictHostKeyChecking=no $1 $SSH_USER:$SSH_FOLDER_HASS/$1
 }
 
-install_hacs() {
-    test -d $1 || mkdir -p $1
-    wget "https://github.com/hacs/integration/releases/latest/download/hacs.zip"
-    unzip "hacs.zip" -d $1
-    rm "hacs.zip"
-    copy_folder $1
-}
-
-# https://unix.stackexchange.com/a/417661
-apk update && apk add curl openssh sshpass
-
 export SSHPASS=$SSH_PASS
+
+#copy .HA_VERSION to main Docker folder
+sshpass -e scp -o StrictHostKeyChecking=no .HA_VERSION $SSH_USER:$SSH_FOLDER_DOCKER/.HA_VERSION
 
 #install hacs
 test -d "custom_components/hacs" || mkdir -p "custom_components/hacs"
@@ -38,6 +30,3 @@ copy_file "groups.yaml"
 copy_file "lovelace.yaml"
 copy_file "scenes.yaml"
 copy_file "scripts.yaml"
-
-#restart HA
-curl -X POST -H "Authorization: Bearer $HASS_TOKEN" -H "Content-Type: application/json" http://$CI_SERVER_HOST:8123/api/services/homeassistant/restart

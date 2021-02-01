@@ -1,8 +1,13 @@
+before_script:
+  # https://unix.stackexchange.com/a/417661
+  - apk update && apk add curl openssh sshpass
+
 stages:
   - build
   - test
-  - deploy-config
-  - deploy-docker
+  - deploy
+  - restart
+  - docker
 
 build:
   # necessary in order to use variable for image in test stage
@@ -23,20 +28,30 @@ test:
   script:
     - sh ./build/test.sh
 
-deploy-config:
-  stage: deploy-config
+deploy:
+  stage: deploy
   only:
     refs:
       - master
   script: 
-    - sh ./build/deploy-config.sh
+    - sh ./build/deploy.sh
 
-deploy-docker:
-  stage: deploy-docker
+restart:
+  stage: restart
+  only:
+    refs:
+      - master
+  except:
+    changes:
+      - .HA_VERSION
+  script:
+    - sh ./build/restart.sh
+
+docker:
+  stage: docker
   only:
     refs:
       - master
     changes:
       - .HA_VERSION
-  script:
-    - sh ./build/deploy-docker.sh
+  trigger: koen/docker
