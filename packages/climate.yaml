@@ -1,0 +1,41 @@
+sensor:
+- platform: template
+  sensors:
+    climate_luchtvochtigheid_binnen:
+      friendly_name: Luchtvochtigheid binnen
+      unit_of_measurement: '%'
+      value_template: >
+        {% set inputs = [
+          states("sensor.netatmo_home_living_room_humidity")|float, 
+          states("sensor.netatmo_home_living_room_corridor_humidity")|float
+        ] %}
+        {{ inputs|sum / inputs|count }}
+
+automation:
+- id: climate_notificatie_lage_luchtvochtigheid
+  alias: Notificatie lage luchtvochtigheid
+  initial_state: 'on'
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.climate_luchtvochtigheid_binnen
+    below: 40
+    for: "24:00:00"
+  action:
+  - service: notify.telegram
+    data:
+      title: Luchtvochtigheid te laag
+      message: "De luchtvochtigheid binnen is met {{ states('sensor.climate_luchtvochtigheid_binnen') }}% lager dan de aangeraden {{ trigger.below }}%"
+
+- id: climate_notificatie_hoge_luchtvochtigheid
+  alias: Notificatie hoge luchtvochtigheid
+  initial_state: 'on'
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.climate_luchtvochtigheid_binnen
+    above: 60
+    for: "24:00:00"
+  action:
+  - service: notify.telegram
+    data:
+      title: Luchtvochtigheid te hoog
+      message: "De luchtvochtigheid binnen is met {{ states('sensor.climate_luchtvochtigheid_binnen') }}% hoger dan de aangeraden {{ trigger.above }}%"

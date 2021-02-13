@@ -50,7 +50,7 @@ automation:
     entity_id: binary_sensor.activity_bedtijd
     to: 'off'
   action:
-    service: input_boolean.turn_off
+  - service: input_boolean.turn_off
     entity_id: input_boolean.activity_sleeping
 
 - id: activity_sleeping
@@ -63,5 +63,7 @@ automation:
       id: tradfri_remote_control
       event: 1002
   action:
-    service: input_boolean.turn_on
+  - service: input_boolean.turn_on
     entity_id: input_boolean.activity_sleeping
+  - service: media_player.turn_off
+    entity_id: media_player.denon_avr_x2100w
