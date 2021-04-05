@@ -7,9 +7,9 @@ sensor:
         {% if not is_state_attr('media_player.denon_avr_x2100w', 'source', 'DVD') %}
           off
         {% else %}
-          {{ states('media_player.living_room_tv') }}
+          {{ states('media_player.plex_plex_htpc_for_windows_watson') }}
         {% endif %}
-          
+
 scene:
 - name: home_cinema_playing
   entities:
@@ -61,10 +61,10 @@ script:
         entity_id: remote.tv_woonkamer
         activity: 'Watch a Movie'
     - service: media_player.media_pause
-      entity_id: media_player.living_room_tv
+      entity_id: media_player.plex_plex_htpc_for_windows_watson
     - delay: 10
     - service: media_player.media_play
-      entity_id: media_player.living_room_tv
+      entity_id: media_player.plex_plex_htpc_for_windows_watson
 
   home_cinema_switch_on_cast:
     alias: Switch source on cast
@@ -119,12 +119,12 @@ automation:
   initial_state: 'on'
   trigger:
   - platform: state
-    entity_id: media_player.living_room_tv
+    entity_id: media_player.plex_plex_htpc_for_windows_watson
     to: playing
   condition:
     condition: template
     value_template: >
-      {{ is_state_attr('media_player.living_room_tv', 'app_name', 'Plex') and is_state('sensor.home_cinema_state', 'off') }}
+      {{ is_state('sensor.home_cinema_state', 'off') }}
   action:
     service: script.turn_on
     data_template:
