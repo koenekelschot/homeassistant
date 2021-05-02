@@ -80,7 +80,7 @@ automation:
   action:
   - service: notify.telegram
     data:
-      message: 'Roomba is gestart met stofzuigen!'
+      message: "{{ state_attr('vacuum.roomba', 'friendly_name') }} is gestart met stofzuigen!"
 
 - id: roomba_done_notification
   alias: Stofzuigen klaar notificatie
@@ -93,7 +93,7 @@ automation:
   action:
   - service: notify.telegram
     data:
-      message: 'Roomba is klaar met stofzuigen!'
+      message: "{{ state_attr('vacuum.roomba', 'friendly_name') }} is klaar met stofzuigen!"
 
 - id: roomba_bin_full_notification
   alias: Roomba vol notificatie
@@ -117,7 +117,7 @@ automation:
   action:
   - service: notify.telegram
     data:
-      message: 'Leeg de afvalbak van de Roomba'
+      message: "Leeg de afvalbak van {{ state_attr('vacuum.roomba', 'friendly_name') }}"
 
 - id: roomba_battery_empty_notification
   alias: Roomba accu leeg notificatie
@@ -143,4 +143,4 @@ automation:
   action:
   - service: notify.telegram
     data:
-      message: 'De accu van de Roomba is (bijna) leeg'
+      message: "De accu van {{ state_attr('vacuum.roomba', 'friendly_name') }} is (bijna) leeg"
