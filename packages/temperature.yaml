@@ -68,7 +68,7 @@ automation:
       state: 'on'
     - condition: template
       value_template: >
-        {{ (as_timestamp(now()) - as_timestamp(states.automation.temperature_notificatie_ramen_boven_open.last_updated)) > 21600 }}
+        {{ (as_timestamp(now()) - as_timestamp(states.automation.notificatie_boven_ramen_open.last_updated)) > 21600 }}
     - condition: state
       entity_id: input_boolean.presence_iemand_opgestaan
       state: 'on'
@@ -105,7 +105,7 @@ automation:
       state: 'on'
     - condition: template
       value_template: >
-        {{ (as_timestamp(now()) - as_timestamp(states.automation.temperature_notificatie_ramen_beneden_open.last_updated)) > 21600 }}
+        {{ (as_timestamp(now()) - as_timestamp(states.automation.notificatie_beneden_ramen_open.last_updated)) > 21600 }}
     - condition: state
       entity_id: input_boolean.presence_iemand_opgestaan
       state: 'on'

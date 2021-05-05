@@ -38,16 +38,6 @@ logger:
   logs:
     roomba.roomba.Roomba: error
 
-sensor:
-- platform: time_date
-  display_options:
-  - date
-  - time
-
-binary_sensor:
-- platform: workday
-  country: NL
-
 toon:
   client_id: !secret eneco_dev_key
   client_secret: !secret eneco_dev_secret
@@ -62,3 +52,22 @@ notify:
 - name: telegram
   platform: telegram
   chat_id: !secret telegram_chatid
+
+rflink:
+  port: /dev/rflink
+
+light:
+- platform: rflink
+  automatic_add: true
+
+sensor:
+- platform: rflink
+  automatic_add: true
+- platform: time_date
+  display_options:
+  - date
+  - time
+
+binary_sensor:
+- platform: workday
+  country: NL
