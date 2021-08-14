@@ -6,8 +6,10 @@ sensor:
       value_template: >
         {% if not is_state_attr('media_player.denon_avr_x2100w', 'source', 'DVD') %}
           off
+        {% elif is_state('media_player.plex_plexkodiconnect_kodi_watson_2', 'playing') %}
+          playing
         {% else %}
-          {{ states('media_player.plex_plex_htpc_for_windows_watson') }}
+          paused
         {% endif %}
 
 scene:
@@ -51,34 +53,6 @@ scene:
     light.hue_play_1: off
     light.hue_play_2: off
 
-script:
-  home_cinema_start_on_cast:
-    alias: Start on cast
-    mode: single
-    sequence:
-    - service: remote.turn_on
-      data:
-        entity_id: remote.tv_woonkamer
-        activity: 'Watch a Movie'
-    - service: media_player.media_pause
-      entity_id: media_player.plex_plex_htpc_for_windows_watson
-    - delay: 10
-    - service: media_player.media_play
-      entity_id: media_player.plex_plex_htpc_for_windows_watson
-
-  home_cinema_switch_on_cast:
-    alias: Switch source on cast
-    mode: single
-    sequence:
-    - service: media_player.volume_set
-      data:
-        entity_id: media_player.denon_avr_x2100w
-        volume_level: 0.25
-    - service: remote.turn_on
-      data:
-        entity_id: remote.tv_woonkamer
-        activity: 'Watch a Movie'
-
 automation:
 - id: home_cinema_ambilight_off
   alias: Ambilight uit
@@ -113,24 +87,3 @@ automation:
     service: scene.turn_on
     data_template:
       entity_id: '{{ "scene.home_cinema_" + states("sensor.home_cinema_state") }}'
-
-- id: home_cinema_start_on_cast
-  alias: Casting Plex
-  initial_state: 'on'
-  trigger:
-  - platform: state
-    entity_id: media_player.plex_plex_htpc_for_windows_watson
-    to: playing
-  condition:
-    condition: template
-    value_template: >
-      {{ is_state('sensor.home_cinema_state', 'off') }}
-  action:
-    service: script.turn_on
-    data_template:
-      entity_id: >
-        {% if is_state('media_player.denon_avr_x2100w', 'off') %}
-          script.home_cinema_start_on_cast
-        {% else %}
-          script.home_cinema_switch_on_cast
-        {% endif %}
