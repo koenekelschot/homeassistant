@@ -5,6 +5,10 @@ homeassistant:
   packages: !include_dir_named packages
   legacy_templates: false
 
+http:
+  use_x_forwarded_for: true
+  trusted_proxies: !secret http_proxy_ip
+
 frontend:
   themes: !include_dir_merge_named themes
 
@@ -25,10 +29,6 @@ group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
-
-updater:
-  reporting: false
-  include_used_components: false
 
 recorder:
   purge_keep_days: 14
