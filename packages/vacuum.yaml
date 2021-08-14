@@ -1,8 +1,3 @@
-roomba:
-- host: 192.168.178.46
-  blid: !secret roomba_blid
-  password: !secret roomba_pass
-
 binary_sensor:
 - platform: template
   sensors:
