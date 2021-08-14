@@ -1,0 +1,52 @@
+binary_sensor:
+- platform: rflink
+  devices:
+    doorbell_0003718f_1:
+      name: doorbell_state
+      off_delay: 10
+
+homeassistant:
+  customize:
+    binary_sensor.doorbell_state:
+      friendly_name: Deurbel
+
+automation:
+- id: doorbell_notification
+  alias: Notificatie deurbel
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.doorbell_state
+    to: 'on'
+  action:
+    service: notify.telegram
+    data:
+      message: "Er is iemand aan de deur!"
+
+- id: doorbell_turn_on_light
+  alias: Deurbel licht aan
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.doorbell_state
+    to: 'on'
+  condition:
+    condition: state
+    entity_id: binary_sensor.lights_donker_buiten
+    state: 'on'
+  action:
+    service: switch.turn_on
+    entity_id: switch.on_off_plug_in_unit_2
+
+- id: doorbell_turn_off_light
+  alias: Deurbel licht uit
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: switch.on_off_plug_in_unit_2
+    to: 'on'
+    for:
+      minutes: 2
+  action:
+    service: switch.turn_off
+    entity_id: switch.on_off_plug_in_unit_2
