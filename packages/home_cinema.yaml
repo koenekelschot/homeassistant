@@ -6,7 +6,7 @@ sensor:
       value_template: >
         {% if not is_state_attr('media_player.denon_avr_x2100w', 'source', 'DVD') %}
           off
-        {% elif is_state('media_player.plex_plexkodiconnect_kodi_watson_2', 'playing') %}
+        {% elif is_state('media_player.kodi_d5178a9ecb913099789f099104292bb8', 'playing') %}
           playing
         {% else %}
           paused
