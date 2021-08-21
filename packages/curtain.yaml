@@ -32,15 +32,30 @@ sensor:
         {% set light_level = states('sensor.veranda_light_level')|float %}
         {% set light_unavailable = states('sensor.veranda_light_level') == 'unavailable' %}
         {% set indoor_temp = states('sensor.temperature_beneden')|float %}
-        {% if is_state('input_boolean.curtain_positie_override', 'on') %}
+        {% if 
+          is_state('input_boolean.curtain_positie_override', 'on') 
+        %}
           {{ states('input_number.curtain_positie_override')|int }}
-        {% elif light_unavailable %}
+        {% elif 
+          light_unavailable 
+        %}
           {{ current }}
-        {% elif is_state('input_boolean.activity_sleeping', 'on') or is_state('binary_sensor.activity_bedtijd', 'on') %}
+        {% elif 
+          is_state('input_boolean.activity_sleeping', 'on') or 
+          is_state('binary_sensor.activity_bedtijd', 'on') 
+        %}
           {{ 0 }}
-        {% elif azimuth >= 297.5 or (current_time >= '16:00' and light_level <= 10.0) %}
+        {% elif 
+          azimuth >= 297.5 or 
+          (current_time >= '16:00' and light_level <= 10.0) or
+          is_state('sensor.home_cinema_state', 'playing') or 
+          is_state('sensor.home_cinema_state', 'paused')
+        %}
           {{ 25 }}
-        {% elif azimuth >= 210 and indoor_temp >= 22 %}
+        {% elif 
+          azimuth >= 210 and 
+          indoor_temp >= 22 
+        %}
           {{ 35 }}
         {% else %}
           {{ 90 }}
