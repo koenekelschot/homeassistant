@@ -1,0 +1,42 @@
+automation:
+- id: battery_levels_notification_hue
+  alias: Notificatie batterij leeg hue
+  initial_state: 'on'
+  mode: parallel
+  trigger:
+    platform: numeric_state
+    entity_id: 
+    - binary_sensor.keuken_motion
+    - binary_sensor.woonkamer_motion
+    - binary_sensor.gang_motion
+    - binary_sensor.overloop_motion
+    - binary_sensor.werkkamer_motion
+    - binary_sensor.slaapkamer_motion
+    - binary_sensor.logeerkamer_motion
+    attribute: battery_level
+    below: 2
+    for:
+      hours: 12
+  action:
+  - service: notify.telegram
+    data:
+      title: Batterij bijna leeg
+      message: "De batterij van {{ trigger.to_state.name }} is bijna leeg"
+
+- id: battery_levels_notification_netatmo
+  alias: Notificatie batterij leeg netatmo
+  initial_state: 'on'
+  mode: parallel
+  trigger: 
+    platform: numeric_state
+    entity_id:
+    - sensor.netatmo_home_living_room_corridor_battery_percent
+    - sensor.netatmo_home_living_room_outdoor_battery_percent
+    below: 2
+    for:
+      hours: 12
+  action:
+  - service: notify.telegram
+    data:
+      title: Batterij bijna leeg
+      message: "De batterij van {{ trigger.to_state.name }} is bijna leeg"
