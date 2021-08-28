@@ -68,6 +68,9 @@ automation:
   trigger:
   - platform: state
     entity_id: sensor.curtain_positie_gewenst
+  - platform: state
+    entity_id: cover.woonkamer
+    from: unavailable
   - platform: event
     event_type: timer.finished
     event_data:
