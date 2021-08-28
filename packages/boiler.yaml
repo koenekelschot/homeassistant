@@ -1,20 +1,3 @@
-sensor:
-- platform: template
-  sensors:
-    boiler_power_usage:
-      friendly_name: Stroomgebruik boiler keuken
-      unit_of_measurement: W
-      value_template: >
-        {{ state_attr('switch.boiler_keuken', 'current_power_w')|float }}
-
-binary_sensor:
-- platform: template
-  sensors:
-    boiler_keuken_actief:
-      friendly_name: Boiler keuken actief
-      value_template: >
-        {{ states('sensor.boiler_power_usage')|float > 10 }}
-
 automation:
 - id: boiler_keuken_aan_doordeweeks
   alias: Boiler keuken aan doordeweeks
