@@ -32,7 +32,7 @@ automation:
     entity_id:
     - sensor.netatmo_home_living_room_corridor_battery_percent
     - sensor.netatmo_home_living_room_outdoor_battery_percent
-    below: 2
+    below: 5
     for:
       hours: 12
   action:
