@@ -6,8 +6,8 @@ sensor:
       unit_of_measurement: '%'
       value_template: >
         {% set inputs = [
-          states("sensor.netatmo_home_living_room_humidity")|float, 
-          states("sensor.netatmo_home_living_room_corridor_humidity")|float
+          states("sensor.netatmo_home_living_room_humidity")|float(default=0), 
+          states("sensor.netatmo_home_living_room_corridor_humidity")|float(default=0)
         ] %}
         {{ inputs|sum / inputs|count }}
 

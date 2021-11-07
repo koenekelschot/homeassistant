@@ -72,7 +72,7 @@ sensor:
       friendly_name: Temperatuurverschil
       unit_of_measurement: '°C'
       value_template: >
-        {{ [0, states('sensor.heating_temperatuur_doel')|float - states('sensor.heating_temperatuur_huidig')|float]|max|float }}
+        {{ [0, states('sensor.heating_temperatuur_doel')|float(default=0) - states('sensor.heating_temperatuur_huidig')|float(default=0)]|max|float }}
 
     heating_verwarming_aan_tijd:
       friendly_name: Verwarming aan om
@@ -123,9 +123,9 @@ binary_sensor:
           {{ false }}
         {% else %}
           {% set mean_heating_rate = state_attr('sensor.heating_rate_stats', 'mean')|float(default=0) %}
-          {% set seconds_offset = (diff_temp * mean_heating_rate)|int %}
-          {% set target_hour = (states('sensor.heating_verwarming_aan_tijd')|int / 100)|int %}
-          {% set target_minutes = (states('sensor.heating_verwarming_aan_tijd')|int % 100)|int %}
+          {% set seconds_offset = (diff_temp * mean_heating_rate)|int(default=0) %}
+          {% set target_hour = (states('sensor.heating_verwarming_aan_tijd')|int(default=0) / 100)|int(default=0) %}
+          {% set target_minutes = (states('sensor.heating_verwarming_aan_tijd')|int(default=0) % 100)|int(default=0) %}
           {% set target_timestamp = (target_hour * 3600) + (target_minutes * 60) %}
           {% set current_timestamp = (now().hour * 3600) + (now().minute * 60) %}
           {{ current_timestamp >= target_timestamp - seconds_offset and current_timestamp < target_timestamp }}

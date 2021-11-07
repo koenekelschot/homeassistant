@@ -17,11 +17,12 @@ binary_sensor:
       friendly_name: Donker buiten
       value_template: >
         {% set current = states('binary_sensor.lights_donker_buiten') %}
-        {% set light_level = states('sensor.veranda_light_level') %}
-        {% set threshold = states('input_number.lights_donker_buiten_threshold')|int %}
-        {% if light_level == 'unavailable' %}
+        {% set light_unavailable = states('sensor.veranda_light_level') == 'unavailable' %}
+        {% set light_level = states('sensor.veranda_light_level')|int(default=0) %}
+        {% set threshold = states('input_number.lights_donker_buiten_threshold')|int(default=0) %}
+        {% if light_unavailable %}
           {{ current }}
-        {% elif is_state('input_boolean.lights_donker_override', 'on') or light_level|int < threshold %}
+        {% elif is_state('input_boolean.lights_donker_override', 'on') or light_level < threshold %}
           true
         {% else %}
           false

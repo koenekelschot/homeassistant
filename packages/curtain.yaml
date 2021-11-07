@@ -26,7 +26,7 @@ sensor:
       friendly_name: Gewenste positie gordijn
       unit_of_measurement: '%'
       value_template: >
-        {% set current = states('sensor.curtain_positie_gewenst')|int %}
+        {% set current = states('sensor.curtain_positie_gewenst')|int(default=0) %}
         {% set azimuth = state_attr('sun.sun', 'azimuth')|float %}
         {% set current_time = states('sensor.time') %}
         {% set light_unavailable = states('sensor.veranda_light_level') == 'unavailable' %}
@@ -35,7 +35,7 @@ sensor:
         {% if 
           is_state('input_boolean.curtain_positie_override', 'on') 
         %}
-          {{ states('input_number.curtain_positie_override')|int }}
+          {{ states('input_number.curtain_positie_override')|int(default=0) }}
         {% elif 
           light_unavailable 
         %}
@@ -78,7 +78,7 @@ automation:
   condition:
     condition: template
     value_template: >
-      {{ (states('sensor.curtain_positie_gewenst')|int - state_attr('cover.woonkamer', 'current_position')|int)|abs > 3 }}
+      {{ (states('sensor.curtain_positie_gewenst')|int(default=0) - state_attr('cover.woonkamer', 'current_position')|int(default=0))|abs > 3 }}
   action:
   - service: cover.set_cover_position
     data_template:
