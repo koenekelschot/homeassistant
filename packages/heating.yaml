@@ -87,11 +87,11 @@ sensor:
       friendly_name: Snelheid opwarming
       unit_of_measurement: 's/°C'
       value_template: >
-        {% set current = states('sensor.heating_rate')|float %}
+        {% set current = states('sensor.heating_rate')|float(default=0) %}
         {% set starttime = as_timestamp(states('input_datetime.heating_verwarming_gestart'))|int %}
         {% set endtime = as_timestamp(states('input_datetime.heating_verwarming_gestopt'))|int %}
-        {% set starttemp = states('input_number.heating_temperatuur_start')|float %}
-        {% set endtemp = states('input_number.heating_temperatuur_eind')|float %}
+        {% set starttemp = states('input_number.heating_temperatuur_start')|float(default=0) %}
+        {% set endtemp = states('input_number.heating_temperatuur_eind')|float(default=0) %}
         {% if (starttime < endtime and starttemp < endtemp) %}
           {{ (endtime - starttime) / (endtemp - starttemp) }}
         {% else %}
@@ -117,13 +117,13 @@ binary_sensor:
       friendly_name: Verwarming moet aan zijn
       value_template: >
         {% set expected_temp = 20.0 %}
-        {% set current_temp = states('sensor.heating_temperatuur_huidig')|float %}
-        {% set diff_temp = expected_temp - current_temp %}
+        {% set current_temp = states('sensor.heating_temperatuur_huidig')|float(default=0) %}
+        {% set diff_temp = (expected_temp - current_temp)|float(default=0) %}
         {% if (diff_temp <= 0) %}
           {{ false }}
         {% else %}
-          {% set mean_heating_rate = state_attr('sensor.heating_rate_stats', 'mean')|float %}
-          {% set seconds_offset = (diff_temp|float * mean_heating_rate)|int %}
+          {% set mean_heating_rate = state_attr('sensor.heating_rate_stats', 'mean')|float(default=0) %}
+          {% set seconds_offset = (diff_temp * mean_heating_rate)|int %}
           {% set target_hour = (states('sensor.heating_verwarming_aan_tijd')|int / 100)|int %}
           {% set target_minutes = (states('sensor.heating_verwarming_aan_tijd')|int % 100)|int %}
           {% set target_timestamp = (target_hour * 3600) + (target_minutes * 60) %}
