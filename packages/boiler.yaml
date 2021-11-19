@@ -1,38 +1,74 @@
+input_datetime:
+  boiler_aan_tijd_werkdag:
+    has_date: false
+    has_time: true
+  boiler_aan_tijd_weekend:
+    has_date: false
+    has_time: true
+
+homeassistant:
+  customize:
+    input_datetime.boiler_aan_tijd_werkdag:
+      friendly_name: Boiler keuken aan (werkdag)
+    input_datetime.boiler_aan_tijd_weekend:
+      friendly_name: Boiler keuken aan (weekend)
+
+sensor:
+- platform: template
+  sensors:
+    boiler_aan_tijd:
+      friendly_name: Boiler keuken aan om
+      value_template: >
+        {% if is_state('binary_sensor.workday_sensor', 'off') or is_state('binary_sensor.activity_thuiswerken', 'on') %}
+          {{ states('input_datetime.boiler_aan_tijd_weekend')[0:5] }}
+        {% else %}
+          {{ states('input_datetime.boiler_aan_tijd_werkdag')[0:5] }}
+        {% endif %}
+
+binary_sensor:
+- platform: template
+  sensors:
+    boiler_timeframe:
+      friendly_name: Boiler aan gewenst
+      value_template: >
+        {% set timeframe_start = states('sensor.boiler_aan_tijd') %}
+        {{ timeframe_start <= states('sensor.time') <= '23:59' }}
+
 automation:
-- id: boiler_keuken_aan_doordeweeks
-  alias: Boiler keuken aan doordeweeks
+- id: boiler_turn_on
+  alias: Boiler keuken aan
   initial_state: 'on'
   trigger:
-    platform: time
-    at: "17:00:00"
+    platform: time_pattern
+    minutes: "/5"
   condition:
-    condition: state
-    entity_id: binary_sensor.workday_sensor
-    state: 'on'
+    condition: and
+    conditions:
+    - condition: state
+      entity_id: switch.boiler_keuken
+      state: 'off'
+    - condition: state
+      entity_id: binary_sensor.boiler_timeframe
+      state: 'on'
   action:
     service: switch.turn_on
     entity_id: switch.boiler_keuken
 
-- id: boiler_keuken_aan_weekend
-  alias: Boiler keuken aan weekend
-  initial_state: 'on'
-  trigger:
-    platform: time
-    at: "09:00:00"
-  condition:
-    condition: state
-    entity_id: binary_sensor.workday_sensor
-    state: 'off'
-  action:
-    service: switch.turn_on
-    entity_id: switch.boiler_keuken
-
-- id: boiler_keuken_uit
+- id: boiler_turn_off
   alias: Boiler keuken uit
   initial_state: 'on'
   trigger:
-    platform: time
-    at: "00:00:00"
+    platform: time_pattern
+    minutes: "/5"
+  condition:
+    condition: and
+    conditions:
+    - condition: state
+      entity_id: switch.boiler_keuken
+      state: 'on'
+    - condition: state
+      entity_id: binary_sensor.boiler_timeframe
+      state: 'off'
   action:
     service: switch.turn_off
     entity_id: switch.boiler_keuken
