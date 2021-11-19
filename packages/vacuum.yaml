@@ -107,7 +107,7 @@ automation:
       value_template: >
         {{ (as_timestamp(now()) - as_timestamp(states.automation.roomba_vol_notificatie.last_updated)) > 21600 }}
     - condition: state
-      entity_id: input_boolean.presence_iemand_opgestaan
+      entity_id: binary_sensor.presence_iemand_opgestaan
       state: 'on'
   action:
   - service: notify.telegram
@@ -133,7 +133,7 @@ automation:
       entity_id: binary_sensor.presence_iemand_thuis
       state: 'on'
     - condition: state
-      entity_id: input_boolean.presence_iemand_opgestaan
+      entity_id: binary_sensor.presence_iemand_opgestaan
       state: 'on'
   action:
   - service: notify.telegram
