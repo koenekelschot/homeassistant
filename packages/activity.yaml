@@ -52,6 +52,8 @@ automation:
   action:
   - service: input_boolean.turn_off
     entity_id: input_boolean.activity_sleeping
+  - service: switch.turn_on
+    entity_id: switch.bureau
 
 - id: activity_sleeping
   alias: Slapen
@@ -67,3 +69,5 @@ automation:
     entity_id: input_boolean.activity_sleeping
   - service: media_player.turn_off
     entity_id: media_player.denon_avr_x2100w
+  - service: switch.turn_off
+    entity_id: switch.bureau
