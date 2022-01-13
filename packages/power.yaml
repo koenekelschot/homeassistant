@@ -31,3 +31,37 @@ template:
       {%- endif -%}
       {%- endfor -%}
       {{ (states('sensor.current_power_usage') | float(default=0) - (ns.states | sum)) | round(3)}}
+
+automation:
+- id: bureau_off
+  alias: Apparatuur bureau uitschakelen
+  initial_state: on
+  trigger:
+    platform: state
+    entity_id: input_boolean.activity_sleeping
+    to: 'on'
+  action:
+    service: switch.turn_off
+    entity_id: switch.bureau
+
+- id: bureau_on
+  alias: Apparatuur bureau inschakelen
+  initial_state: on
+  trigger:
+    platform: state
+    entity_id: input_boolean.activity_sleeping
+    to: 'off'
+  action:
+    service: switch.turn_on
+    entity_id: switch.bureau
+
+- id: media_player_off
+  alias: TV uitschakelen
+  initial_state: on
+  trigger:
+    platform: state
+    entity_id: input_boolean.activity_sleeping
+    to: 'on'
+  action:
+    service: media_player.turn_off
+    entity_id: media_player.denon_avr_x2100w
