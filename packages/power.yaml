@@ -32,6 +32,9 @@ template:
       {%- endfor -%}
       {{ (states('sensor.current_power_usage') | float(default=0) - (ns.states | sum)) | round(3)}}
 
+shell_command:
+  turn_off_watson: !secret watson_shutdown
+
 automation:
 - id: bureau_off
   alias: Apparatuur bureau uitschakelen
@@ -55,13 +58,25 @@ automation:
     service: switch.turn_on
     entity_id: switch.bureau
 
-- id: media_player_off
-  alias: TV uitschakelen
+- id: tv_off
+  alias: Apparatuur tv uitschakelen
   initial_state: on
   trigger:
     platform: state
     entity_id: input_boolean.activity_sleeping
     to: 'on'
   action:
-    service: media_player.turn_off
-    entity_id: media_player.denon_avr_x2100w
+  - service: shell_command.turn_off_watson
+  - service: switch.turn_off
+    entity_id: switch.tv_meubel
+
+- id: tv_on
+  alias: Apparatuur tv inschakelen
+  initial_state: on
+  trigger:
+    platform: state
+    entity_id: input_boolean.activity_sleeping
+    to: 'off'
+  action:
+  - service: switch.turn_on
+    entity_id: switch.tv_meubel
