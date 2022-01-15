@@ -1,17 +1,3 @@
-switch:
-- platform: mystrom
-  name: washing_machine
-  host: 192.168.178.57
-
-sensor:
-- platform: template
-  sensors:
-    washing_machine_usage:
-      friendly_name: Stroomgebruik wasmachine
-      unit_of_measurement: W
-      value_template: >
-        {{ state_attr('switch.washing_machine', 'current_power_w') }}
-
 binary_sensor:
 - platform: template
   sensors:
@@ -22,12 +8,7 @@ binary_sensor:
       delay_off:
         minutes: 5
       value_template: >
-        {{ states('sensor.washing_machine_usage')|float(default=0) > 10 }}
-
-homeassistant:
-  customize:
-    switch.washing_machine:
-      friendly_name: Wasmachine
+        {{ states('sensor.wasmachine_current_consumption')|float(default=0) > 10 }}
 
 automation:
 - id: washing_machine_ready_notification
