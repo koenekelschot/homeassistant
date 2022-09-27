@@ -52,6 +52,7 @@ sensor:
 - platform: statistics
   name: heating_rate_stats
   entity_id: sensor.heating_rate
+  state_characteristic: mean
   sampling_size: 14
 
 - platform: template
