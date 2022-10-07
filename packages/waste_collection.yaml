@@ -1,0 +1,72 @@
+afvalbeheer:
+    wastecollector: !secret afvalbeheer_wastecollector
+    resources:
+      - restafval
+      - gft
+      - papier
+      - pmd
+    postcode: !secret afvalbeheer_postcode
+    streetnumber: !secret afvalbeheer_streetnumber
+    upcomingsensor: 2
+    dutch: 1
+
+automation:
+  - alias: Afval herinnering restafval
+    id: waste_reminder_restafval
+    trigger:
+      - platform: time
+        at: "17:00:00"
+    condition:
+      condition: template
+      value_template: "{{ 'restafval' in states('sensor.circulus_morgen') | lower }}"
+    action:
+      service: script.notify_waste_collection
+      data:
+        waste_type: 'restafval'
+
+  - alias: Afval herinnering GFT
+    id: waste_reminder_gft
+    trigger:
+      - platform: time
+        at: "17:00:00"
+    condition:
+      condition: template
+      value_template: "{{ 'gft' in states('sensor.circulus_morgen') | lower }}"
+    action:
+      service: script.notify_waste_collection
+      data:
+        waste_type: 'gft'
+
+  - alias: Afval herinnering papier
+    id: waste_reminder_papier
+    trigger:
+      - platform: time
+        at: "17:00:00"
+    condition:
+      condition: template
+      value_template: "{{ 'papier' in states('sensor.circulus_morgen') | lower }}"
+    action:
+      service: script.notify_waste_collection
+      data:
+        waste_type: 'papier'
+
+  - alias: Afval herinnering PMD
+    id: waste_reminder_pmd
+    trigger:
+      - platform: time
+        at: "17:00:00"
+    condition:
+      condition: template
+      value_template: "{{ 'pmd' in states('sensor.circulus_morgen') | lower }}"
+    action:
+      service: script.notify_waste_collection
+      data:
+        waste_type: 'pmd'
+
+script:
+  notify_waste_collection:
+    alias: Afval notificatie
+    sequence:
+      - service: notify.telegram
+        data:
+          message: "{{ state_attr('sensor.circulus_' + waste_type, 'Official name')}} wordt morgen opgehaald."
