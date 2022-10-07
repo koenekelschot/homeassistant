@@ -1,38 +1,5 @@
-template:
-- trigger:
-  - platform: state
-    entity_id: sensor.current_power_usage
-  
-  sensor:
-  - unique_id: power_todays_consumption_overig
-    name: Overig Today's Consumption
-    unit_of_measurement: 'kWh'
-    device_class: energy
-    state_class: total
-    state: >
-      {%- set ns = namespace(states=[]) -%}
-      {%- for s in states.sensor -%}
-      {%- if s.object_id.endswith('_today_s_consumption') and not s.object_id.startswith('overig_') -%}
-      {%- set ns.states = ns.states + [ s.state | float(default=0) ] -%}
-      {%- endif -%}
-      {%- endfor -%}
-      {{ (states('sensor.energy_usage_today') | float(default=0) - (ns.states | sum)) | round(3)}}
-    
-  - unique_id: power_current_consumption_overig
-    name: Overig Current Consumption
-    unit_of_measurement: 'W'
-    device_class: energy
-    state_class: measurement
-    state: >
-      {%- set ns = namespace(states=[]) -%}
-      {%- for s in states.sensor -%}
-      {%- if s.object_id.endswith('_current_consumption') and not s.object_id.startswith('overig_') -%}
-      {%- set ns.states = ns.states + [ s.state | float(default=0) ] -%}
-      {%- endif -%}
-      {%- endfor -%}
-      {{ (states('sensor.current_power_usage') | float(default=0) - (ns.states | sum)) | round(3)}}
-
 shell_command:
+  # https://github.com/karpach/remote-shutdown-pc
   turn_off_watson: !secret watson_shutdown
 
 automation:
