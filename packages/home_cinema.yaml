@@ -97,6 +97,8 @@ automation:
     platform: state
     entity_id: sensor.home_cinema_state
     to: 'off'
+    for:
+      seconds: 10
   condition:
     condition: state
     entity_id: binary_sensor.lights_donker_buiten
