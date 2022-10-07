@@ -1,13 +1,13 @@
 stages:
-  - build
+  - init
   - test
   - deploy
   - restart
   - docker
 
-build:
+init:
   # necessary in order to use variable for image in test stage
-  stage: build
+  stage: init
   script:
     - echo -n "HA_VERSION=" | cat - .HA_VERSION >> build.env
   artifacts:
@@ -17,7 +17,7 @@ build:
 test:
   stage: test
   dependencies:
-    - build
+    - init
   image:
     name: homeassistant/home-assistant:$HA_VERSION
     entrypoint: [""]
@@ -36,21 +36,19 @@ deploy:
 
 restart:
   stage: restart
-  only:
-    refs:
-      - master
-  except:
-    changes:
-      - .HA_VERSION
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - custom_components/**/*
+        - "**/*.yaml"
   script:
     - apk update && apk add curl
     - sh ./build/restart.sh
 
 docker:
   stage: docker
-  only:
-    refs:
-      - master
-    changes:
-      - .HA_VERSION
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - .HA_VERSION
   trigger: koen/docker
