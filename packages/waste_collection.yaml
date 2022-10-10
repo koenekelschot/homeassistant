@@ -22,7 +22,7 @@ automation:
     action:
       service: script.notify_waste_collection
       data:
-        waste_type: 'restafval'
+        waste_type: 'Restafval'
 
   - alias: Afval herinnering GFT
     id: waste_reminder_gft
@@ -35,7 +35,7 @@ automation:
     action:
       service: script.notify_waste_collection
       data:
-        waste_type: 'gft'
+        waste_type: 'GFT'
 
   - alias: Afval herinnering papier
     id: waste_reminder_papier
@@ -48,7 +48,7 @@ automation:
     action:
       service: script.notify_waste_collection
       data:
-        waste_type: 'papier'
+        waste_type: 'Papier'
 
   - alias: Afval herinnering PMD
     id: waste_reminder_pmd
@@ -61,7 +61,7 @@ automation:
     action:
       service: script.notify_waste_collection
       data:
-        waste_type: 'pmd'
+        waste_type: 'PMD'
 
 script:
   notify_waste_collection:
@@ -69,4 +69,4 @@ script:
     sequence:
       - service: notify.telegram
         data:
-          message: "{{ state_attr('sensor.circulus_' + waste_type, 'Official name')}} wordt morgen opgehaald."
+          message: "{{ waste_type }} wordt morgen opgehaald."

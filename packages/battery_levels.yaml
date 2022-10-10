@@ -40,3 +40,20 @@ automation:
     data:
       title: Batterij bijna leeg
       message: "De batterij van {{ trigger.to_state.name }} is bijna leeg"
+
+- id: battery_levels_notification_tradfri
+  alias: Notificatie batterij leeg tradfri
+  initial_state: 'on'
+  mode: parallel
+  trigger: 
+    platform: numeric_state
+    entity_id:
+    - sensor.tradfri_remote_control_battery_level
+    below: 5
+    for:
+      hours: 12
+  action:
+  - service: notify.telegram
+    data:
+      title: Batterij bijna leeg
+      message: "De batterij van {{ trigger.to_state.name }} is bijna leeg"
