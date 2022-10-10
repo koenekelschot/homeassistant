@@ -1,3 +1,4 @@
+---
 # Configure a default setup of Home Assistant (frontend, api, etc)
 default_config:
 
@@ -7,9 +8,9 @@ homeassistant:
 
 http:
   use_x_forwarded_for: true
-  trusted_proxies: 
-  - 127.0.0.1
-  - !secret http_proxy_ip
+  trusted_proxies:
+    - 127.0.0.1
+    - !secret http_proxy_ip
 
 frontend:
   themes: !include_dir_merge_named themes
@@ -32,31 +33,31 @@ toon:
   client_secret: !secret eneco_dev_secret
 
 telegram_bot:
-- platform: polling
-  api_key: !secret telegram_api
-  allowed_chat_ids:
-  - !secret telegram_chatid
+  - platform: polling
+    api_key: !secret telegram_api
+    allowed_chat_ids:
+      - !secret telegram_chatid
 
 notify:
-- name: telegram
-  platform: telegram
-  chat_id: !secret telegram_chatid
+  - name: telegram
+    platform: telegram
+    chat_id: !secret telegram_chatid
 
 rflink:
   port: /dev/rflink
 
 light:
-- platform: rflink
-  automatic_add: false
+  - platform: rflink
+    automatic_add: false
 
 sensor:
-- platform: rflink
-  automatic_add: false
-- platform: time_date
-  display_options:
-  - date
-  - time
+  - platform: rflink
+    automatic_add: false
+  - platform: time_date
+    display_options:
+      - date
+      - time
 
 binary_sensor:
-- platform: workday
-  country: NL
+  - platform: workday
+    country: NL

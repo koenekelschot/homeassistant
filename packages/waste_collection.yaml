@@ -1,14 +1,15 @@
+---
 afvalbeheer:
-    wastecollector: !secret afvalbeheer_wastecollector
-    resources:
-      - restafval
-      - gft
-      - papier
-      - pmd
-    postcode: !secret afvalbeheer_postcode
-    streetnumber: !secret afvalbeheer_streetnumber
-    upcomingsensor: 2
-    dutch: 1
+  wastecollector: !secret afvalbeheer_wastecollector
+  resources:
+    - restafval
+    - gft
+    - papier
+    - pmd
+  postcode: !secret afvalbeheer_postcode
+  streetnumber: !secret afvalbeheer_streetnumber
+  upcomingsensor: 2
+  dutch: 1
 
 automation:
   - alias: Afval herinnering restafval

@@ -1,116 +1,123 @@
+---
 sensor:
-- platform: template
-  sensors:
-    temperature_buiten:
-      friendly_name: Temperatuur buiten
-      unit_of_measurement: '°C'
-      value_template: >
-        {{ states('sensor.veranda_temperature') }}
+  - platform: template
+    sensors:
+      temperature_buiten:
+        friendly_name: Temperatuur buiten
+        unit_of_measurement: '°C'
+        value_template: >
+          {{ states('sensor.veranda_temperature') }}
 
-    temperature_boven:
-      friendly_name: Temperatuur boven
-      unit_of_measurement: '°C'
-      value_template: >
-        {{ [states('sensor.overloop_temperature')|float(default=0), 
-          states('sensor.werkkamer_temperature')|float(default=0), 
-          states('sensor.slaapkamer_temperature')|float(default=0), 
-          states('sensor.logeerkamer_temperature')|float(default=0)
-        ]|max }}
+      temperature_boven:
+        friendly_name: Temperatuur boven
+        unit_of_measurement: '°C'
+        value_template: >
+          {{ [states('sensor.overloop_temperature')|float(default=0),
+            states('sensor.werkkamer_temperature')|float(default=0),
+            states('sensor.slaapkamer_temperature')|float(default=0),
+            states('sensor.logeerkamer_temperature')|float(default=0)
+          ]|max }}
 
-    temperature_beneden:
-      friendly_name: Temperatuur beneden
-      unit_of_measurement: '°C'
-      value_template: >
-        {{ [states('sensor.gang_temperature')|float(default=0), 
-          states('sensor.woonkamer_temperature')|float(default=0), 
-          states('sensor.keuken_temperature')|float(default=0),
-          state_attr('climate.thermostat', 'current_temperature')|float(default=0)
-        ]|max }}
+      temperature_beneden:
+        friendly_name: Temperatuur beneden
+        unit_of_measurement: '°C'
+        value_template: >
+          {{ [states('sensor.gang_temperature')|float(default=0),
+            states('sensor.woonkamer_temperature')|float(default=0),
+            states('sensor.keuken_temperature')|float(default=0),
+            state_attr('climate.thermostat', 'current_temperature')|float(default=0)
+          ]|max }}
 
 binary_sensor:
-- platform: template
-  sensors:
-    temperature_boven_warmer_dan_buiten:
-      friendly_name: Boven warmer dan buiten
-      value_template: >
-        {{ states('sensor.temperature_boven')|float(default=0) > states('sensor.temperature_buiten')|float(default=0) + 2 }}
+  - platform: template
+    sensors:
+      temperature_boven_warmer_dan_buiten:
+        friendly_name: Boven warmer dan buiten
+        value_template: >
+          {% set temp_boven = states('sensor.temperature_boven')|float(default=0) %}
+          {% set temp_buiten = states('sensor.temperature_buiten')|float(default=0) %}
+          {{ temp_boven - temp_buiten > 2 }}
 
-    temperature_beneden_warmer_dan_buiten:
-      friendly_name: Beneden warmer dan buiten
-      value_template: >
-        {{ states('sensor.temperature_beneden')|float(default=0) > states('sensor.temperature_buiten')|float(default=0) + 2 }}
+      temperature_beneden_warmer_dan_buiten:
+        friendly_name: Beneden warmer dan buiten
+        value_template: >
+          {% set temp_beneden = states('sensor.temperature_beneden')|float(default=0) %}
+          {% set temp_buiten = states('sensor.temperature_buiten')|float(default=0) %}
+          {{ temp_beneden - temp_buiten > 2 }}
 
 automation:
-- id: temperature_notificatie_ramen_boven_open
-  alias: Notificatie boven ramen open
-  initial_state: on
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.presence_iemand_thuis
-    to: 'on'
-  - platform: state
-    entity_id: binary_sensor.temperature_boven_warmer_dan_buiten
-    to: 'on'
-  condition:
-    condition: and
-    conditions:
-    - condition: numeric_state
-      entity_id: sensor.temperature_boven
-      above: 22
-    - condition: numeric_state
-      entity_id: sensor.temperature_buiten
-      above: 12
-    - condition: state
-      entity_id: binary_sensor.presence_iemand_thuis
-      state: 'on'
-    - condition: state
-      entity_id: binary_sensor.temperature_boven_warmer_dan_buiten
-      state: 'on'
-    - condition: template
-      value_template: >
-        {{ (as_timestamp(now()) - as_timestamp(states.automation.notificatie_boven_ramen_open.last_updated)) > 21600 }}
-    - condition: state
-      entity_id: binary_sensor.presence_iemand_opgestaan
-      state: 'on'
-  action:
-  - service: notify.telegram
-    data:
-      title: Zet de ramen boven open
-      message: "Het is {{ states('sensor.temperature_boven') }}°C boven en {{ states('sensor.temperature_buiten') }}°C buiten!"
+  - id: temperature_notificatie_ramen_boven_open
+    alias: Notificatie boven ramen open
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.presence_iemand_thuis
+        to: 'on'
+      - platform: state
+        entity_id: binary_sensor.temperature_boven_warmer_dan_buiten
+        to: 'on'
+    condition:
+      condition: and
+      conditions:
+        - condition: numeric_state
+          entity_id: sensor.temperature_boven
+          above: 22
+        - condition: numeric_state
+          entity_id: sensor.temperature_buiten
+          above: 12
+        - condition: state
+          entity_id: binary_sensor.presence_iemand_thuis
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.temperature_boven_warmer_dan_buiten
+          state: 'on'
+        - condition: template
+          value_template: >
+            {% set last_updated = states.automation.notificatie_boven_ramen_open.last_updated %}
+            {{ as_timestamp(now()) - as_timestamp(last_updated) > 21600 }}
+        - condition: state
+          entity_id: binary_sensor.presence_iemand_opgestaan
+          state: 'on'
+    action:
+      - service: notify.telegram
+        data:
+          title: Zet de ramen boven open
+          message: "Het is {{ states('sensor.temperature_boven') }}°C boven en {{ states('sensor.temperature_buiten') }}°C buiten!"
 
-- id: temperature_notificatie_ramen_beneden_open
-  alias: Notificatie beneden ramen open
-  initial_state: on
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.presence_iemand_thuis
-    to: 'on'
-  - platform: state
-    entity_id: binary_sensor.temperature_beneden_warmer_dan_buiten
-    to: 'on'
-  condition:
-    condition: and
-    conditions:
-    - condition: numeric_state
-      entity_id: sensor.temperature_beneden
-      above: 22
-    - condition: numeric_state
-      entity_id: sensor.temperature_buiten
-      above: 12
-    - condition: state
-      entity_id: binary_sensor.presence_iemand_thuis
-      state: 'on'
-    - condition: state
-      entity_id: binary_sensor.temperature_beneden_warmer_dan_buiten
-      state: 'on'
-    - condition: template
-      value_template: >
-        {{ (as_timestamp(now()) - as_timestamp(states.automation.notificatie_beneden_ramen_open.last_updated)) > 21600 }}
-    - condition: state
-      entity_id: binary_sensor.presence_iemand_opgestaan
-      state: 'on'
-  action:
-  - service: notify.telegram
-    data:
-      title: Zet de ramen beneden open
-      message: "Het is {{ states('sensor.temperature_beneden') }}°C beneden en {{ states('sensor.temperature_buiten') }}°C buiten!"
+  - id: temperature_notificatie_ramen_beneden_open
+    alias: Notificatie beneden ramen open
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.presence_iemand_thuis
+        to: 'on'
+      - platform: state
+        entity_id: binary_sensor.temperature_beneden_warmer_dan_buiten
+        to: 'on'
+    condition:
+      condition: and
+      conditions:
+        - condition: numeric_state
+          entity_id: sensor.temperature_beneden
+          above: 22
+        - condition: numeric_state
+          entity_id: sensor.temperature_buiten
+          above: 12
+        - condition: state
+          entity_id: binary_sensor.presence_iemand_thuis
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.temperature_beneden_warmer_dan_buiten
+          state: 'on'
+        - condition: template
+          value_template: >
+            {% set last_updated = states.automation.notificatie_beneden_ramen_open.last_updated %}
+            {{ as_timestamp(now()) - as_timestamp(last_updated) > 21600 }}
+        - condition: state
+          entity_id: binary_sensor.presence_iemand_opgestaan
+          state: 'on'
+    action:
+      - service: notify.telegram
+        data:
+          title: Zet de ramen beneden open
+          message: "Het is {{ states('sensor.temperature_beneden') }}°C beneden en {{ states('sensor.temperature_buiten') }}°C buiten!"

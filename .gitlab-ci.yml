@@ -1,23 +1,32 @@
+---
 stages:
-  - init
+  - setup
+  - lint
   - test
   - deploy
   - restart
-  - docker
 
-init:
+setup:
   # necessary in order to use variable for image in test stage
-  stage: init
+  stage: setup
   script:
     - echo -n "HA_VERSION=" | cat - .HA_VERSION >> build.env
   artifacts:
     reports:
       dotenv: build.env
 
-test:
+lint yaml:
+  stage: lint
+  image: sdesbure/yamllint
+  before_script:
+    - yamllint --version
+  script:
+    - yamllint .
+
+test config:
   stage: test
   dependencies:
-    - init
+    - setup
   image:
     name: homeassistant/home-assistant:$HA_VERSION
     entrypoint: [""]
@@ -29,12 +38,12 @@ deploy:
   only:
     refs:
       - master
-  script: 
+  script:
     # https://unix.stackexchange.com/a/417661
     - apk update && apk add openssh sshpass
     - sh ./build/deploy.sh
 
-restart:
+restart homeassistant:
   stage: restart
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -45,8 +54,8 @@ restart:
     - apk update && apk add curl
     - sh ./build/restart.sh
 
-docker:
-  stage: docker
+redeploy docker:
+  stage: restart
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:

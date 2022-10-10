@@ -1,49 +1,50 @@
+---
 shell_command:
   # https://github.com/karpach/remote-shutdown-pc
   turn_off_watson: !secret watson_shutdown
 
 automation:
-- id: bureau_off
-  alias: Apparatuur bureau uitschakelen
-  initial_state: on
-  trigger:
-    platform: state
-    entity_id: input_boolean.activity_sleeping
-    to: 'on'
-  action:
-    service: switch.turn_off
-    entity_id: switch.bureau
+  - id: bureau_off
+    alias: Apparatuur bureau uitschakelen
+    initial_state: true
+    trigger:
+      platform: state
+      entity_id: input_boolean.activity_sleeping
+      to: 'on'
+    action:
+      service: switch.turn_off
+      entity_id: switch.bureau
 
-- id: bureau_on
-  alias: Apparatuur bureau inschakelen
-  initial_state: on
-  trigger:
-    platform: state
-    entity_id: input_boolean.activity_sleeping
-    to: 'off'
-  action:
-    service: switch.turn_on
-    entity_id: switch.bureau
+  - id: bureau_on
+    alias: Apparatuur bureau inschakelen
+    initial_state: true
+    trigger:
+      platform: state
+      entity_id: input_boolean.activity_sleeping
+      to: 'off'
+    action:
+      service: switch.turn_on
+      entity_id: switch.bureau
 
-- id: tv_off
-  alias: Apparatuur tv uitschakelen
-  initial_state: on
-  trigger:
-    platform: state
-    entity_id: input_boolean.activity_sleeping
-    to: 'on'
-  action:
-  - service: shell_command.turn_off_watson
-  - service: switch.turn_off
-    entity_id: switch.tv_meubel
+  - id: tv_off
+    alias: Apparatuur tv uitschakelen
+    initial_state: true
+    trigger:
+      platform: state
+      entity_id: input_boolean.activity_sleeping
+      to: 'on'
+    action:
+      - service: shell_command.turn_off_watson
+      - service: switch.turn_off
+        entity_id: switch.tv_meubel
 
-- id: tv_on
-  alias: Apparatuur tv inschakelen
-  initial_state: on
-  trigger:
-    platform: state
-    entity_id: input_boolean.activity_sleeping
-    to: 'off'
-  action:
-  - service: switch.turn_on
-    entity_id: switch.tv_meubel
+  - id: tv_on
+    alias: Apparatuur tv inschakelen
+    initial_state: true
+    trigger:
+      platform: state
+      entity_id: input_boolean.activity_sleeping
+      to: 'off'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.tv_meubel

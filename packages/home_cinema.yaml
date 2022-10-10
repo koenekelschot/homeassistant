@@ -1,108 +1,109 @@
+---
 sensor:
-- platform: template
-  sensors:
-    home_cinema_state:
-      friendly_name: Status home cinema
-      value_template: >
-        {% if not is_state_attr('media_player.denon_avr_x2100w', 'source', 'DVD') %}
-          off
-        {% elif is_state('media_player.kodi_d5178a9ecb913099789f099104292bb8', 'playing') %}
-          playing
-        {% else %}
-          paused
-        {% endif %}
+  - platform: template
+    sensors:
+      home_cinema_state:
+        friendly_name: Status home cinema
+        value_template: >
+          {% if not is_state_attr('media_player.denon_avr_x2100w', 'source', 'DVD') %}
+            off
+          {% elif is_state('media_player.kodi_d5178a9ecb913099789f099104292bb8', 'playing') %}
+            playing
+          {% else %}
+            paused
+          {% endif %}
 
 scene:
-- name: home_cinema_playing
-  entities:
-    light.lamp_tv:
-      state: on
-      brightness: 30
-    light.lamp_bank:
-      state: on
-      brightness: 30
-    light.lamp_dressoir:
-      state: on
-      brightness: 30
-    light.lights_group_eettafel:
-      state: on
-      brightness: 15
-    light.lights_group_keuken:
-      state: off
+  - name: home_cinema_playing
+    entities:
+      light.lamp_tv:
+        state: 'on'
+        brightness: 30
+      light.lamp_bank:
+        state: 'on'
+        brightness: 30
+      light.lamp_dressoir:
+        state: 'on'
+        brightness: 30
+      light.lights_group_eettafel:
+        state: 'on'
+        brightness: 15
+      light.lights_group_keuken:
+        state: 'off'
 
-- name: home_cinema_paused
-  entities:
-    light.lamp_tv:
-      state: on
-      brightness: 100
-    light.lamp_bank:
-      state: on
-      brightness: 100
-    light.lamp_dressoir:
-      state: on
-      brightness: 100
-    light.lights_group_eettafel:
-      state: on
-      brightness: 90
-    light.lights_group_keuken:
-      state: on
-      brightness: 160
+  - name: home_cinema_paused
+    entities:
+      light.lamp_tv:
+        state: 'on'
+        brightness: 100
+      light.lamp_bank:
+        state: 'on'
+        brightness: 100
+      light.lamp_dressoir:
+        state: 'on'
+        brightness: 100
+      light.lights_group_eettafel:
+        state: 'on'
+        brightness: 90
+      light.lights_group_keuken:
+        state: 'on'
+        brightness: 160
 
-- name: home_cinema_off
-  entities:
-    light.hue_play_1: off
-    light.hue_play_2: off
+  - name: home_cinema_off
+    entities:
+      light.hue_play_1: 'off'
+      light.hue_play_2: 'off'
 
 automation:
-- id: home_cinema_ambilight_off
-  alias: Ambilight uit
-  initial_state: 'on'
-  trigger: 
-    platform: state
-    entity_id: media_player.denon_avr_x2100w
-    to: 'off'
-  action:
-    service: scene.turn_on
-    entity_id: scene.home_cinema_off
+  - id: home_cinema_ambilight_off
+    alias: Ambilight uit
+    initial_state: true
+    trigger:
+      platform: state
+      entity_id: media_player.denon_avr_x2100w
+      to: 'off'
+    action:
+      service: scene.turn_on
+      entity_id: scene.home_cinema_off
 
-- id: home_cinema_playback_change
-  alias: Film status
-  initial_state: 'on'
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.lights_donker_buiten
-    to: 'on'
-  - platform: state
-    entity_id: sensor.home_cinema_state
-    for:
-      seconds: 5
-  condition:
-    condition: and
-    conditions:
-    - condition: state
+  - id: home_cinema_playback_change
+    alias: Film status
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.lights_donker_buiten
+        to: 'on'
+      - platform: state
+        entity_id: sensor.home_cinema_state
+        for:
+          seconds: 5
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.lights_donker_buiten
+          state: 'on'
+        - condition: template
+          value_template: >
+            {{ is_state('sensor.home_cinema_state', 'playing') or is_state('sensor.home_cinema_state', 'paused') }}
+    action:
+      service: scene.turn_on
+      data_template:
+        entity_id: '{{ "scene.home_cinema_" + states("sensor.home_cinema_state") }}'
+
+  - id: home_cinema_lights_normal
+    alias: Film uit
+    initial_state: true
+    trigger:
+      platform: state
+      entity_id: sensor.home_cinema_state
+      to: 'off'
+      for:
+        seconds: 10
+    condition:
+      condition: state
       entity_id: binary_sensor.lights_donker_buiten
       state: 'on'
-    - condition: template
-      value_template: >
-        {{ is_state('sensor.home_cinema_state', 'playing') or is_state('sensor.home_cinema_state', 'paused') }}
-  action:
-    service: scene.turn_on
-    data_template:
-      entity_id: '{{ "scene.home_cinema_" + states("sensor.home_cinema_state") }}'
-
-- id: home_cinema_lights_normal
-  alias: Film uit
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: sensor.home_cinema_state
-    to: 'off'
-    for:
-      seconds: 10
-  condition:
-    condition: state
-    entity_id: binary_sensor.lights_donker_buiten
-    state: 'on'
-  action:
-    service: scene.turn_on
-    entity_id: scene.lights_beneden_normaal
+    action:
+      service: scene.turn_on
+      entity_id: scene.lights_beneden_normaal
