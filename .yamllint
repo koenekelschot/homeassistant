@@ -1,9 +1,6 @@
 ---
 ignore: |
-  config/custom_components/
-  config/ip_bans.yaml
-  config/esphomeyaml/*/
-  config/notebooks/
+  custom_components/
 rules:
   braces:
     level: error
@@ -39,7 +36,7 @@ rules:
     level: error
     present: true
     ignore: |
-      config/known_devices.yaml
+      known_devices.yaml
   empty-lines:
     level: error
     max: 1
@@ -56,9 +53,6 @@ rules:
   key-duplicates:
     level: error
   line-length:
-    ignore: |
-      .github/support.yml
-      .github/settings.yml
     level: warning
     max: 120
     allow-non-breakable-words: true
