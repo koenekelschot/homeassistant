@@ -21,9 +21,9 @@ automation:
       condition: template
       value_template: "{{ 'restafval' in states('sensor.circulus_morgen') | lower }}"
     action:
-      service: script.notify_waste_collection
+      service: notify.telegram
       data:
-        waste_type: 'Restafval'
+        message: "Restafval wordt morgen opgehaald."
 
   - alias: Afval herinnering GFT
     id: waste_reminder_gft
@@ -34,9 +34,9 @@ automation:
       condition: template
       value_template: "{{ 'gft' in states('sensor.circulus_morgen') | lower }}"
     action:
-      service: script.notify_waste_collection
+      service: notify.telegram
       data:
-        waste_type: 'GFT'
+        message: "GFT wordt morgen opgehaald."
 
   - alias: Afval herinnering papier
     id: waste_reminder_papier
@@ -47,9 +47,9 @@ automation:
       condition: template
       value_template: "{{ 'papier' in states('sensor.circulus_morgen') | lower }}"
     action:
-      service: script.notify_waste_collection
+      service: notify.telegram
       data:
-        waste_type: 'Papier'
+        message: "Papier wordt morgen opgehaald."
 
   - alias: Afval herinnering PMD
     id: waste_reminder_pmd
@@ -60,14 +60,6 @@ automation:
       condition: template
       value_template: "{{ 'pmd' in states('sensor.circulus_morgen') | lower }}"
     action:
-      service: script.notify_waste_collection
+      service: notify.telegram
       data:
-        waste_type: 'PMD'
-
-script:
-  notify_waste_collection:
-    alias: Afval notificatie
-    sequence:
-      - service: notify.telegram
-        data:
-          message: "{{ waste_type }} wordt morgen opgehaald."
+        message: "PMD wordt morgen opgehaald."
