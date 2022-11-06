@@ -35,12 +35,17 @@ test config:
 
 deploy:
   stage: deploy
-  only:
-    refs:
-      - master
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  image: alpine:latest
+  before_script:
+    - apk update && apk add openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - echo "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
   script:
-    # https://unix.stackexchange.com/a/417661
-    - apk update && apk add openssh sshpass
     - sh ./build/deploy.sh
 
 restart homeassistant:

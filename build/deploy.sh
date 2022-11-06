@@ -2,26 +2,25 @@
 
 hass_folder=$SSH_FOLDER_DOCKER/volumes/homeassistant/config
 
-copy_folder() {
-    sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "test -d $hass_folder/$1 && echo $SSH_PASS | sudo -S rm -r $hass_folder/$1"
-    echo "Copying folder $1"
-    sshpass -e scp -O -o StrictHostKeyChecking=no -r $1 $SSH_USER@$SSH_HOST:$hass_folder/$1
-}
+rsync -athv .HA_VERSION $SSH_USER@$SSH_HOST:$SSH_FOLDER_DOCKER/.HA_VERSION
 
-copy_file() {
-    echo "Copying file $1"
-    sshpass -e scp -O -o StrictHostKeyChecking=no $1 $SSH_USER@$SSH_HOST:$hass_folder/$1
-}
+echo "Cleaning folder"
+ssh $SSH_USER@$SSH_HOST "find $hass_folder -maxdepth 1 -type f -name *.yaml -not -name secrets.yaml -exec rm {} \;"
+echo "Cleaning packages folder"
+ssh $SSH_USER@$SSH_HOST "find $hass_folder/packages -type f -name *.yaml -exec rm {} \;"
+echo "Cleaning custom_components folder"
+ssh $SSH_USER@$SSH_HOST "find $hass_folder/custom_components -type f -exec rm {} \;"
 
-export SSHPASS=$SSH_PASS
+echo "Copying yaml files"
+for i in `find . -maxdepth 2 -type f -name "*.yaml" -not -name "fake_secrets.yaml" 2>/dev/null`
+do
+    echo "Copying file $i"
+    rsync -athv $i $SSH_USER@$SSH_HOST:$hass_folder/$i
+done
 
-#copy .HA_VERSION to main Docker folder
-sshpass -e scp -O -o StrictHostKeyChecking=no .HA_VERSION $SSH_USER@$SSH_HOST:$SSH_FOLDER_DOCKER/.HA_VERSION
-
-copy_folder "custom_components"
-copy_folder "packages"
-copy_file "automations.yaml"
-copy_file "configuration.yaml"
-copy_file "groups.yaml"
-copy_file "scenes.yaml"
-copy_file "scripts.yaml"
+echo "Copying custom_components"
+for i in `find ./custom_components -type f 2>/dev/null`
+do
+    echo "Copying file $i"
+    rsync -athv $i $SSH_USER@$SSH_HOST:$hass_folder/$i
+done
