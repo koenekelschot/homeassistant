@@ -1,14 +1,16 @@
 #!/bin/bash
 
+hass_folder=$SSH_FOLDER_DOCKER/volumes/homeassistant/config
+
 copy_folder() {
-    sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "test -d $SSH_FOLDER_HASS/$1 && echo $SSH_PASS | sudo -S rm -r $SSH_FOLDER_HASS/$1"
+    sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "test -d $hass_folder/$1 && echo $SSH_PASS | sudo -S rm -r $hass_folder/$1"
     echo "Copying folder $1"
-    sshpass -e scp -O -o StrictHostKeyChecking=no -r $1 $SSH_USER@$SSH_HOST:$SSH_FOLDER_HASS/$1
+    sshpass -e scp -O -o StrictHostKeyChecking=no -r $1 $SSH_USER@$SSH_HOST:$hass_folder/$1
 }
 
 copy_file() {
     echo "Copying file $1"
-    sshpass -e scp -O -o StrictHostKeyChecking=no $1 $SSH_USER@$SSH_HOST:$SSH_FOLDER_HASS/$1
+    sshpass -e scp -O -o StrictHostKeyChecking=no $1 $SSH_USER@$SSH_HOST:$hass_folder/$1
 }
 
 export SSHPASS=$SSH_PASS
