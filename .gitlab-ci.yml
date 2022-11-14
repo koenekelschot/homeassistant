@@ -1,7 +1,6 @@
 ---
 stages:
   - setup
-  - lint
   - test
   - deploy
   - restart
@@ -16,7 +15,7 @@ setup:
       dotenv: build.env
 
 lint yaml:
-  stage: lint
+  stage: test
   image: sdesbure/yamllint
   before_script:
     - yamllint --version
